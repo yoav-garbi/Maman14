@@ -1,7 +1,8 @@
 #define ERROR -1
 #define buffer_size 100
 
-typedef struct
+/* the struct that holds the labels is a binary search tree- each node has two brnaches- the smaller is to the left, the bigger is to the right. This is very efficient and allows a time complexity of O(log n) both for adding a node and searching, and a space complexity of O(n) */
+typedef struct binTree
 {
 	char *str;
 	int address;
@@ -26,3 +27,5 @@ binTree * makeNode(char *, int);
 int setL(binTree *, binTree *);
 int setR(binTree *, binTree *);
 int printTree(binTree *);																								/* TEMP */
+int addNode(binTree *, char *, int);
+binTree * search(binTree *, char *);
