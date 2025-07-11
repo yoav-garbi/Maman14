@@ -10,8 +10,6 @@ int main (int argc, char *argv[])
 	FILE *filePointer;
 	FILE **fileArr = malloc(4 * sizeof(FILE));
 	
-	binTree *root;																								/* TEMP */
-	
 	
 	/* take in the arguments into the FILEs array */
 	for (i = 1; i < argc; ++i)
@@ -31,12 +29,7 @@ int main (int argc, char *argv[])
 	
 	
 	
-	root = makeNode("root", 100);																									/* TEMP */
-	setL(root, makeNode("node1", 200));
-	setR(root, makeNode("node2", 300));
 	
-	printTree(root);
-
 	
 	
 	/* close all files */
