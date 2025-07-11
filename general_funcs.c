@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "func_prototypes.h"
+#include "prototypes.h"
 
 
 
@@ -67,22 +67,3 @@ int base2_to_base4(void *source, void *dest)
 	
 	return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
