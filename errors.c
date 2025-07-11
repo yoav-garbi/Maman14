@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "errors.h"
+#include "prototypes.h"
 
 
 
@@ -14,3 +14,8 @@ int checkFileExistence(void *pointer)
 	
 	return 0;
 }
+
+
+
+
+
