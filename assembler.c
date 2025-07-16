@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include "prototypes.h"
 
+extern opcd opcodeTable[16];
+
+
+
 
 int main (int argc, char *argv[])
 {
