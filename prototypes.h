@@ -11,6 +11,16 @@ typedef struct binTree
 	
 } binTree;
 
+/* this struct holds necessary information about the opcodes and their permissions. Time complexity for searching an opcode is O(1) because their is a constant amount of opcodes (16). space complexity is O(1) for the same reason */
+typedef struct opcd
+{
+	char *name;
+	char *code;
+	int source[4];
+	int dest[4];
+	
+} opcd;
+
 
 /* errors.c */
 int checkFileExistence(void*);
