@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "prototypes.h"
-
+#include "header.h"
 
 
 int checkFileExistence(void *pointer)
