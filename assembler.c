@@ -14,12 +14,9 @@ int main (int argc, char *argv[])
 	FILE **fileArr;
 	
 	
-	
 	fileArr = getFiles(argc, argv);	/* take in the arguments into the FILEs array */
 	if (fileArr == NULL)
 		return ERROR;
-	
-	
 	
 	
 	
