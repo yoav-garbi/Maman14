@@ -49,25 +49,37 @@ int takeInLine(char buffer[], FILE *source)
 	void *status;
 	
 	status = fgets(buffer, buffer_size, source);
+	lineCounter++;
 	
 	if (status == NULL)	/* fgets returns NULL if the entire input is EOF (an empty line) */
 		return EOF_only_line;
+	
+	if (check_lineLength(buffer) == ERROR)
+		return ERROR;
 	
 	return 0;
 }
 
 
 
-/* read lines until you reach a non-white-space-only line */
-int skipWhiteLines(char buffer[], FILE *source)
+/* read lines until you reach a non-note and non-white-space-only line */
+int skipNotesAndWhiteLines(char buffer[], FILE *source)
 {
-	int i, count;
+	int i, count, status;
 	char c;
 	
 	do
 	{
-		if (takeInLine(buffer, source) == EOF_only_line)	/* take line into buffer */
-			return ERROR;
+		status = takeInLine(buffer, source);	/* take line into buffer */
+		if (status == EOF_only_line)	/* if encountered a line that only has EOF then end the task */
+			break;
+		
+		if (status == ERROR)	/* if takeInLine returned error this means that the line is too long, so we can skip it */
+			continue;
+		
+		c = buffer[0];
+		if (c == ';')
+			continue;
 		
 		for (i = 0, count = 0; c != EOF && c != '\0'; ++i)	/* read the line with c and mark count with 1 if encountering a non-white-space (this means a real line) */
 		{
