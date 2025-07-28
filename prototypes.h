@@ -1,7 +1,13 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #define ERROR -1
 #define buffer_size 100
 #define binary_representation_size 9
 #define total_num_of_files(argc) ((argc)*2+2) /* argc*2 because each as file will make a new ob file. +2 because there are an additional two file- ext and ent */
+#define EOF_only_line 1
+#define num_of_opcodes 16
 
 /* the struct that holds the labels is a binary search tree- each node has two brnaches- the smaller is to the left, the bigger is to the right. This is very efficient and allows a time complexity of O(log n) both for adding a node and searching, and a space complexity of O(n) */
 typedef struct binTree
@@ -27,18 +33,25 @@ typedef struct opcd
 
 /* io.c */
 FILE **getFiles(int, char *[]);
-int closeFiles(int argc, FILE **fileArr);
+int closeFiles(int argc, FILE **);
+int takeInLine(char [], FILE *);
+int skipWhiteLines(char [], FILE *);
+int recognize_opcode(char *);
+
 
 
 
 /* errors.c */
-int checkFileExistence(void*);
+int check_fileExistence(void*);
+int check_opcodeName(int);
+int check_legalAddressing(int, int, int);
 
 
 
 /* general_funcs.c */
 int base2_to_base4(void*, void*);
 int base10_to_base2(int, char[]);
+
 
 
 
