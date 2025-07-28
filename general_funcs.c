@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "prototypes.h"
 
 
@@ -64,6 +62,34 @@ int base2_to_base4(void *source, void *dest)
 		status = fgets(buffer, buffer_size, source);
 	}
 	
+	
+	return 0;
+}
+
+
+
+
+int base10_to_base2(int num, char str[])
+{
+	int i;
+	char tempStr[binary_representation_size];
+	
+	/* translate num from decimal to binary into the temporary str (it is needed because the number comes out backwards) */
+	for (i = 0; i < binary_representation_size; i++)
+	{
+		if (num % 2)
+			tempStr[i] = '1';
+		else
+			tempStr[i] = '0';
+		
+		num >>= 1;
+	}
+	
+	/* copy temp into str in reverse (the correct way) */
+	for (i = 0; i < binary_representation_size; i++)
+		str[i] = tempStr[binary_representation_size - 1 - i];
+	
+	str[i] = '\0';
 	
 	return 0;
 }
