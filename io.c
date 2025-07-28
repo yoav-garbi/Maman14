@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "prototypes.h"
 
 extern opcd opcodeTable[16];
@@ -46,13 +44,13 @@ int closeFiles(int argc, FILE **fileArr)
 
 
 /* take in the next line of text to the buffer */
-int takeInLine(char buffer[])
+int takeInLine(char buffer[], FILE *source)
 {
 	void *status;
 	
 	status = fgets(buffer, buffer_size, source);
 	
-	if (status = NULL)	/* fgets returns NULL if the entire input is EOF (an empty line) */
+	if (status == NULL)	/* fgets returns NULL if the entire input is EOF (an empty line) */
 		return EOF_only_line;
 	
 	return 0;
@@ -61,14 +59,14 @@ int takeInLine(char buffer[])
 
 
 /* read lines until you reach a non-white-space-only line */
-int skipWhiteLines(char buffer[])
+int skipWhiteLines(char buffer[], FILE *source)
 {
 	int i, count;
 	char c;
 	
 	do
 	{
-		if (takeInLine(buffer) == EOF_only_line)	/* take line into buffer */
+		if (takeInLine(buffer, source) == EOF_only_line)	/* take line into buffer */
 			return ERROR;
 		
 		for (i = 0, count = 0; c != EOF && c != '\0'; ++i)	/* read the line with c and mark count with 1 if encountering a non-white-space (this means a real line) */
@@ -93,7 +91,7 @@ int recognize_opcode(char *code)
 	for (i = 0; strcmp(code, opcodeTable[i].name); ++i);
 
 	status = check_opcodeName(i);
-	if(check_opcodeName == 0)	/* command found- return index */
+	if(status == 0)	/* command found- return index */
 		return i;
 	
 	return ERROR;
