@@ -31,6 +31,16 @@ typedef struct binTree
 	
 } binTree;
 
+/* struct that will serve as a package for all relevant data for each row, making error handling easier */
+typedef struct {
+    char content[MAX_LINE_LENGTH];
+    int lineNumber;
+    int hasError;
+	char error[MAX_LINE_LENGTH];
+    int hasLabel;
+	char label[MAX_LABEL_LENGTH];
+} LineDate;
+
 /* this struct holds necessary information about the opcodes and their permissions. Time complexity for searching an opcode is O(1) because their is a constant amount of opcodes (16). space complexity is O(1) for the same reason */
 typedef struct opcd
 {
