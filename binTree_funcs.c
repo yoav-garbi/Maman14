@@ -1,12 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "prototypes.h"
 
 
 
 /* creates a node and fills it with the data entered (branches are set to NULL) */
-binTree * makeNode(char *str, int address)
+binTree * makeNode(char *str, int address, int type, int external, int entry)
 {
 	binTree *node = malloc(sizeof(binTree));
 	if (node == NULL)
@@ -14,6 +11,9 @@ binTree * makeNode(char *str, int address)
 	
 	node->str = str;
 	node->address = address;
+	node->symbolType = type;
+	node->isExternal = external;
+	node->isEntry = entry;
 	node->left = NULL;
 	node->right = NULL;
 	
@@ -43,7 +43,7 @@ int printTree(binTree *root)																								/* TEMP */
 		return 0;
 	
 	printTree(root->left);
-	printf("str: %s\t\t\taddress: %d\n", root->str, root->address);
+	printf("str: %s\t\t\taddress: %d\t\tsymbolType: %d\t\tisExternal: %d\t\tisEntry: %d\n", root->str, root->address, root->symbolType, root->isExternal, root->isEntry);
 	printTree(root->right);
 	
 	return 0;
@@ -52,7 +52,7 @@ int printTree(binTree *root)																								/* TEMP */
 
 /* adds a node to the correct place in the tree. time compexity = O(log n) because every level cuts down the number of option by half. space complexity = O(n)- there is no waste of space because nodes are initiallized as needed and not ahead of time. Each node is O(n) because of the string but that is out of out control. In this prohect we will look at a node as a single unit so the space complexity of each node is O(1) 
 The correct place in the tree is determined with the help of strcmp (from <string.h>) that compares 2 string an returns if they are identical or if one has a bigger value (lexicographically) */
-int addNode(binTree *root, char *str, int address)
+int addNode(binTree *root, char *str, int address, int type, int external, int entry)
 {
 	int comp;
 	
@@ -66,22 +66,22 @@ int addNode(binTree *root, char *str, int address)
 	{
 		if (root->left == NULL)
 		{
-			setL(root, makeNode(str, address));
+			setL(root, makeNode(str, address, type, external, entry));
 			return 0;
 		}
 		
-		addNode(root->left, str, address); /* use recursion to decend 1 more level */
+		addNode(root->left, str, address, type, external, entry); /* use recursion to decend 1 more level */
 	}
 	
 	else if (comp > 0)
 	{
 		if (root->right == NULL)
 		{
-			setR(root, makeNode(str, address));
+			setR(root, makeNode(str, address, type, external, entry));
 			return 0;
 		}
 		
-		addNode(root->right, str, address); /* use recursion to decend 1 more level */
+		addNode(root->right, str, address, type, external, entry); /* use recursion to decend 1 more level */
 	}
 	
 	return 0;
