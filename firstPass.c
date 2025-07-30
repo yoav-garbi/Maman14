@@ -9,6 +9,15 @@
  * Skips all leading spaces and tab characters in a line.
  * Returns a pointer to the first non-whitespace character.
  */
+char *skipWhitespace(char *line);
+
+/*
+ * Checks if the first word in the line is a label.
+ * Returns 1 if a label is found, 0 otherwise.
+ */
+int isLabel(const char *ptr);
+
+
 char *skipWhitespace(char *line) {
     while (*line == ' ' || *line == '\t') {
         line++;
@@ -16,10 +25,6 @@ char *skipWhitespace(char *line) {
     return line;
 }
 
-/*
- * Checks if the first word in the line is a label.
- * Returns 1 if a label is found, 0 otherwise.
- */
 int isLabel(const char *ptr) {
     int len = 0;
     while (ptr[len] && !isspace((unsigned char)ptr[len]) && ptr[len] != ':') {
