@@ -54,16 +54,15 @@ char *skipWhitespace(char *line) {
     return line;
 }
 
-int isLabel(char *ptr) {
+int isLabel(const char *ptr) {
     int len = 0;
     while (ptr[len] && !isspace((unsigned char)ptr[len]) && ptr[len] != ':') {
         len++;
     }
-    if (isalpha(ptr[0]) && ptr[len] == ':' && len > 0 && len <= MAX_LABEL_LENGTH) {
+    if (check_labelName((char *)ptr, len) == 0) {
         return 1;
     }
     return 0;
-}
 
 int isData(char *word) {
     return (strcmp(word, ".data") == 0 ||
