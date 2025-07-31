@@ -14,7 +14,6 @@ int isData(const char *word);
 /*
  * Checks if the word is a legal opcode (instruction).
  * Returns 1 if true, 0 otherwise.
- * Uses the OPCODES array defined elsewhere.
  */
 int isInstruction(const char *word);
 
