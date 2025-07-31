@@ -1,11 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+
+#include "constants.h"
 
 #define ERROR -1
 #define buffer_size 85
 #define binary_representation_size 9
-#define total_num_of_files(argc) ((argc)*2+2) /* argc*2 because each as file will make a new ob file. +2 because there are an additional two file- ext and ent */
+#define total_num_of_files(argc) ((argc-1)*4) /* argc-1 because the 0th index refers to "./assembler" which is irrelevent here. *4 because each .as (1) file will make a .ob (2) file, a .ext (3) file and a .ent (4) file */
 #define EOF_only_line 1
 #define num_of_opcodes 16
 
@@ -31,16 +34,6 @@ typedef struct binTree
 	
 } binTree;
 
-/* struct that will serve as a package for all relevant data for each row, making error handling easier */
-typedef struct {
-    char content[MAX_LINE_LENGTH];
-    int lineNumber;
-    int hasError;
-	char error[MAX_LINE_LENGTH];
-    int hasLabel;
-	char label[MAX_LABEL_LENGTH];
-} LineDate;
-
 /* this struct holds necessary information about the opcodes and their permissions. Time complexity for searching an opcode is O(1) because their is a constant amount of opcodes (16). space complexity is O(1) for the same reason */
 typedef struct opcd
 {
@@ -55,21 +48,25 @@ typedef struct opcd
 
 /* io.c */
 FILE **getFiles(int, char *[]);
-int closeFiles(int argc, FILE **);
+int closeFiles(int, FILE **);
 int takeInLine(char [], FILE *);
 int skipNotesAndWhiteLines(char [], FILE *);
 int recognize_opcode(char *);
+int findCommand(char *);
 
 
 
 
 /* errors.c */
+int check_lineGeneral(char *);
 int check_fileExistence(void*);
 int check_opcodeName(int);
 int check_legalAddressing(int, int, int);
 int check_lineLength(char []);
 int check_registerNumber(char []);
 int check_labelLength(char []);
+int check_labelName(char *, int);
+int check_allocation(void *);
 
 
 
