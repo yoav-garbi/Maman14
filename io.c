@@ -7,10 +7,11 @@ extern opcd opcodeTable[16];
 /* take in the arguments into the FILEs array */
 FILE **getFiles(int argc, char *argv[])
 {
-	int i;
+	int i, iTemp;
 	FILE *filePointer;
 	FILE **fileArr = malloc(total_num_of_files(argc) * sizeof(FILE));
 	
+	/* open .as files */
 	for (i = 1; i < argc; ++i)
 	{
 		filePointer = fopen(argv[i], "r");
@@ -21,7 +22,76 @@ FILE **getFiles(int argc, char *argv[])
 		}
 		
 		fileArr[i-1] = filePointer;
+		printf("%d:\t%s", i, argv[i]);																						/*TEMP*/
 	}
+	
+	printf("\n");																											/*TEMP*/
+	
+	
+	/* create .ob files */
+	for (iTemp = 1; i < 2*argc; ++i) /* iTemp tracks the .as files, i tracks the index in fileArr */
+	{
+		len = strlen(argv[iTemp]);
+		for (j = 0; j < len; ++j)
+			name[j] = argv[j]; 
+		name[len-2] = 'o';
+		name[len-1] = 'b';
+		
+		filePointer = fopen(name, "w+");
+		
+		if (check_fileExistence(filePointer) == ERROR)	/* check if the file was created succesfuly */
+		{
+			return NULL;
+		}
+		
+		fileArr[i-1] = filePointer;
+		printf("%d:\t%s", i, name);																						/*TEMP*/
+	}
+	
+	printf("\n");																											/*TEMP*/
+	
+	
+	/* create .ent files */
+	for (iTemp = 1; i < 3*argc; ++i) /* iTemp tracks the .as files, i tracks the index in fileArr */
+	{
+		len = strlen(argv[iTemp]);
+		for (j = 0; j < len; ++j)
+			name[j] = argv[j]; 
+		name[len-2] = 'e';
+		name[len-1] = 'n';
+		name[len] = 't';
+		
+		filePointer = fopen(name, "w+");
+		
+		if (check_fileExistence(filePointer) == ERROR)	/* check if the file was created succesfuly */
+		{
+			return NULL;
+		}
+		
+		fileArr[i-1] = filePointer;
+	}
+	
+	
+	/* create .ext files */
+	for (iTemp = 1; i < 4*argc; ++i) /* iTemp tracks the .as files, i tracks the index in fileArr */
+	{
+		len = strlen(argv[iTemp]);
+		for (j = 0; j < len; ++j)
+			name[j] = argv[j]; 
+		name[len-2] = 'e';
+		name[len-1] = 'x';
+		name[len] = 't';
+		
+		filePointer = fopen(name, "w+");
+		
+		if (check_fileExistence(filePointer) == ERROR)	/* check if the file was created succesfuly */
+		{
+			return NULL;
+		}
+		
+		fileArr[i-1] = filePointer;
+	}
+	
 	
 	return fileArr;
 }
