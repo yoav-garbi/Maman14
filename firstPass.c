@@ -6,29 +6,45 @@
 #include "prototypes.h"
 
 /*
- * Checks if the word is a data directive (.data, .string, .mat).
- * Returns 1 if true, 0 otherwise.
+ * Checks if the word is data (.data, .string, .mat).
+ * Returns 1 if data, 0 if not.
  */
-int isData(const char *word);
+int isData(char *word);
 
 /*
  * Checks if the word is a legal opcode (instruction).
- * Returns 1 if true, 0 otherwise.
+ * Returns 1 if opcode, 0 otherwise.
  */
-int isInstruction(const char *word);
+int isInstruction(char *word);
 
 /*
- * Skips all leading spaces and tab characters in a line.
+ * Skips all spaces and tab characters in a line.
  * Returns a pointer to the first non-whitespace character.
  */
 char *skipWhitespace(char *line);
 
 /*
  * Checks if the first word in the line is a label.
- * Returns 1 if a label is found, 0 otherwise.
+ * Returns 1 if its label, 0 otherwise.
  */
-int isLabel(const char *ptr);
+int isLabel(char *ptr);
 
+/*
+ *adds a data symbol to the symbol table
+ *return 1 if it was added, 0 if not
+ */
+int addSymbolToData(binTree **root, char *str, int address);
+/*
+ *returns the amount of numbers in the .data line
+ */
+int countDataValues(char *line);
+
+/*
+ * Counts the total memory required for a mat
+ * Expects a string like ".mat [rows][cols]"
+ * Returns rows*cols if successful, 0 otherwise.
+ */
+int countMatValues(const char *line);
 char *opCodes[num_of_opcodes] = { "mov", "cmp", "add", "sub", "not", "clr", "lea", "inc","dec", "jmp", "bne", "red", "prn", "jsr", "rts", "stop"};
 
 char *skipWhitespace(char *line) {
@@ -38,24 +54,24 @@ char *skipWhitespace(char *line) {
     return line;
 }
 
-int isLabel(const char *ptr) {
+int isLabel(char *ptr) {
     int len = 0;
     while (ptr[len] && !isspace((unsigned char)ptr[len]) && ptr[len] != ':') {
         len++;
     }
-    if (ptr[len] == ':' && len > 0 && len <= MAX_LABEL_LENGTH) {
+    if (isalpha(ptr[0]) && ptr[len] == ':' && len > 0 && len <= MAX_LABEL_LENGTH) {
         return 1;
     }
     return 0;
 }
 
-int isData(const char *word) {
+int isData(char *word) {
     return (strcmp(word, ".data") == 0 ||
             strcmp(word, ".string") == 0 ||
             strcmp(word, ".mat") == 0);
 }
 
-int isInstruction(const char *word) {
+int isInstruction(char *word) {
     int i;
     for (i = 0; i < num_of_opcodes; i++) {
         if (strcmp(word, opCodes[i]) == 0)
@@ -82,7 +98,7 @@ int addSymbolToData(binTree **root, char *str, int address) {
     return 1;
 }
 
-int countDataValues(const char *line) {
+int countDataValues(char *line) {
     int count = 0;
     const char *p = line;
     while (*p) {
@@ -104,6 +120,22 @@ int countWordsForInstruction(const char *line) {
     return 1;
 }
 
+int countMatValues(const char *line) {
+    int rows = 0, cols = 0;
+    const char *p = strchr(line, '[');
+    if (p) {
+        rows = atoi(p + 1);
+        p = strchr(p + 1, '[');
+        if (p) {
+            cols = atoi(p + 1);
+        }
+    }
+    if (rows > 0 && cols > 0)
+        return rows * cols;
+    return 0;
+}
+
+
 int firstPass(const char *fileName, binTree **labelTable) {
     FILE *fp;
     int IC = IC_INIT_VALUE;
@@ -112,6 +144,7 @@ int firstPass(const char *fileName, binTree **labelTable) {
     char label[MAX_LABEL_LENGTH];
     int lineNumber = 1;
     int countError = 0;
+    int tempMemory=0;
     LineDate currentLine;
     char *ptr;
     char *nextPtr;
@@ -167,17 +200,37 @@ int firstPass(const char *fileName, binTree **labelTable) {
             if (isData(first_word)) {
                 addSymbolToData(labelTable, currentLine.label, DC);
                 if (strcmp(first_word, ".data") == 0) {
-                    DC += countDataValues(nextPtr + strlen(first_word));
+                    tempMemory= countDataValues(nextPtr + strlen(first_word));
+                    if (tempMemory == 0) {
+                        strcpy(currentLine.error, "missing argument");
+                        countError++;
+                        return 0;
+                    }
+                    else {
+                        DC+= tempMemory;
+                    }
                 } else if (strcmp(first_word, ".string") == 0) {
                     char *start = strchr(nextPtr, '\"');
                     if (start) {
                         char *end = strchr(start + 1, '\"');
                         if (end && end > start) {
                             DC += (end - start - 1) + 1;
+                        }else {
+                            strcpy(currentLine.error, "missing argument");
+                            countError++;
+                            return 0;
                         }
                     }
                 } else if (strcmp(first_word, ".mat") == 0) {
-                    /*TODO:write a method for an arry*/
+                    tempMemory= countDataValues(currentLine.content);
+                    if (tempMemory == 0) {
+                        strcpy(currentLine.error, "missing argument");
+                        countError++;
+                        return 0;
+                    }
+                    else {
+                        DC+= tempMemory;
+                    }
                 }
             } else if (isInstruction(first_word)) {
                 addNode(*labelTable, currentLine.label, IC, CODE, 0, 0);
@@ -186,7 +239,15 @@ int firstPass(const char *fileName, binTree **labelTable) {
         } else {
             if (isData(first_word)) {
                 if (strcmp(first_word, ".data") == 0) {
-                    DC += countDataValues(nextPtr + strlen(first_word));
+                    tempMemory= countDataValues(nextPtr + strlen(first_word));
+                    if (tempMemory == 0) {
+                        strcpy(currentLine.error, "missing argument");
+                        countError++;
+                        return 0;
+                    }
+                    else {
+                        DC+= tempMemory;
+                    }
                 } else if (strcmp(first_word, ".string") == 0) {
                     char *start = strchr(nextPtr, '\"');
                     if (start) {
@@ -196,7 +257,15 @@ int firstPass(const char *fileName, binTree **labelTable) {
                         }
                     }
                 } else if (strcmp(first_word, ".mat") == 0) {
-                    /*TODO:write a method for an arry*/
+                    tempMemory= countDataValues(currentLine.content);
+                    if (tempMemory == 0) {
+                        strcpy(currentLine.error, "missing argument");
+                        countError++;
+                        return 0;
+                    }
+                    else {
+                        DC+= tempMemory;
+                    }
                 }
             } else if (isInstruction(first_word)) {
                 IC += countWordsForInstruction(nextPtr + strlen(first_word));
