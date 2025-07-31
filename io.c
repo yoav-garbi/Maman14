@@ -3,95 +3,102 @@
 extern opcd opcodeTable[16];
 
 
-
 /* take in the arguments into the FILEs array */
 FILE **getFiles(int argc, char *argv[])
 {
-	int i, iTemp;
+	int i, countFiles, len;
+	char **nameArr = calloc(argc - 1, sizeof(char *));
 	FILE *filePointer;
-	FILE **fileArr = malloc(total_num_of_files(argc) * sizeof(FILE));
+	FILE **fileArr = malloc(total_num_of_files(argc) * sizeof(FILE *));
+	
+	
+	if (check_allocation(nameArr) == ERROR)
+		return NULL;
+	
+	/* create an array of strings- each one points to the name of a source file (to facilitate the creation of the new files) */
+	for (i = 0; i < argc - 1; ++i) /* argc-1 because the 0th index refers to "./assembler" which is irelevent here. iTemp count up to argc for each loop, so it resets each time. i tracks the index in fileArr, so we don't reset it */
+	{
+		nameArr[i] = malloc(buffer_size * sizeof(char));
+		if (check_allocation(nameArr[i]) == ERROR)
+			return NULL;
+		
+		strcpy(nameArr[i], argv[i+1]);
+	}
+	countFiles = i;
 	
 	/* open .as files */
-	for (i = 1; i < argc; ++i)
+	for (i = 0; i < argc - 1; ++i)
 	{
-		filePointer = fopen(argv[i], "r");
+		filePointer = fopen(argv[i+1], "r");
 		
 		if (check_fileExistence(filePointer) == ERROR)	/* check if the file has opened succesfuly */
 		{
 			return NULL;
 		}
 		
-		fileArr[i-1] = filePointer;
-		printf("%d:\t%s", i, argv[i]);																						/*TEMP*/
+		fileArr[i] = filePointer;
+		printf("%d:\t%s\n", i, nameArr[i]);																						/*TEMP*/
 	}
-	
-	printf("\n");																											/*TEMP*/
 	
 	
 	/* create .ob files */
-	for (iTemp = 1; i < 2*argc; ++i) /* iTemp tracks the .as files, i tracks the index in fileArr */
+	for (i = 0; i < argc - 1; ++i)
 	{
-		len = strlen(argv[iTemp]);
-		for (j = 0; j < len; ++j)
-			name[j] = argv[j]; 
-		name[len-2] = 'o';
-		name[len-1] = 'b';
-		
-		filePointer = fopen(name, "w+");
-		
-		if (check_fileExistence(filePointer) == ERROR)	/* check if the file was created succesfuly */
+		len = strlen(nameArr[i]);
+		nameArr[i][len-2] = 'o';
+		nameArr[i][len-1] = 'b';
+	
+		filePointer = fopen(nameArr[i], "w+");
+	
+		if (check_fileExistence(filePointer) == ERROR)
 		{
 			return NULL;
 		}
-		
-		fileArr[i-1] = filePointer;
-		printf("%d:\t%s", i, name);																						/*TEMP*/
+
+		fileArr[countFiles + i] = filePointer;
+		printf("%d:\t%s\n", i, nameArr[i]);																						/*TEMP*/
 	}
-	
-	printf("\n");																											/*TEMP*/
 	
 	
 	/* create .ent files */
-	for (iTemp = 1; i < 3*argc; ++i) /* iTemp tracks the .as files, i tracks the index in fileArr */
+	for (i = 0; i < argc - 1; ++i)
 	{
-		len = strlen(argv[iTemp]);
-		for (j = 0; j < len; ++j)
-			name[j] = argv[j]; 
-		name[len-2] = 'e';
-		name[len-1] = 'n';
-		name[len] = 't';
-		
-		filePointer = fopen(name, "w+");
-		
-		if (check_fileExistence(filePointer) == ERROR)	/* check if the file was created succesfuly */
+		len = strlen(nameArr[i]);
+		nameArr[i][len-2] = 'e';
+		nameArr[i][len-1] = 'n';
+		nameArr[i][len] = 't';
+		nameArr[i][len+1] = '\0';
+	
+		filePointer = fopen(nameArr[i], "w+");
+	
+		if (check_fileExistence(filePointer) == ERROR)
 		{
 			return NULL;
 		}
-		
-		fileArr[i-1] = filePointer;
+
+		fileArr[countFiles*2 + i] = filePointer;
+		printf("%d:\t%s\n", i, nameArr[i]);																						/*TEMP*/
 	}
-	
 	
 	/* create .ext files */
-	for (iTemp = 1; i < 4*argc; ++i) /* iTemp tracks the .as files, i tracks the index in fileArr */
+	for (i = 0; i < argc - 1; ++i)
 	{
-		len = strlen(argv[iTemp]);
-		for (j = 0; j < len; ++j)
-			name[j] = argv[j]; 
-		name[len-2] = 'e';
-		name[len-1] = 'x';
-		name[len] = 't';
-		
-		filePointer = fopen(name, "w+");
-		
-		if (check_fileExistence(filePointer) == ERROR)	/* check if the file was created succesfuly */
+		len = strlen(nameArr[i]);
+		nameArr[i][len-3] = 'e';
+		nameArr[i][len-2] = 'x';
+		nameArr[i][len-1] = 't';
+		nameArr[i][len] = '\0';
+	
+		filePointer = fopen(nameArr[i], "w+");
+	
+		if (check_fileExistence(filePointer) == ERROR)
 		{
 			return NULL;
 		}
-		
-		fileArr[i-1] = filePointer;
+
+		fileArr[countFiles*3 + i] = filePointer;
+		printf("%d:\t%s\n", i, nameArr[i]);																						/*TEMP*/
 	}
-	
 	
 	return fileArr;
 }
@@ -103,7 +110,7 @@ int closeFiles(int argc, FILE **fileArr)
 {
 	int i;
 	
-	for (i = 0; i < total_num_of_files(argc)-1; ++i)
+	for (i = 0; i < total_num_of_files(argc); ++i)
 	{
 		fclose(fileArr[i]);
 	}
