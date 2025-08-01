@@ -34,16 +34,6 @@ typedef struct binTree
 	
 } binTree;
 
-/* struct that will serve as a package for all relevant data for each row, making error handling easier */
-typedef struct {
-    char content[MAX_LINE_LENGTH];
-    int lineNumber;
-    int hasError;
-	char error[MAX_LINE_LENGTH];
-    int hasLabel;
-	char label[MAX_LABEL_LENGTH];
-} LineDate;
-
 /* this struct holds necessary information about the opcodes and their permissions. Time complexity for searching an opcode is O(1) because their is a constant amount of opcodes (16). space complexity is O(1) for the same reason */
 typedef struct opcd
 {
@@ -55,14 +45,37 @@ typedef struct opcd
 } opcd;
 
 
+/* struct that will serve as a package for all relevant data for each row, making error handling easier */
+typedef struct {
+    char content[MAX_LINE_LENGTH];
+    int lineNumber;
+    int hasError;
+	char error[MAX_LINE_LENGTH];
+    int hasLabel;
+	char label[MAX_LABEL_LENGTH];
+} LineDate;
+
+
+/* struct that holds a line of data (in binary) and its address */
+typedef struct dataLine
+{
+	char *data;
+	int address;
+	
+} dataLine;
+
+
 
 /* io.c */
 FILE **getFiles(int, char *[]);
+int makeOutFiles(int, char *[], FILE **);
 int closeFiles(int, FILE **);
 int takeInLine(char [], FILE *);
 int skipNotesAndWhiteLines(char [], FILE *);
 int recognize_opcode(char *);
 int findCommand(char *);
+int writeEnt(FILE *, binTree *node);
+int writeExt(FILE *, binTree *node);
 
 
 
@@ -94,3 +107,10 @@ int setR(binTree *, binTree *);
 int printTree(binTree *);																								/* TEMP */
 int addNode(binTree *, char *, int, int, int, int);
 binTree * search(binTree *, char *);
+
+
+
+
+/* secondPass.c */
+int secondPass();																															/* TEMP */
+int isLabel(const cha
