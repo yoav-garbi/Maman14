@@ -71,11 +71,11 @@ int base2_to_base4(void *source, void *dest)
 
 int base10_to_base2(int num, char str[])
 {
-	int i;
+	int i, bitCount;
 	char tempStr[binary_representation_size];
 	
 	/* translate num from decimal to binary into the temporary str (it is needed because the number comes out backwards) */
-	for (i = 0; i < binary_representation_size; i++)
+	for (i = 0; num != 0; i++)
 	{
 		if (num % 2)
 			tempStr[i] = '1';
@@ -84,10 +84,19 @@ int base10_to_base2(int num, char str[])
 		
 		num >>= 1;
 	}
+	bitCount = i;
+
+	/* round up bitCount to nearest multiple of 4 */
+	if (bitCount % 4 != 0)
+		bitCount += 4 - (bitCount % 4);
 	
+	/* add zeros to complete to a number with a width of 4 (or a multiple op 4) */
+	while (i < bitCount)
+		tempStr[i++] = '0';
+		
 	/* copy temp into str in reverse (the correct way) */
-	for (i = 0; i < binary_representation_size; i++)
-		str[i] = tempStr[binary_representation_size - 1 - i];
+	for (i = 0; i < bitCount; i++)
+		str[i] = tempStr[bitCount - 1 - i];
 	
 	str[i] = '\0';
 	
