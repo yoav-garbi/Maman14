@@ -150,3 +150,35 @@ int check_allocation(void *pointer)
 	printf("\nMemory allocation failed.\n\n");
 	return ERROR;
 }
+
+
+
+int check_labelExist(binTree *node)
+{
+	if (node != NULL)	/* label was found in the label table */
+		return 0;
+	
+	printf("\nLabel not defined in the assembly file. (Line %d)\n\n", lineCounter);
+	return ERROR;
+}
+
+
+
+
+
+
+
+
+
+
+																																		/* TEMP */
+int isLabel(const char *ptr) {
+    int len = 0;
+    while (ptr[len] && !isspace((unsigned char)ptr[len]) && ptr[len] != ':') {
+        len++;
+    }
+    if (check_labelName((char *)ptr, len) == 0) {
+        return 1;
+    }
+    return 0;
+}
