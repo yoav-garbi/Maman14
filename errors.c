@@ -1,7 +1,6 @@
 #include "prototypes.h"
 #include "header.h"
 
-int lineCounter;
 
 
 /* go through a command line and search for all errors that may lie in it */
