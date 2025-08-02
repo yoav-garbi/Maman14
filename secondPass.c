@@ -1,16 +1,15 @@
 #include "prototypes.h"
 
-extern binTree *labelTable;
 
 
-int secondPass(int argc, FILE **fileArr, lineNode *lineArr[])
+int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[])
 {
-	int fileCount /*, status*/, errorFlag = 0;
-	char /* *line,*/ *character, label[buffer_size], binAddress[binary_representation_size];
+	int fileCount, errorFlag = 0;
+	char *character, label[buffer_size], binAddress[binary_representation_size];
 	binTree *node;	
 	
 	/* replace lebels with address */
-	for (fileCount = 0; argc-1; ++fileCount) /* each iteration is one file */
+	for (fileCount = 0; fileCount < argc-1; ++fileCount) /* each iteration is one file */
 	{
 		for (lineCounter = 0; lineArr[lineCounter] != NULL; lineCounter++) /* each iteration is one line */
 		{
@@ -46,20 +45,31 @@ int secondPass(int argc, FILE **fileArr, lineNode *lineArr[])
 		}
 		
 		
-		/* TODO- copy lines to file */
-		
-		
-		/* create extension files (if there were no errors) */
-		if (errorFlag == 1)
-			return ERROR;
-		
-		for (fileCount = 0; argc-1; ++fileCount) /* each iteration is one file */
-			writeOutFiles(fileArr[3*(argc-1) + fileCount], fileArr[3*(argc-1) + fileCount]);
-		
-		
+		/* copy lines to file */
+		for (lineCounter = 0; lineArr[lineCounter] != NULL; lineCounter++) /* each iteration is one line */
+		{
+			
+			/*TODO- create .ob file*/
+				
+			for (character = lineArr[lineCounter]->line; *character != '\0'; character++) /* start of line to end of line, each iteration is one char */
+			{
+				if (*character == ' ')
+					continue;
+				
+				fputc(*character, fileArr[2*(argc-1) + fileCount]);
+			}
+		}
 	}
 	
 	
+	
+	/* create extension files (if there were no errors) */
+	if (errorFlag == 1)
+		return ERROR;
+	
+	makeOutFiles(argc, argv, fileArr);
+	for (fileCount = 0; argc-1; ++fileCount) /* each iteration is one file */
+		writeOutFiles(fileArr[3*(argc-1) + fileCount], fileArr[3*(argc-1) + fileCount]);
 	
 	return 0;
 }
