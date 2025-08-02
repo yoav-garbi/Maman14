@@ -7,17 +7,23 @@ int lineCounter;
 
 int main (int argc, char *argv[])
 {
-	/*int i;*/
+	/*int i;*
 	/*FILE *filePointer;*/
 	FILE **fileArr;
 	lineNode **lineArr = malloc((argc-1)*sizeof(lineNode *)); /* an array of pointers to linked lists. each linked list is like a file because it holds all lines */
+	char **nameArr;
+	
 	labelTable = NULL;
+
 	
 	fileArr = getFiles(argc, argv);	/* take in the arguments into the FILEs array */
 	if (fileArr == NULL)
 		return ERROR;
 	
-	
+	/* create an array of strings- each one points to the name of a .as file */
+	nameArr = make_nameArr(argc, argv);
+	if (nameArr == NULL)
+		return ERROR;
 	
 																																			/* TEMP */
 	addNode(&labelTable, "HELLO", 100, CODE, 0, 0);
@@ -50,7 +56,7 @@ int main (int argc, char *argv[])
 	
 	closeFiles(argc, fileArr); /* close all open files */
 	
-	/* TODO- free all allocated storage  */
+	/* TODO- free all allocated storage */
 	
 	return 0;
 }
