@@ -52,7 +52,18 @@ int printTree(binTree *root)																								/* TEMP */
 
 /* adds a node to the correct place in the tree. time compexity = O(log n) because every level cuts down the number of option by half. space complexity = O(n)- there is no waste of space because nodes are initiallized as needed and not ahead of time. Each node is O(n) because of the string but that is out of out control. In this prohect we will look at a node as a single unit so the space complexity of each node is O(1) 
 The correct place in the tree is determined with the help of strcmp (from <string.h>) that compares 2 string an returns if they are identical or if one has a bigger value (lexicographically) */
-int addNode(binTree *root, char *str, int address, int type, int external, int entry)
+int addNode(binTree **root, char *str, int address, int type, int external, int entry)
+{
+	if (*root == NULL)
+		*root = makeNode(str, address, type, external, entry);
+	
+	else
+		addNodePrivate(*root, str, address, type, external, entry);
+	
+	return 0;
+}
+
+int addNodePrivate(binTree *root, char *str, int address, int type, int external, int entry)
 {
 	int comp;
 	
@@ -70,7 +81,7 @@ int addNode(binTree *root, char *str, int address, int type, int external, int e
 			return 0;
 		}
 		
-		addNode(root->left, str, address, type, external, entry); /* use recursion to decend 1 more level */
+		addNodePrivate(root->left, str, address, type, external, entry); /* use recursion to decend 1 more level */
 	}
 	
 	else if (comp > 0)
@@ -81,7 +92,7 @@ int addNode(binTree *root, char *str, int address, int type, int external, int e
 			return 0;
 		}
 		
-		addNode(root->right, str, address, type, external, entry); /* use recursion to decend 1 more level */
+		addNodePrivate(root->right, str, address, type, external, entry); /* use recursion to decend 1 more level */
 	}
 	
 	return 0;
@@ -120,4 +131,38 @@ binTree * search(binTree *root, char *str)
 	}
 	
 	return root;
+}
+
+
+
+
+int addLineNode(lineNode **head, char *line, int address)
+{
+	lineNode *newNode = malloc(sizeof(lineNode)), *current;
+
+	if (check_allocation(newNode) == ERROR)
+		return ERROR;
+
+	newNode->line = malloc(strlen(line) + 1);
+
+	if (check_allocation(newNode->line) == ERROR)
+		return ERROR;
+
+	strcpy(newNode->line, line);
+	newNode->address = address;
+	newNode->next = NULL;
+
+	if (*head == NULL)
+	{
+		*head = newNode;
+		return 0;
+	}
+
+	current = *head;
+	while (current->next != NULL)
+		current = current->next;
+
+	current->next = newNode;
+	
+	return 0;
 }
