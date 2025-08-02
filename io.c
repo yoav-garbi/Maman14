@@ -29,28 +29,34 @@ FILE **getFiles(int argc, char *argv[])
 	return fileArr;
 }
 
-
-/* create the output files and store in the FILEs array */
-int makeOutFiles(int argc, char *argv[], FILE **fileArr)
+char **make_nameArr(int argc, char *argv[])
 {
-	int i, countFiles, len;
-	char **nameArr = calloc(argc - 1, sizeof(char *));
-	FILE *filePointer;
+	int i;
+	char **nameArr;
 	
+	/* create an array of strings- each one points to the name of a .as file */
+	nameArr = calloc(argc - 1, sizeof(char *));
 	if (check_allocation(nameArr) == ERROR)
-		return ERROR;
+		return NULL;
 	
-	/* create an array of strings- each one points to the name of a source file */
 	for (i = 0; i < argc - 1; ++i) /* argc-1 because the 0th index refers to "./assembler" so we need to skip it without going out of bounds */
 	{
 		nameArr[i] = malloc(buffer_size * sizeof(char));
 		if (check_allocation(nameArr[i]) == ERROR)
-			return ERROR;
+			return NULL;
 		
 		strcpy(nameArr[i], argv[i+1]);	/* argv+1 because the 0th index refers to "./assembler" which is irelevent here, so we need to skip it */
 	}
-	countFiles = i;
 	
+	return nameArr;
+}
+
+
+/* create the output files and store in the FILEs array */
+int makeOutFiles(int argc, char *argv[], FILE **fileArr, char **nameArr)
+{
+	int i, countFiles = argc-1, len;
+	FILE *filePointer;
 	
 	/* create .am files */
 	for (i = 0; i < argc - 1; ++i)
