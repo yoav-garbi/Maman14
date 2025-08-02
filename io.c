@@ -1,7 +1,5 @@
 #include "prototypes.h"
 
-extern opcd opcodeTable[16];
-extern binTree *labelTable;
 
 
 /* take in the arguments into the FILEs array */
@@ -142,9 +140,8 @@ int closeFiles(int argc, FILE **fileArr)
 	int i;
 	
 	for (i = 0; i < total_num_of_files(argc); ++i)
-	{
-		fclose(fileArr[i]);
-	}
+		if (fileArr[i] != NULL)
+			fclose(fileArr[i]);
 	
 	return 0;
 }
