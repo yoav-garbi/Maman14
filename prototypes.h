@@ -8,7 +8,7 @@
 #define ERROR -1
 #define buffer_size 85
 #define binary_representation_size 9
-#define total_num_of_files(argc) ((argc-1)*4) /* argc-1 because the 0th index refers to "./assembler" which is irrelevent here. *4 because each .as (1) file will make a .ob (2) file, a .ext (3) file and a .ent (4) file */
+#define total_num_of_files(argc) ((argc-1)*5) /* argc-1 because the 0th index refers to "./assembler" which is irrelevent here. *4 because each .as file (1) will make a .am file (2), .ob file (3), a .ext file (4) and a .ent file (5) */
 #define EOF_only_line 1
 #define num_of_opcodes 16
 
@@ -57,12 +57,13 @@ typedef struct {
 
 
 /* struct that holds a line of data (in binary) and its address */
-typedef struct dataLine
+typedef struct lineNode
 {
-	char *data;
+	char *line;
 	int address;
+	struct lineNode *next;
 	
-} dataLine;
+} lineNode;
 
 
 
@@ -74,9 +75,9 @@ int takeInLine(char [], FILE *);
 int skipNotesAndWhiteLines(char [], FILE *);
 int recognize_opcode(char *);
 int findCommand(char *);
-int writeEnt(FILE *, binTree *node);
-int writeExt(FILE *, binTree *node);
-
+int writeEnt(FILE *, binTree *);
+int writeExt(FILE *, binTree *);
+int writeOutFiles(FILE *, FILE *);
 
 
 
@@ -90,12 +91,14 @@ int check_registerNumber(char []);
 int check_labelLength(char []);
 int check_labelName(char *, int);
 int check_allocation(void *);
+int check_labelExist(binTree *);
 
 
 
 /* general_funcs.c */
 int base2_to_base4(void*, void*);
 int base10_to_base2(int, char[]);
+int base10_to_base2_forAddress(int, char[]);
 
 
 
@@ -112,5 +115,5 @@ binTree * search(binTree *, char *);
 
 
 /* secondPass.c */
-int secondPass();																															/* TEMP */
-int isLabel(const cha
+int secondPass(int, FILE **, lineNode *[]);
+int is
