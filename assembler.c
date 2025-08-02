@@ -50,7 +50,7 @@ int main (int argc, char *argv[])
 	
 	closeFiles(argc, fileArr); /* close all open files */
 	
-	/* TODO- free all allocated storage */
+	/* TODO- free all allocated storage  */
 	
 	return 0;
 }
