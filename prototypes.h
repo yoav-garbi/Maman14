@@ -18,9 +18,6 @@
 #define EXTERN 3
 #define ENTRY 4
 
-
-extern int lineCounter;
-
 /* the struct that holds the labels is a binary search tree- each node has two brnaches- the smaller is to the left, the bigger is to the right. This is very efficient and allows a time complexity of O(log n) both for adding a node and searching, and a space complexity of O(n) */
 typedef struct binTree
 {
@@ -66,10 +63,15 @@ typedef struct lineNode
 } lineNode;
 
 
+extern int lineCounter;
+extern binTree *labelTable;
+extern opcd opcodeTable[16];
+
 
 /* io.c */
 FILE **getFiles(int, char *[]);
-int makeOutFiles(int, char *[], FILE **);
+char **make_nameArr(int, char *[]);
+int makeOutFiles(int, char *[], FILE **, char **);
 int closeFiles(int, FILE **);
 int takeInLine(char [], FILE *);
 int skipNotesAndWhiteLines(char [], FILE *);
@@ -103,17 +105,17 @@ int base10_to_base2_forAddress(int, char[]);
 
 
 
-/* binTree_funcs.c */
+/* struct_funcs.c */
 binTree * makeNode(char *, int, int, int, int);
 int setL(binTree *, binTree *);
 int setR(binTree *, binTree *);
 int printTree(binTree *);																								/* TEMP */
-int addNode(binTree *, char *, int, int, int, int);
+int addNode(binTree **, char *, int, int, int, int);
+int addNodePrivate(binTree *, char *, int, int, int, int);
 binTree * search(binTree *, char *);
-
+int addLineNode(lineNode **, char *, int);
 
 
 
 /* secondPass.c */
-int secondPass(int, FILE **, lineNode *[]);
-int is
+int secondPass(int, char *[], FILE **, lineNode *[], char **);
