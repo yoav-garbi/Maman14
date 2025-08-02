@@ -1,30 +1,18 @@
 #include "prototypes.h"
 
 extern opcd opcodeTable[16];
+extern binTree *labelTable;
 
 
 /* take in the arguments into the FILEs array */
 FILE **getFiles(int argc, char *argv[])
 {
-	int i, countFiles, len;
-	char **nameArr = calloc(argc - 1, sizeof(char *));
+	int i;
 	FILE *filePointer;
 	FILE **fileArr = malloc(total_num_of_files(argc) * sizeof(FILE *));
 	
-	
-	if (check_allocation(nameArr) == ERROR)
+	if (check_allocation(fileArr) == ERROR)
 		return NULL;
-	
-	/* create an array of strings- each one points to the name of a source file (to facilitate the creation of the new files) */
-	for (i = 0; i < argc - 1; ++i) /* argc-1 because the 0th index refers to "./assembler" which is irelevent here. iTemp count up to argc for each loop, so it resets each time. i tracks the index in fileArr, so we don't reset it */
-	{
-		nameArr[i] = malloc(buffer_size * sizeof(char));
-		if (check_allocation(nameArr[i]) == ERROR)
-			return NULL;
-		
-		strcpy(nameArr[i], argv[i+1]);
-	}
-	countFiles = i;
 	
 	/* open .as files */
 	for (i = 0; i < argc - 1; ++i)
@@ -37,9 +25,52 @@ FILE **getFiles(int argc, char *argv[])
 		}
 		
 		fileArr[i] = filePointer;
-		printf("%d:\t%s\n", i, nameArr[i]);																						/*TEMP*/
+		/*printf("%d:\t%s\n", i, nameArr[i]);																						TEMP*/
 	}
 	
+	return fileArr;
+}
+
+
+/* create the output files and store in the FILEs array */
+int makeOutFiles(int argc, char *argv[], FILE **fileArr)
+{
+	int i, countFiles, len;
+	char **nameArr = calloc(argc - 1, sizeof(char *));
+	FILE *filePointer;
+	
+	if (check_allocation(nameArr) == ERROR)
+		return ERROR;
+	
+	/* create an array of strings- each one points to the name of a source file */
+	for (i = 0; i < argc - 1; ++i) /* argc-1 because the 0th index refers to "./assembler" so we need to skip it without going out of bounds */
+	{
+		nameArr[i] = malloc(buffer_size * sizeof(char));
+		if (check_allocation(nameArr[i]) == ERROR)
+			return ERROR;
+		
+		strcpy(nameArr[i], argv[i+1]);	/* argv+1 because the 0th index refers to "./assembler" which is irelevent here, so we need to skip it */
+	}
+	countFiles = i;
+	
+	
+	/* create .am files */
+	for (i = 0; i < argc - 1; ++i)
+	{
+		len = strlen(nameArr[i]);
+		nameArr[i][len-2] = 'a';
+		nameArr[i][len-1] = 'm';
+	
+		filePointer = fopen(nameArr[i], "w+");
+	
+		if (check_fileExistence(filePointer) == ERROR)
+		{
+			return ERROR;
+		}
+
+		fileArr[countFiles + i] = filePointer;
+		printf("%d:\t%s\n", i, nameArr[i]);																						/*TEMP*/
+	}
 	
 	/* create .ob files */
 	for (i = 0; i < argc - 1; ++i)
@@ -52,10 +83,10 @@ FILE **getFiles(int argc, char *argv[])
 	
 		if (check_fileExistence(filePointer) == ERROR)
 		{
-			return NULL;
+			return ERROR;
 		}
 
-		fileArr[countFiles + i] = filePointer;
+		fileArr[2*countFiles + i] = filePointer;
 		printf("%d:\t%s\n", i, nameArr[i]);																						/*TEMP*/
 	}
 	
@@ -73,10 +104,10 @@ FILE **getFiles(int argc, char *argv[])
 	
 		if (check_fileExistence(filePointer) == ERROR)
 		{
-			return NULL;
+			return ERROR;
 		}
 
-		fileArr[countFiles*2 + i] = filePointer;
+		fileArr[3*countFiles + i] = filePointer;
 		printf("%d:\t%s\n", i, nameArr[i]);																						/*TEMP*/
 	}
 	
@@ -93,14 +124,14 @@ FILE **getFiles(int argc, char *argv[])
 	
 		if (check_fileExistence(filePointer) == ERROR)
 		{
-			return NULL;
+			return ERROR;
 		}
 
-		fileArr[countFiles*3 + i] = filePointer;
+		fileArr[4*countFiles + i] = filePointer;
 		printf("%d:\t%s\n", i, nameArr[i]);																						/*TEMP*/
 	}
 	
-	return fileArr;
+	return 0;
 }
 
 
@@ -184,4 +215,62 @@ int recognize_opcode(char *code)
 		return i;
 	
 	return ERROR;
+}
+
+
+
+int writeEnt(FILE *file, binTree *root)
+{
+	char address[5];
+	
+	if (root == NULL)
+		return 0;
+	
+	writeEnt(file, root->left);
+	
+	if (root->isEntry)
+	{
+		base10_to_base2(root->address, address);
+	
+		fprintf(file, "%s\t\t", root->str);
+		base2_to_base4(address, file);
+		fprintf(file, "\n");
+	}
+	
+	writeEnt(file, root->right);
+	
+	return 0;
+}
+
+
+int writeExt(FILE *file, binTree *root)
+{
+	char address[5];
+	
+	if (root == NULL)
+		return 0;
+	
+	writeExt(file, root->left);
+	
+	if (root->isExternal)
+	{
+		base10_to_base2(root->address, address);
+	
+		fprintf(file, "%s\t\t", root->str);
+		base2_to_base4(address, file);
+		fprintf(file, "\n");
+	}
+	
+	writeExt(file, root->right);
+	
+	return 0;
+}
+
+
+int writeOutFiles(FILE *ent, FILE *ext)
+{
+	writeEnt(ent, labelTable);
+	writeExt(ext, labelTable);
+	
+	return 0;
 }
