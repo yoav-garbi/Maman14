@@ -102,3 +102,34 @@ int base10_to_base2(int num, char str[])
 	
 	return 0;
 }
+
+
+/* differs from  base10_to_base2 only by insuring that the number is 8 chars long (as standard for an address) */
+int base10_to_base2_forAddress(int num, char str[])
+{
+	int i;
+	char tempStr[binary_representation_size];
+	
+	/* translate num from decimal to binary into the temporary str (it is needed because the number comes out backwards) */
+	for (i = 0; num != 0; i++)
+	{
+		if (num % 2)
+			tempStr[i] = '1';
+		else
+			tempStr[i] = '0';
+		
+		num >>= 1;
+	}
+	
+	/* add zeros to complete to a number with a width of 4 (or a multiple op 4) */
+	while (i < binary_representation_size)
+		tempStr[i++] = '0';
+		
+	/* copy temp into str in reverse (the correct way) */
+	for (i = 0; i < binary_representation_size; i++)
+		str[i] = tempStr[binary_representation_size - 1 - i];
+	
+	str[i] = '\0';
+	
+	return 0;
+}
