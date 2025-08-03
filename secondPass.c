@@ -5,7 +5,7 @@
 int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char **nameArr)
 {
 	int fileCount, errorFlag = 0;
-	char *character, label[buffer_size], binAddress[binary_representation_size];
+	char *character, label[buffer_size], binAddress[address_binary_representation_size];
 	binTree *node;
 	
 	/* replace lebels with address */
@@ -71,10 +71,17 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 	
 	for (fileCount = 0; fileCount < argc-1; ++fileCount) /* each iteration is one file */
 	{
-		create_entFile(argc, fileArr, nameArr, fileCount);
-		create_extFile(argc, fileArr, nameArr, fileCount);
+		if (searchEnt(labelTable))	/* if there is an entry to put in .ent file */
+		{
+			create_entFile(argc, fileArr, nameArr, fileCount);
+			writeEnt(fileArr[3*(argc-1) + fileCount], labelTable);
+		}
 		
-		writeOutFiles(fileArr[3*(argc-1) + fileCount], fileArr[4*(argc-1) + fileCount]);
+		if (searchExt(labelTable))	/* if there is an extern label to put in .ext file */
+		{
+			create_extFile(argc, fileArr, nameArr, fileCount);
+			writeExt(fileArr[4*(argc-1) + fileCount], labelTable);
+		}
 	}
 	
 	return 0;
