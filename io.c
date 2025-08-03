@@ -266,12 +266,3 @@ int writeExt(FILE *file, binTree *root)
 	
 	return 0;
 }
-
-
-int writeOutFiles(FILE *ent, FILE *ext)
-{
-	writeEnt(ent, labelTable);
-	writeExt(ext, labelTable);
-	
-	return 0;
-}
