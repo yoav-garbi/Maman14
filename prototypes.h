@@ -84,7 +84,6 @@ int recognize_opcode(char *);
 int findCommand(char *);
 int writeEnt(FILE *, binTree *);
 int writeExt(FILE *, binTree *);
-int writeOutFiles(FILE *, FILE *);
 
 
 
@@ -119,7 +118,10 @@ int setR(binTree *, binTree *);
 int printTree(binTree *);																								/* TEMP */
 int addNode(binTree **, char *, int, int, int, int);
 int addNodePrivate(binTree *, char *, int, int, int, int);
-binTree * search(binTree *, char *);
+binTree *search(binTree *, char *);
+int searchEnt(binTree *);
+int searchExt(binTree *);
+
 int addLineNode(lineNode **, char *, int);
 int printList(lineNode *);																								/* TEMP */
 
@@ -127,3 +129,16 @@ int printList(lineNode *);																								/* TEMP */
 
 /* secondPass.c */
 int secondPass(int, char *[], FILE **, lineNode *[], char **);
+
+
+
+
+
+
+
+
+
+
+
+																																		/* TEMP */
+int isLabel(const char *ptr);
