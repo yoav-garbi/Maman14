@@ -7,57 +7,59 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 	int fileCount, errorFlag = 0;
 	char *character, label[buffer_size], binAddress[address_binary_representation_size];
 	binTree *node;
+	lineNode *line;
 	
 	/* replace lebels with address */
 	for (fileCount = 0; fileCount < argc-1; ++fileCount) /* each iteration is one file */
 	{
-		for (lineCounter = 0; lineArr[lineCounter] != NULL; lineCounter++) /* each iteration is one line */
+		if (lineArr[fileCount] == NULL)
+			break;
+		
+		for (line = lineArr[fileCount], lineCounter = 0; line != NULL; line = line->next, lineCounter++) /* each iteration is one line */
 		{
-			for (character = lineArr[lineCounter]->line; *character != '\n'; character++) /* start of line to end of line, each iteration is one char */
+			character = line->line;
+			
+			if (*character != ' ') /* if there's a label in the line, it is always the first thing in the line */
+				break;
+			
+			if (*character == '\n')
+				break;
+			
+			sscanf(character, "%s", label);
+			node = search(labelTable, label);
+			
+			if (check_labelExist(node) == ERROR)	/* if label isn't in labelTable */
 			{
-				while (*character != ' ' && *character != '\n')
-					character++;
-				
-				if (*character == '\n')
-					break;
-				
-				sscanf(character, "%s", label);
-				node = search(labelTable, label);
-				
-				if (check_labelExist(node) == ERROR)
-				{
-					errorFlag = 1;
-					break; /* go to next line */
-				}
-				
-				base10_to_base2_forAddress(node->address, binAddress); /* translate address to binary */
-				
-				sprintf(character, "%s", binAddress); /* use address to overwrite the label */
-				
-				while (*character != '\0') /* go to end of address */
-					character++;
-				
-				while (*character != ' ' && *character != '\n')	/* delete any remaining parts of the label */
-					*character = ' ';
-				
-				/* continue scanning from current character for more labels */
+				errorFlag = 1;
+				break; /* go to next line */
 			}
+			
+			base10_to_base2_forAddress(node->address, binAddress); /* translate address to binary */
+			
+			sprintf(character, "%s", binAddress); /* use address to overwrite the label */
+			
+			while (*character != ' ')	/* delete any remaining parts of the label */
+				*character = ' ';
 		}
+
 		
 		
 		/* copy lines to file */
-		for (lineCounter = 0; lineArr[lineCounter] != NULL; lineCounter++) /* each iteration is one line */
+		if (errorFlag == 1)
+			return ERROR;
+		
+		for (fileCount = 0; lineArr[fileCount] != NULL; fileCount++) /* each iteration is one file */
 		{
+			create_obFile(argc, fileArr, nameArr, fileCount);
 			
-			/*TODO- create .ob file*/
+			for (line = lineArr[fileCount]; line != NULL; line = line->next) /* each iteration is one line */
+				for (character = line->line; *character != '\0'; character++) /* each iteration is one char */
+				{
+					if (*character == ' ')
+						continue;
 				
-			for (character = lineArr[lineCounter]->line; *character != '\0'; character++) /* start of line to end of line, each iteration is one char */
-			{
-				if (*character == ' ')
-					continue;
-				
-				/*fputc(*character, fileArr[2*(argc-1) + fileCount]);															FIX*/
-			}
+					fputc(*character, fileArr[2*(argc-1) + fileCount]);
+				}
 		}
 	}
 	
