@@ -43,7 +43,7 @@ int printTree(binTree *root)																								/* TEMP */
 		return 0;
 	
 	printTree(root->left);
-	printf("str: %s\t\t\taddress: %d\t\tsymbolType: %d\t\tisExternal: %d\t\tisEntry: %d\n", root->str, root->address, root->symbolType, root->isExternal, root->isEntry);
+	printf("str: %s\taddress: %d\tsymbolType: %d\tisExternal: %d\tisEntry: %d\n", root->str, root->address, root->symbolType, root->isExternal, root->isEntry);
 	printTree(root->right);
 	
 	return 0;
@@ -163,6 +163,19 @@ int addLineNode(lineNode **head, char *line, int address)
 		current = current->next;
 
 	current->next = newNode;
+	
+	return 0;
+}
+
+
+																																		/* TEMP */
+int printList(lineNode *node)
+{
+	if (node == NULL)
+		return 0;
+	
+	printf("address: %d\t\tline: %s\n", node->address, node->line);
+	printList(node->next);
 	
 	return 0;
 }
