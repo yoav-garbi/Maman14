@@ -7,7 +7,7 @@
 
 #define ERROR -1
 #define buffer_size 85
-#define binary_representation_size 9
+#define address_binary_representation_size 8
 #define total_num_of_files(argc) ((argc-1)*5) /* argc-1 because the 0th index refers to "./assembler" which is irrelevent here. *4 because each .as file (1) will make a .am file (2), .ob file (3), a .ext file (4) and a .ent file (5) */
 #define EOF_only_line 1
 #define num_of_opcodes 16
@@ -71,7 +71,12 @@ extern opcd opcodeTable[16];
 /* io.c */
 FILE **getFiles(int, char *[]);
 char **make_nameArr(int, char *[]);
-int makeOutFiles(int, char *[], FILE **, char **);
+
+int create_amFile(int, FILE **, char **, int);
+int create_obFile(int, FILE **, char **, int);
+int create_entFile(int, FILE **, char **, int);
+int create_extFile(int, FILE **, char **, int);
+
 int closeFiles(int, FILE **);
 int takeInLine(char [], FILE *);
 int skipNotesAndWhiteLines(char [], FILE *);
@@ -86,6 +91,7 @@ int writeOutFiles(FILE *, FILE *);
 /* errors.c */
 int check_lineGeneral(char *);
 int check_fileExistence(void*);
+int check_fileEntered(int);
 int check_opcodeName(int);
 int check_legalAddressing(int, int, int);
 int check_lineLength(char []);
@@ -98,7 +104,8 @@ int check_labelExist(binTree *);
 
 
 /* general_funcs.c */
-int base2_to_base4(void*, void*);
+int base2_to_base4_fileToFile(FILE *, FILE *);
+int base2_to_base4_strToFile(char *, FILE*);
 int base10_to_base2(int, char[]);
 int base10_to_base2_forAddress(int, char[]);
 
@@ -114,6 +121,7 @@ int addNode(binTree **, char *, int, int, int, int);
 int addNodePrivate(binTree *, char *, int, int, int, int);
 binTree * search(binTree *, char *);
 int addLineNode(lineNode **, char *, int);
+int printList(lineNode *);																								/* TEMP */
 
 
 
