@@ -134,6 +134,32 @@ binTree * search(binTree *root, char *str)
 }
 
 
+/* search if there is at least one entry label. yes = 1, no = 0 */
+int searchEnt(binTree *root)
+{
+	if (root == NULL)
+		return 0;
+	
+	if (root->isEntry)
+		return 1;
+	
+	return searchEnt(root->left) || searchEnt(root->right);
+}
+
+/* search if there is at least one extern label. yes = 1, no = 0 */
+int searchExt(binTree *root)
+{
+	if (root == NULL)
+		return 0;
+	
+	if (root->isExternal)
+		return 1;
+	
+	return searchExt(root->left) || searchExt(root->right);
+}
+
+
+
 
 
 int addLineNode(lineNode **head, char *line, int address)
@@ -179,3 +205,13 @@ int printList(lineNode *node)
 	
 	return 0;
 }
+
+
+
+
+
+
+
+
+
+
