@@ -60,7 +60,7 @@ int create_amFile(int argc, FILE **fileArr, char **nameArr, int i)
 
 	filePointer = fopen(nameArr[i], "w+");
 
-	if (check_fileExistence(filePointer) == ERROR)
+	if (check_newFileExistence(filePointer) == ERROR)
 		return ERROR;
 
 	fileArr[(argc-1) + i] = filePointer;
@@ -81,7 +81,7 @@ int create_obFile(int argc, FILE **fileArr, char **nameArr, int i)
 
 	filePointer = fopen(nameArr[i], "w+");
 
-	if (check_fileExistence(filePointer) == ERROR)
+	if (check_newFileExistence(filePointer) == ERROR)
 		return ERROR;
 
 	fileArr[2*(argc-1) + i] = filePointer;
@@ -104,7 +104,7 @@ int create_entFile(int argc, FILE **fileArr, char **nameArr, int i)
 
 	filePointer = fopen(nameArr[i], "w+");
 
-	if (check_fileExistence(filePointer) == ERROR)
+	if (check_newFileExistence(filePointer) == ERROR)
 		return ERROR;
 
 	fileArr[3*(argc-1) + i] = filePointer;
@@ -127,7 +127,7 @@ int create_extFile(int argc, FILE **fileArr, char **nameArr, int i)
 
 	filePointer = fopen(nameArr[i], "w+");
 
-	if (check_fileExistence(filePointer) == ERROR)
+	if (check_newFileExistence(filePointer) == ERROR)
 		return ERROR;
 
 	fileArr[4*(argc-1) + i] = filePointer;
@@ -266,4 +266,3 @@ int writeExt(FILE *file, binTree *root)
 	
 	return 0;
 }
-
