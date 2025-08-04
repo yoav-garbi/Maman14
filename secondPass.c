@@ -8,6 +8,7 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 	char *character, label[buffer_size], binAddress[address_binary_representation_size];
 	binTree *node;
 	lineNode *line;
+	FILE *tempFile;
 	
 	/* replace lebels with address */
 	for (fileCount = 0; fileCount < argc-1; ++fileCount) /* each iteration is one file */
@@ -20,10 +21,10 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 			character = line->line;
 			
 			if (*character != ' ') /* if there's a label in the line, it is always the first thing in the line */
-				break;
+				continue;
 			
 			if (*character == '\n')
-				break;
+				continue;
 			
 			sscanf(character, "%s", label);
 			node = search(labelTable, label);
@@ -31,12 +32,12 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 			if (check_labelExist(node) == ERROR)	/* if label isn't in labelTable */
 			{
 				errorFlag = 1;
-				break; /* go to next line */
+				continue; /* go to next line */
 			}
 			
 			base10_to_base2_forAddress(node->address, binAddress); /* translate address to binary */
 			
-			sprintf(character, "%s", binAddress); /* use address to overwrite the label */
+			memcpy(character + 1, binAddress, 8); /* use address to overwrite the label */
 			
 			while (*character != ' ')	/* delete any remaining parts of the label */
 				*character = ' ';
@@ -52,6 +53,7 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 		{
 			create_obFile(argc, fileArr, nameArr, fileCount);
 			
+			
 			for (line = lineArr[fileCount]; line != NULL; line = line->next) /* each iteration is one line */
 				for (character = line->line; *character != '\0'; character++) /* each iteration is one char */
 				{
@@ -60,6 +62,18 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 				
 					fputc(*character, fileArr[2*(argc-1) + fileCount]);
 				}
+			
+			tempFile = fopen("temp", "w+");
+			if (check_newFileExistence(tempFile) == ERROR)
+				return ERROR;
+				
+			copyFile(fileArr[2*(argc-1) + fileCount], tempFile);
+			freopen(NULL, "w+", fileArr[2*(argc-1) + fileCount]); /* truncate and reopen the ob file */
+			
+			base2_to_base4_fileToFile(tempFile, fileArr[2*(argc-1) + fileCount]);
+			
+			fclose(tempFile);
+			remove("temp");
 		}
 	}
 	
@@ -68,8 +82,6 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 	/* create extension files (if there were no errors) */
 	if (errorFlag == 1)
 		return ERROR;
-	
-	/*makeOutFiles(argc, argv, fileArr, nameArr);																REMOVE*/
 	
 	for (fileCount = 0; fileCount < argc-1; ++fileCount) /* each iteration is one file */
 	{
