@@ -58,7 +58,7 @@ int main (int argc, char *argv[])
 	addLineNode(&lineArr[0], "0011001100\n", 117);
 	addLineNode(&lineArr[0], "0000001100\n", 118);
 	addLineNode(&lineArr[0], "1010000100\n", 119);
-	addLineNode(&lineArr[0], " L3       10\n", 120);
+	addLineNode(&lineArr[0], " L3       01\n", 120);
 	addLineNode(&lineArr[0], "1111000000\n", 121);
 	
 	addLineNode(&lineArr[0], "0001100001\n", 122);
