@@ -9,37 +9,24 @@ int base2_to_base4_fileToFile(FILE *source, FILE *dest)
 	char buffer[buffer_size];
 	void *status;
 	
+	rewind(source);
 	status = fgets(buffer, buffer_size, source);
 	
-	while (status != NULL)
+	while (status != NULL) /* until end of file */
 	{
 		i = 0;
 		
-		while (buffer[i] != '\0')
+		while (buffer[i] != '\0') /* until end of line */
 		{
-			/* skip and write white spaces */
-			while (buffer[i] != '0' && buffer[i] != '1' && buffer[i] != '\0') 
+			/* write \n */
+			if (buffer[i] == '\n')
 			{
-				fprintf(dest, "%c", buffer[i++]);
-			}
-			
-			if (buffer[i] == '\0')
+				fputc('\n', dest);
 				break;
+			}
 			
 			c1 = buffer[i++];
-			
-			
-			/* skip and write white spaces */
-			while (buffer[i] != '0' && buffer[i] != '1' && buffer[i] != '\0') 
-			{
-				fprintf(dest, "%c", buffer[i++]);
-			}
-			
-			if (buffer[i] == '\0')
-				break;
-			
 			c2 = buffer[i++];
-			
 			
 			if (c1 == '0' && c2 == '0')
 				result = 'a';
@@ -56,7 +43,7 @@ int base2_to_base4_fileToFile(FILE *source, FILE *dest)
 			else
 				result = '?'; 
 			
-			fprintf(dest, "%c", result);
+			fputc(result, dest);
 		}
 		
 		status = fgets(buffer, buffer_size, source);
@@ -116,7 +103,7 @@ int base2_to_base4_strToFile(char *source, FILE *dest)
 		else
 			result = '?'; 
 	
-		fprintf(dest, "%c", result);
+		fputc(result, dest);
 	}
 	
 	
@@ -187,6 +174,28 @@ int base10_to_base2_forAddress(int num, char str[])
 		str[i] = tempStr[address_binary_representation_size - 1 - i];
 	
 	str[i] = '\0';
+	
+	return 0;
+}
+
+
+
+int copyFile(FILE *source, FILE *dest)
+{
+	int c = ' ';
+	
+	fflush(source);
+	fflush(dest);
+	rewind(source);
+	rewind(dest);
+	
+	while ((c = fgetc(source)) != EOF)
+		fputc(c, dest);
+	
+	fflush(source);
+	fflush(dest);
+	rewind(source);
+	rewind(dest);
 	
 	return 0;
 }
