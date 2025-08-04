@@ -1,172 +1,146 @@
-#include "prototypes.h"
-#include "header.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 
+#include "constants.h"
 
+#define ERROR -1
+#define buffer_size 85
+#define address_binary_representation_size 8
+#define total_num_of_files(argc) ((argc-1)*5) /* argc-1 because the 0th index refers to "./assembler" which is irrelevent here. *4 because each .as file (1) will make a .am file (2), .ob file (3), a .ext file (4) and a .ent file (5) */
+#define EOF_only_line 1
+#define num_of_opcodes 16
 
-/* go through a command line and search for all errors that may lie in it */
-int check_lineGeneral(char *line)
+#define CODE 0
+#define DATE 1
+#define MAT 2
+#define EXTERN 3
+#define ENTRY 4
+
+/* the struct that holds the labels is a binary search tree- each node has two brnaches- the smaller is to the left, the bigger is to the right. This is very efficient and allows a time complexity of O(log n) both for adding a node and searching, and a space complexity of O(n) */
+typedef struct binTree
 {
-	int status, charsRead;
-	char word[MAX_LINE_LENGTH];
+	char *str;
+	int address;
+	int symbolType;
+	int isEntry: 1;
+	int isExternal: 1;
+	struct binTree *left;
+	struct binTree *right;
 	
-	/* check if the label is legal */
-	sscanf(line, "%s%n", word, &charsRead);
-	line += charsRead;
-	status = isLabel(word);
-	
-	if (status == 1)																						/* switch 1 to ERROR in isLabel */
-	{
-		lineCounter++;
-		return ERROR;
-	}
-	
-	/* check if command is legal */
-	sscanf(line, "%s%n", word, &charsRead);
-	line += charsRead;
-	
-	status = recognize_opcode(word);
-	if (status == ERROR)
-		return ERROR;
-		
-	/*TODO- add handeling for ilegal addressing and excessive text before/in/after line*/
-	
-	return 0;
-}
+} binTree;
 
-
-
-/* check if a file with a given name exists in the directory */
-int check_fileExistence(void *pointer)
+/* this struct holds necessary information about the opcodes and their permissions. Time complexity for searching an opcode is O(1) because their is a constant amount of opcodes (16). space complexity is O(1) for the same reason */
+typedef struct opcd
 {
-	if (pointer == NULL)
-	{
-		printf("\nSource file does not exist.\n\n");
-		return ERROR;
-	}
+	char *name;
+	char *code;
+	int source[4];
+	int dest[4];
 	
-	return 0;
-}
+} opcd;
 
 
-int check_fileEntered(int argc)
+/* struct that will serve as a package for all relevant data for each row, making error handling easier */
+typedef struct {
+    char content[MAX_LINE_LENGTH];
+    int lineNumber;
+    int hasError;
+	char error[MAX_LINE_LENGTH];
+    int hasLabel;
+	char label[MAX_LABEL_LENGTH];
+} LineDate;
+
+
+/* struct that holds a line of data (in binary) and its address */
+typedef struct lineNode
 {
-	if (argc > 1)
-		return 0;
+	char *line;
+	int address;
+	struct lineNode *next;
 	
-	printf("\nNo files entered.\n\n");
-	return ERROR;
-}
+} lineNode;
 
 
-/* check if a command in the source code was mis-written */
-int check_opcodeName(int index)
-{
-	if (index < num_of_opcodes) /* a command was found */
-		return 0;
-	
-	printf("\nUnknown command name. (Line %d)\n\n", lineCounter);
-	return ERROR;
-}
+extern int lineCounter;
+extern binTree *labelTable;
+extern opcd opcodeTable[16];
 
 
+/* io.c */
+FILE **getFiles(int, char *[]);
+char **make_nameArr(int, char *[]);
 
+int create_amFile(int, FILE **, char **, int);
+int create_obFile(int, FILE **, char **, int);
+int create_entFile(int, FILE **, char **, int);
+int create_extFile(int, FILE **, char **, int);
 
-/* check if a given opcode was given an illegal addressing method in the source code */
-int check_legalAddressing(int opcodeIndex, int sourceMethod, int destMethod)
-{
-	int *permissions1, *permissions2, status1, status2;
-	opcd opcodeTable[num_of_opcodes];
-	
-	permissions1 = opcodeTable[opcodeIndex].source;
-	permissions2 = opcodeTable[opcodeIndex].dest;
-	
-	status1 = permissions1[sourceMethod] == 1;
-	status2 = permissions2[destMethod] == 1;
-	
-	if (status1 && status2)	/* both methods are legal for this opcode */
-		return 0;
-	
-	printf("\nIlegal addressing method for this command. (Line %d)\n\n", lineCounter);
-	return ERROR;
-}
+int closeFiles(int, FILE **);
+int takeInLine(char [], FILE *);
+int skipNotesAndWhiteLines(char [], FILE *);
+int recognize_opcode(char *);
+int findCommand(char *);
+int writeEnt(FILE *, binTree *);
+int writeExt(FILE *, binTree *);
 
 
 
-int check_lineLength(char buffer[])
-{
-	int len = strlen(buffer);
-	int status = len > 0 && len <= MAX_LINE_LENGTH;
-	
-	if (len == MAX_LINE_LENGTH && buffer[80] != '\n');	/* this check makes sure that a line that has 81 chars and EOF doesn't go unnoticed */
-	
-	else if (status)
-		return 0; /* this means that the line has legal length */
-	
-	printf("\nLine exceeding the allowed length of 80 chars. (Line %d)\n\n", lineCounter);
-	return ERROR;
-}
-
-
-int check_registerNumber(char name[])
-{
-	if (name[0] == 'r' && (name[1] >= '0' && name[1] <= '7'))
-		return 0; /* register name is correct */
-	
-	printf("\nRegister with this name doesn't exist. (Line %d)\n\n", lineCounter);
-	return ERROR;
-}
+/* errors.c */
+int check_lineGeneral(char *);
+int check_fileExistence(void*);
+int check_newFileExistence(void *);
+int check_fileEntered(int);
+int check_opcodeName(int);
+int check_legalAddressing(int, int, int);
+int check_lineLength(char []);
+int check_registerNumber(char []);
+int check_labelLength(char []);
+int check_labelName(char *, int);
+int check_allocation(void *);
+int check_labelExist(binTree *);
 
 
 
-int check_labelLength(char buffer[])
-{
-	int len = strlen(buffer);
-	int status = len > 0 && len <= MAX_LABEL_LENGTH;
-	
-	if (status)
-		return 0; /* this means that the label has legal length */
-	
-	printf("\nLabel exceeding the allowed length of 30 chars. (Line %d)\n\n", lineCounter);
-	return ERROR;	
-}
+/* general_funcs.c */
+int base2_to_base4_fileToFile(FILE *, FILE *);
+int base2_to_base4_strToFile(char *, FILE*);
+int base10_to_base2(int, char[]);
+int base10_to_base2_forAddress(int, char[]);
+int copyFile(FILE *, FILE *);
 
 
 
-int check_labelName(char *ptr, int len)
-{
-	if (!isalpha(ptr[0]))
-	{
-		printf("\nLabel name starts with non-letter. (Line %d)\n\n", lineCounter);
-		return ERROR;
-	}
-	
-	if (ptr[len] != ':')
-	{
-		printf("\nMissing ':' at the end of label. (Line %d)\n\n", lineCounter);
-		return ERROR;
-	}
-	
-	return 0;
-}
+
+/* struct_funcs.c */
+binTree * makeNode(char *, int, int, int, int);
+int setL(binTree *, binTree *);
+int setR(binTree *, binTree *);
+int printTree(binTree *);																								/* TEMP */
+int addNode(binTree **, char *, int, int, int, int);
+int addNodePrivate(binTree *, char *, int, int, int, int);
+binTree *search(binTree *, char *);
+int searchEnt(binTree *);
+int searchExt(binTree *);
+
+int addLineNode(lineNode **, char *, int);
+int printList(lineNode *);																								/* TEMP */
 
 
 
-int check_allocation(void *pointer)
-{
-	if (pointer != NULL)	/* check if memory was allocated succesfuly */
-		return 0;	
-	
-	printf("\nMemory allocation failed.\n\n");
-	return ERROR;
-}
+/* secondPass.c */
+int secondPass(int, char *[], FILE **, lineNode *[], char **);
 
 
 
-int check_labelExist(binTree *node)
-{
-	if (node != NULL)	/* label was found in the label table */
-		return 0;
-	
-	printf("\nLabel not defined in the assembly file. (Line %d)\n\n", lineCounter);
-	return ERROR;
-}
+
+
+
+
+
+
+
+
+																																		/* TEMP */
+int isLabel(const char *ptr);
