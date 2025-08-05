@@ -13,7 +13,7 @@ int main (int argc, char *argv[])
 	labelTable = NULL;
 	
 	
-	/* check that source file/s were entered */
+	/* check that source file/s were entered */ 
 	if (check_fileEntered(argc) == ERROR)
 		goto cleanUp;
 	
