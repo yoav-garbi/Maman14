@@ -118,6 +118,14 @@ int base10_to_base2(int num, char str[])
 	int i, bitCount;
 	char tempStr[buffer_size];
 	
+	/* handle zero explicitly to avoid returning an empty string */
+        if (num == 0)
+        {
+                str[0] = '0';
+                str[1] = '\0';
+                return 0;
+        }
+	
 	/* translate num from decimal to binary into the temporary str (it is needed because the number comes out backwards) */
 	for (i = 0; num != 0; i++)
 	{
@@ -199,3 +207,16 @@ int copyFile(FILE *source, FILE *dest)
 	
 	return 0;
 }
+
+
+char *strDuplicate(char *str)
+{
+	char *copy = malloc(strlen(str) + 1);
+	if (copy)
+		strcpy(copy, str);
+
+	return copy;
+}
+
+
+
