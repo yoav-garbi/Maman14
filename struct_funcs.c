@@ -244,16 +244,6 @@ int addIC(binTree **root, int IC)
 	return 0;
 }
 
-int addICList(lineNode *dataList, int IC_FINAL) {
-	if (dataList==NULL)
-		return 0;
-	lineNode *current = dataList;
-	while (current != NULL) {
-		current->address += IC_FINAL;
-		current = current->next;
-	}
-	return 0;
-}
 
 /* update this label (only on the labelTable of this file)- it's now an entry */
 int addEntryLocal(char *str)
@@ -409,12 +399,3 @@ int freeFileArr(FILE ***arr) /* arr = pointer to a pointer to an array of FILE p
 	*arr = NULL;
 	return 0;
 }
-
-
-
-
-
-
-
-
-
