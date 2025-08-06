@@ -266,12 +266,3 @@ int writeExt(FILE *file, binTree *root)
 	
 	return 0;
 }
-
-
-
-
-
-
-
-
-
