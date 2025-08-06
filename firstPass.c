@@ -288,7 +288,7 @@ int getOpcodeIndex(char *opcodeName) {
 int getAddressingMethod(char *operand) {
     if (operand[0] == '#') return 0;
     if (strchr(operand, '[') != NULL) return 2;
-    if (operand[0] == 'r' && operand[1] >= '0' && operand[1] <= '7') return 3;
+    if (operand[0] == 'r' && operand[1] >= '0' && operand[1] <= '7' && operand[2] == '\0') return 3;
     return 1;
 }
 
