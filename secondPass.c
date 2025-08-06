@@ -4,19 +4,19 @@
 
 int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char **nameArr)
 {
-	int fileCount, errorFlag = 0;
+	int errorFlag = 0, numFiles = argc - 1, obOffset = 2 * numFiles, entOffset = 3 * numFiles, extOffset = 4 * numFiles;
 	char *character, label[buffer_size], binAddress[address_binary_representation_size];
 	binTree *node;
 	lineNode *line;
 	FILE *tempFile;
 	
 	/* replace lebels with address */
-	for (fileCount = 0; fileCount < argc-1; ++fileCount) /* each iteration is one file */
+	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) /* each iteration is one file */
 	{
-		if (lineArr[fileCount] == NULL)
+		if (lineArr[fileCounter] == NULL)
 			break;
 		
-		for (line = lineArr[fileCount], lineCounter = 0; line != NULL; line = line->next, lineCounter++) /* each iteration is one line */
+		for (line = lineArr[fileCounter], lineCounter = 0; line != NULL; line = line->next) /* each iteration is one line */
 		{
 			character = line->line;
 			
@@ -27,9 +27,9 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 				continue;
 			
 			sscanf(character, "%s", label);
-			node = search(labelTable, label);
+			node = search(labelTable[fileCounter], label);
 			
-			if (check_labelExist(node) == ERROR)	/* if label isn't in labelTable */
+			if (check_labelExist_or_legalExternalUse(node, label, line, numFiles) == ERROR) /* if label is ilegaly external or isn't in labelTable at all */
 			{
 				errorFlag = 1;
 				continue; /* go to next line */
@@ -42,59 +42,59 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 			while (*character != ' ')	/* delete any remaining parts of the label */
 				*character = ' ';
 		}
+	}
+
 
 		
+	if (errorFlag == 1)
+		return ERROR;
+	
+	
+	
+	/* create .ob file (copy lines to file and translate to base4) */
+	for (fileCounter = 0; fileCounter < numFiles && lineArr[fileCounter] != NULL; fileCounter++) /* each iteration is one file */
+	{
+		create_obFile(argc, fileArr, nameArr, fileCounter);
 		
-		/* copy lines to file */
-		if (errorFlag == 1)
+		
+		for (line = lineArr[fileCounter]; line != NULL; line = line->next) /* each iteration is one line */
+			for (character = line->line; *character != '\0'; character++) /* each iteration is one char */
+			{
+				if (*character == ' ')
+					continue;
+			
+				fputc(*character, fileArr[obOffset + fileCounter]);
+			}
+		
+		tempFile = fopen("temp", "w+");
+		if (check_newFileExistence(tempFile) == ERROR)
 			return ERROR;
+			
+		copyFile(fileArr[obOffset + fileCounter], tempFile);
+		freopen(NULL, "w+", fileArr[obOffset + fileCounter]); /* truncate and reopen the ob file */
 		
-		for (fileCount = 0; lineArr[fileCount] != NULL; fileCount++) /* each iteration is one file */
-		{
-			create_obFile(argc, fileArr, nameArr, fileCount);
-			
-			
-			for (line = lineArr[fileCount]; line != NULL; line = line->next) /* each iteration is one line */
-				for (character = line->line; *character != '\0'; character++) /* each iteration is one char */
-				{
-					if (*character == ' ')
-						continue;
-				
-					fputc(*character, fileArr[2*(argc-1) + fileCount]);
-				}
-			
-			tempFile = fopen("temp", "w+");
-			if (check_newFileExistence(tempFile) == ERROR)
-				return ERROR;
-				
-			copyFile(fileArr[2*(argc-1) + fileCount], tempFile);
-			freopen(NULL, "w+", fileArr[2*(argc-1) + fileCount]); /* truncate and reopen the ob file */
-			
-			base2_to_base4_fileToFile(tempFile, fileArr[2*(argc-1) + fileCount]);
-			
-			fclose(tempFile);
-			remove("temp");
-		}
+		base2_to_base4_fileToFile(tempFile, fileArr[obOffset + fileCounter]);
+		
+		fclose(tempFile);
+		remove("temp");
 	}
 	
 	
 	
-	/* create extension files (if there were no errors) */
-	if (errorFlag == 1)
-		return ERROR;
 	
-	for (fileCount = 0; fileCount < argc-1; ++fileCount) /* each iteration is one file */
+	/* create extension files (if there were no errors) */
+	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) /* each iteration is one file */
 	{
-		if (searchEnt(labelTable))	/* if there is an entry to put in .ent file */
+		if (searchEnt(labelTable[fileCounter]))	/* if there is an entry to put in .ent file */
 		{
-			create_entFile(argc, fileArr, nameArr, fileCount);
-			writeEnt(fileArr[3*(argc-1) + fileCount], labelTable);
+			create_entFile(argc, fileArr, nameArr, fileCounter);
+			writeEnt(fileArr[entOffset + fileCounter], labelTable[fileCounter]);
 		}
 		
-		if (searchExt(labelTable))	/* if there is an extern label to put in .ext file */
+		if (searchExt(labelTable[fileCounter]))	/* if there is an extern label to put in .ext file */
 		{
-			create_extFile(argc, fileArr, nameArr, fileCount);
-			writeExt(fileArr[4*(argc-1) + fileCount], labelTable);
+			create_extFile(argc, fileArr, nameArr, fileCounter);
+			writeExt(fileArr[extOffset + fileCounter], labelTable[fileCounter]);
 		}
 	}
 	
