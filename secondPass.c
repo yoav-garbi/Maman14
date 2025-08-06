@@ -5,7 +5,7 @@
 int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char **nameArr)
 {
 	int errorFlag = 0, numFiles = argc - 1, obOffset = 2 * numFiles, entOffset = 3 * numFiles, extOffset = 4 * numFiles;
-	char *character, label[buffer_size], binAddress[address_binary_representation_size];
+	char *character, label[buffer_size], binAddress[address_binary_representation_size+1];
 	binTree *node;
 	lineNode *line;
 	FILE *tempFile;
@@ -56,8 +56,19 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 	{
 		create_obFile(argc, fileArr, nameArr, fileCounter);
 		
+		/* write IC in first line */
+		base10_to_base2(icArr[fileCounter], binAddress);
+		fprintf(fileArr[obOffset + fileCounter], "%s\t\t\t", binAddress);
+		
+		/* write DC in first line */
+		base10_to_base2(dcArr[fileCounter], binAddress);
+		fprintf(fileArr[obOffset + fileCounter], "%s\t\t\t", binAddress);
 		
 		for (line = lineArr[fileCounter]; line != NULL; line = line->next) /* each iteration is one line */
+		{
+			base10_to_base2_forAddress(node->address, binAddress);
+			fprintf(fileArr[obOffset + fileCounter], "%s\t\t", binAddress);
+			
 			for (character = line->line; *character != '\0'; character++) /* each iteration is one char */
 			{
 				if (*character == ' ')
@@ -65,6 +76,7 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 			
 				fputc(*character, fileArr[obOffset + fileCounter]);
 			}
+		}
 		
 		tempFile = fopen("temp", "w+");
 		if (check_newFileExistence(tempFile) == ERROR)
