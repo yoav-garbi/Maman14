@@ -44,12 +44,12 @@ int main (int argc, char *argv[])
 		goto cleanUp;
 	
 	
-	/* 5) open .as files (store in fileArr) */
+	/* 3) open .as files (store in fileArr) */
 	fileArr = getFiles(argc, argv);
 	if (fileArr == NULL)
 		goto cleanUp;
 	
-	/* 6) build nameArr- an array of strings, each one is a name of a .as file */
+	/* 4) build nameArr- an array of strings, each one is a name of a .as file */
 	nameArr = make_nameArr(argc, argv);
 	if (nameArr == NULL)
 		goto cleanUp;
