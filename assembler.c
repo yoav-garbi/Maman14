@@ -5,7 +5,8 @@ int *icArr;
 int *dcArr;
 int lineCounter;
 int fileCounter;
-/* TODO- lineNode *entryLineArr; */
+lineNode **entryLineArr;
+
 
 
 
@@ -18,26 +19,30 @@ int main (int argc, char *argv[])
 	labelTable = NULL;
 	icArr = NULL;
 	dcArr = NULL;
+	entryLineArr = NULL;
 	
 	
 	/* 1) check that source file/s were entered */
 	if (check_fileEntered(argc) == ERROR)
 		goto cleanUp;
 	
-	/* 2) initialize labelTables array */
-	if (initializeLabelTables(argc) == ERROR)
+	/* 2) initialize relevant structs and arrays */
+	if (initializeLabelTables(argc) == ERROR) /* initialize labelTables array */
 		goto cleanUp;
 	
-	/* 3) initialize lineArr- lineArr is an array of pointers to linked lists. each linked list is like a file because it holds all lines */
-	lineArr = calloc(numFiles, sizeof(lineNode *));
+	lineArr = calloc(numFiles, sizeof(lineNode *)); /* initialize lineArr- lineArr is an array of pointers to linked lists. each linked list is like a file because it holds all lines */
 	if (check_allocation(lineArr) == ERROR)
 		goto cleanUp;
-		
-	/* 4) initialize icArr and dcArr */
-	icArr = calloc(numFiles, sizeof(int));
-	dcArr = calloc(numFiles, sizeof(int));
+	
+	icArr = calloc(numFiles, sizeof(int)); /* initialize icArr */
+	dcArr = calloc(numFiles, sizeof(int)); /* initialize dcArr */
 	if (check_allocation(icArr) == ERROR || check_allocation(dcArr) == ERROR)
 		goto cleanUp;
+	
+	entryLineArr = calloc(numFiles, sizeof(lineNode *)); /* initialize lineArr- lineArr is an array of pointers to linked lists. each linked list is like a file because it holds all lines */
+	if (check_allocation(entryLineArr) == ERROR)
+		goto cleanUp;
+	
 	
 	/* 5) open .as files (store in fileArr) */
 	fileArr = getFiles(argc, argv);
@@ -157,6 +162,7 @@ for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) {
 	freeFileArr(&fileArr);
 	free(icArr);
 	free(dcArr);
+	freeListArr(&entryLineArr, argc-1);
 	
 	return 0;
 }
