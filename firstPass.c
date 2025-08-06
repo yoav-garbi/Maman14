@@ -61,6 +61,7 @@ int getAddressingMethod(char *operand);
 
 int addIC(binTree **root, int IC);
 int addICList(lineNode *dataList, int IC_FINAL);
+int hasOnlyDestOperand(char *opcodeName);
 char *opCodes[num_of_opcodes] = { "mov", "cmp", "add", "sub", "not", "clr", "lea", "inc", "dec", "jmp", "bne", "red", "prn", "jsr", "rts", "stop"};
 
 char *skipWhitespace(char *line) {
@@ -296,7 +297,7 @@ int getRegisterNumber(char *operand) {
     return operand[1] - '0';
 }
 
-operands parseOperands(char *lineAfterOpcode) {
+operands parseOperands(char *lineAfterOpcode, char *opcodeName) {
     operands ops;
     char tempLine[MAX_LINE_LENGTH];
     char *token;
@@ -310,7 +311,11 @@ operands parseOperands(char *lineAfterOpcode) {
 
     token = strtok(tempLine, " ,\t\n");
     if (token != NULL) {
-        strcpy(ops.op1, token);
+        if (hasOnlyDestOperand(opcodeName)) {
+            strcpy(ops.op2, token);
+        } else {
+            strcpy(ops.op1, token);
+        }
         count++;
     }
 
@@ -323,6 +328,16 @@ operands parseOperands(char *lineAfterOpcode) {
     ops.operandCount = count;
     return ops;
 }
+
+
+int hasOnlyDestOperand(char *opcodeName) {
+    return (strcmp(opcodeName, "clr") == 0 || strcmp(opcodeName, "not") == 0 ||
+            strcmp(opcodeName, "inc") == 0 || strcmp(opcodeName, "dec") == 0 ||
+            strcmp(opcodeName, "jmp") == 0 || strcmp(opcodeName, "bne") == 0 ||
+            strcmp(opcodeName, "jsr") == 0 || strcmp(opcodeName, "red") == 0 ||
+            strcmp(opcodeName, "prn") == 0);
+}
+
 
 /*gets 2 lists and chains them together */
 lineNode *concatLists(lineNode *list1, lineNode *list2) {
@@ -422,7 +437,7 @@ int firstPass(const char *fileName, binTree **labelTable, lineNode **codeList, l
             if (currentLine.hasLabel) {
                 addNode(*labelTable, currentLine.label, IC, CODE, 0, 0);
             }
-            operands = parseOperands(nextPtr);
+            operands = parseOperands(nextPtr, first_word);
             processInstructionLine(first_word, operands, &IC, codeList, lineNumber);
         } else {
             strcpy(currentLine.error, "Unknown command");
@@ -436,7 +451,7 @@ int firstPass(const char *fileName, binTree **labelTable, lineNode **codeList, l
     addIC(labelTable, IC);
     addICList(*dataList, IC);
 
-    codeList = concatLists(codeList, dataList);
+    *codeList = concatLists(*codeList, *dataList);
 
     fclose(fp);
 
@@ -445,4 +460,3 @@ int firstPass(const char *fileName, binTree **labelTable, lineNode **codeList, l
     }
     return 0;
 }
-
