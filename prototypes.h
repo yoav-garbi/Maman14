@@ -152,16 +152,3 @@ int freeFileArr(FILE ***);
 
 /* secondPass.c */
 int secondPass(int, char *[], FILE **, lineNode *[], char **);
-
-
-
-
-
-
-
-
-
-
-
-																																		/* TEMP */
-int isLabel(char *ptr);
