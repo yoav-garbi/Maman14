@@ -5,7 +5,7 @@ int *icArr;
 int *dcArr;
 int lineCounter;
 int fileCounter;
-
+/* TODO- lineNode *entryLineArr; */
 
 
 
