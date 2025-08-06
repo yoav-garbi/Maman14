@@ -69,6 +69,7 @@ extern binTree **labelTable;
 extern opcd opcodeTable[16];
 extern int *icArr;
 extern int *dcArr;
+extern lineNode **entryLineArr;
 
 
 /* io.c */
@@ -152,3 +153,16 @@ int freeFileArr(FILE ***);
 
 /* secondPass.c */
 int secondPass(int, char *[], FILE **, lineNode *[], char **);
+
+
+
+
+
+
+
+
+
+
+
+																																		/* TEMP */
+int isLabel(char *ptr);
