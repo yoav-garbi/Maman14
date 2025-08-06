@@ -47,7 +47,7 @@ typedef struct {
 	char error[MAX_LINE_LENGTH];
     int hasLabel;
 	char label[MAX_LABEL_LENGTH];
-} LineDate;
+} LineData;
 
 
 /* struct- node that holds a line of data, its address, the number of the line in the .as file, and a pointer to the next node */
@@ -67,6 +67,8 @@ extern int lineCounter;
 extern int fileCounter;
 extern binTree **labelTable;
 extern opcd opcodeTable[16];
+extern int *icArr;
+extern int *dcArr;
 
 
 /* io.c */
@@ -89,7 +91,7 @@ int writeExt(FILE *, binTree *);
 
 
 /* errors.c */
-int check_lineGeneral(char *);
+int check_lineGeneral(char *, int, int);
 int check_fileExistence(void*);
 int check_newFileExistence(void *);
 int check_fileEntered(int);
@@ -97,8 +99,7 @@ int check_opcodeName(int);
 int check_legalAddressing(int, int, int);
 int check_lineLength(char []);
 int check_registerNumber(char []);
-int check_labelLength(char []);
-int check_labelName(char *, int);
+int check_labelName(char *);
 int check_allocation(void *);
 int check_existsInOtherFileAsEntry(char *, int);
 int check_labelExist_or_legalExternalUse(binTree *, char *, lineNode *, int);
@@ -163,4 +164,4 @@ int secondPass(int, char *[], FILE **, lineNode *[], char **);
 
 
 																																		/* TEMP */
-int isLabel(const char *ptr);
+int isLabel(char *ptr);
