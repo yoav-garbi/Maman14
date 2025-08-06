@@ -36,7 +36,7 @@ int main (int argc, char *argv[])
 	if (nameArr == NULL)
 		goto cleanUp;
 	
-																																			/* TEMP */
+/* TEMP */
 	/* ─── Revised TEMP first-pass stub ───────────────────────────────── */
 for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) {
     if (fileCounter == 0) {
@@ -48,35 +48,33 @@ for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) {
         addNode(&labelTable[0], "K",      132, DATA, 0, 0);
         addNode(&labelTable[0], "M1",     133, DATA, 0, 0);
 
-        /* Stub the labels you’ll .entry/.extern */
-        addNode(&labelTable[0], "LOOP",   102, CODE, 0, 0);   /* CHANGED: define LOOP */
-        addNode(&labelTable[0], "LENGTH", 131, DATA, 0, 0);   /* CHANGED: define LENGTH */
-        addNode(&labelTable[0], "L3",     120, CODE, 0, 0);   /* CHANGED: define L3 */
-        addNode(&labelTable[0], "W",      103, DATA, 0, 0);   /* CHANGED: define W */
+        /* Stub labels defined in this file */
+        addNode(&labelTable[0], "LOOP",   102, CODE, 0, 0);
+        addNode(&labelTable[0], "LENGTH", 131, DATA, 0, 0);
 
         /* .entry for LOOP & LENGTH */
-        fileCounter = 0;                                     /* CHANGED: ensure fileCounter */
-        addEntryLocal("LOOP");                               /* CHANGED */
-        addEntryLocal("LENGTH");                             /* CHANGED */
+        fileCounter = 0;
+        addEntryLocal("LOOP");
+        addEntryLocal("LENGTH");
 
         /* .extern for L3 & W */
-        addExternAcross("L3",   CODE, numFiles, 0);         /* CHANGED */
-        addExternAcross("W",    DATA, numFiles, 0);         /* CHANGED */
+        addExternAcross("L3",   CODE, numFiles, 0);
+        addExternAcross("W",    DATA, numFiles, 0);
     }
     else if (fileCounter == 1) {
         /* PROG2.AS directives */
         /* Definitions */
-        addNode(&labelTable[1], "L3",  100, CODE, 0, 0);     /* CHANGED */
-        addNode(&labelTable[1], "W",   102, CODE, 0, 0);     /* CHANGED */
+        addNode(&labelTable[1], "L3",  100, CODE, 0, 0);
+        addNode(&labelTable[1], "W",   102, CODE, 0, 0);
 
         /* .entry for L3 & W */
-        fileCounter = 1;                                     /* CHANGED: ensure fileCounter */
-        addEntryLocal("L3");                                 /* CHANGED */
-        addEntryLocal("W");                                  /* CHANGED */
+        fileCounter = 1;
+        addEntryLocal("L3");
+        addEntryLocal("W");
 
         /* .extern for LOOP & LENGTH */
-        addExternAcross("LOOP",   CODE, numFiles, 1);       /* CHANGED */
-        addExternAcross("LENGTH", DATA, numFiles, 1);       /* CHANGED */
+        addExternAcross("LOOP",   CODE, numFiles, 1);
+        addExternAcross("LENGTH", DATA, numFiles, 1);
     }
 }
 /* ──────────────────────────────────────────────────────────── */
