@@ -13,10 +13,7 @@
 #define num_of_opcodes 16
 
 #define CODE 0
-#define DATE 1
-#define MAT 2
-#define EXTERN 3
-#define ENTRY 4
+#define DATA 1
 
 /* the struct that holds the labels is a binary search tree- each node has two brnaches- the smaller is to the left, the bigger is to the right. This is very efficient and allows a time complexity of O(log n) both for adding a node and searching, and a space complexity of O(n) */
 typedef struct binTree
@@ -24,8 +21,8 @@ typedef struct binTree
 	char *str;
 	int address;
 	int symbolType;
-	int isExternal: 1;
-	int isEntry: 1;
+	unsigned int isEntry: 1;
+	unsigned int isExternal: 1;
 	struct binTree *left;
 	struct binTree *right;
 	
@@ -50,21 +47,25 @@ typedef struct {
 	char error[MAX_LINE_LENGTH];
     int hasLabel;
 	char label[MAX_LABEL_LENGTH];
-} LineDate;
+} LineData;
 
 
-/* struct that holds a line of data (in binary) and its address */
+/* struct- node that holds a line of data, its address, the number of the line in the .as file, and a pointer to the next node */
 typedef struct lineNode
 {
 	char *line;
 	int address;
+	int lineNum;
 	struct lineNode *next;
 	
 } lineNode;
 
 
+
+
 extern int lineCounter;
-extern binTree *labelTable;
+extern int fileCounter;
+extern binTree **labelTable;
 extern opcd opcodeTable[16];
 
 
@@ -90,6 +91,7 @@ int writeExt(FILE *, binTree *);
 /* errors.c */
 int check_lineGeneral(char *);
 int check_fileExistence(void*);
+int check_newFileExistence(void *);
 int check_fileEntered(int);
 int check_opcodeName(int);
 int check_legalAddressing(int, int, int);
@@ -98,7 +100,10 @@ int check_registerNumber(char []);
 int check_labelLength(char []);
 int check_labelName(char *, int);
 int check_allocation(void *);
-int check_labelExist(binTree *);
+int check_existsInOtherFileAsEntry(char *, int);
+int check_labelExist_or_legalExternalUse(binTree *, char *, lineNode *, int);
+int check_entryWithLocalDefinition(binTree *, char *);
+int check_labelDuplicate(char *);
 
 
 
@@ -107,11 +112,14 @@ int base2_to_base4_fileToFile(FILE *, FILE *);
 int base2_to_base4_strToFile(char *, FILE*);
 int base10_to_base2(int, char[]);
 int base10_to_base2_forAddress(int, char[]);
+int copyFile(FILE *, FILE *);
+char *strDuplicate(char *);
 
 
 
 
 /* struct_funcs.c */
+int initializeLabelTables(int);
 binTree * makeNode(char *, int, int, int, int);
 int setL(binTree *, binTree *);
 int setR(binTree *, binTree *);
@@ -121,9 +129,23 @@ int addNodePrivate(binTree *, char *, int, int, int, int);
 binTree *search(binTree *, char *);
 int searchEnt(binTree *);
 int searchExt(binTree *);
+int freeTree(binTree **);
+int freeLabelTable(binTree ***, int);
+int addIC(binTree **, int);
+int addEntryLocal(char *);
+int addExternAcross(char *, int, int, int);
 
-int addLineNode(lineNode **, char *, int);
+
+
+int addLineNode(lineNode **, char *, int, int);
 int printList(lineNode *);																								/* TEMP */
+int freeList(lineNode **);
+int freeListArr(lineNode ***, int);
+
+int freeNameArr(char ***, int);
+
+int freeFileArr(FILE ***);
+
 
 
 
