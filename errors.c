@@ -4,31 +4,101 @@
 
 
 /* go through a command line and search for all errors that may lie in it */
-int check_lineGeneral(char *line)
+int check_lineGeneral(char *line, int addressingMethod_opernad1, int addressingMethod_opernad2)
 {
-	int status, charsRead;
-	char word[MAX_LINE_LENGTH];
+	int status, charsRead, command_num, offsetCount = 0;
+	char word[MAX_LINE_LENGTH], *legalStart1, *legalStart2, *legalStart3;
 	
-	/* check if the label is legal */
+	/* check for extrenous text (chars that are not an .entry/.extern or label or command) */
 	sscanf(line, "%s%n", word, &charsRead);
-	line += charsRead;
-	status = isLabel(word);
+	offsetCount += charsRead;
 	
-	if (status == 1)																						/* switch 1 to ERROR in isLabel */
+	legalStart1 = strstr(word, ":");
+	legalStart2 = strstr(word, ".entry");
+	legalStart3 = strstr(word, ".extern");
+	/* TODO- add checks for mat and data */
+	
+	if ((legalStart1 == NULL && legalStart2 == NULL && legalStart3 == NULL) || (legalStart1 == word || legalStart2 == word || legalStart3 == word)) /* start of the line isn't a label, .entry or .extern, or it is one of these, but with garbage text stuck to it (legalStart doesn't point to the same place as word) */
 	{
-		lineCounter++;
-		return ERROR;
+		/* check if it's a command */
+		for (command_num = 0; command_num < num_of_opcodes; ++command_num)
+			if (strcmp(word, opcodeTable[command_num].name) == 0)
+				break;
+		
+		if (command_num == num_of_opcodes) /* no label, no entry, no extern, and now also no command were found- this is garbage text */
+		{
+			printf("\nExtrenous text before line. (Line %d)\n\n", lineCounter);
+			return ERROR;
+		}
 	}
+	
+	
+	
+	/* check for missing white space before any other text */
+	if (legalStart1 != NULL) /* in case- label */
+	{
+		if (strncmp(legalStart1, ": ", 2) != 0 && strncmp(legalStart1, ":\t", 2) != 0) /* non-white space imidietly after the lable */
+		{
+			printf("\nMissing white space after label. (Line %d)\n\n", lineCounter);
+			return ERROR;
+		}
+	}
+	
+	if (legalStart2 != NULL) /* in case- entry */
+	{
+		if (strncmp(word, ".entry ", 7) != 0 && strncmp(word, ".entry\t", 7) != 0) /* non-white space imidietly after the entry */
+		{
+			printf("\nMissing white space after entry. (Line %d)\n\n", lineCounter);
+			return ERROR;
+		}
+	}
+	
+	if (legalStart3 != NULL) /* in case- extern */
+	{
+		if (strncmp(word, ".extern ", 7) != 0 && strncmp(word, ".extern\t", 7) != 0) /* non-white space imidietly after the extern */
+		{
+			printf("\nMissing white space after external decleration. (Line %d)\n\n", lineCounter);
+			return ERROR;
+		}
+	}
+	
+	
+	
+	/* if label- check if the label is legal (all checks already called by isLabel) */
+	if (legalStart1 != NULL)
+	{
+		status = isLabel(word);
+	
+		if (status == ERROR)
+			return ERROR;
+	}
+	
+	
+	/* TODO- check for extrenous text */
+	sscanf(line, "%s%n", word, &charsRead);
+	offsetCount += charsRead;
+	
+	
+	
 	
 	/* check if command is legal */
 	sscanf(line, "%s%n", word, &charsRead);
-	line += charsRead;
+	offsetCount += charsRead;
 	
 	status = recognize_opcode(word);
 	if (status == ERROR)
 		return ERROR;
-		
-	/*TODO- add handeling for ilegal addressing and excessive text before/in/after line*/
+	
+	/* TODO- check for ilegal ',' */
+	
+	
+	/* TODO- check for ilegal addressing for operand1 */
+	
+	/* TODO- check for ',' */
+	
+	/* TODO- check for ilegal addressing for operand2 */
+	
+	/* TODO- check for extrenous text */
 	
 	return 0;
 }
@@ -119,9 +189,9 @@ int check_lineLength(char buffer[])
 }
 
 
-int check_registerNumber(char name[])
+int check_registerNumber(char name[3])
 {
-	if (name[0] == 'r' && (name[1] >= '0' && name[1] <= '7'))
+	if (name[0] == 'r' && (name[1] >= '0' && name[1] <= '7') && name[2] == '\0')
 		return 0; /* register name is correct */
 	
 	printf("\nRegister with this name doesn't exist. (Line %d)\n\n", lineCounter);
@@ -130,25 +200,51 @@ int check_registerNumber(char name[])
 
 
 
-int check_labelLength(char buffer[])
+
+int check_labelName(char *ptr)	/* ptr entered should be "(labelStr):\0" */
 {
-	int len = strlen(buffer);
-	int status = len > 0 && len <= MAX_LABEL_LENGTH;
+	int len = strlen(ptr), i;
 	
-	if (status)
-		return 0; /* this means that the label has legal length */
+	if (len == 1)
+	{
+		printf("\nLabel is blank. (Line %d)\n\n", lineCounter);
+		return ERROR;	
+	}
 	
-	printf("\nLabel exceeding the allowed length of 30 chars. (Line %d)\n\n", lineCounter);
-	return ERROR;	
-}
-
-
-
-int check_labelName(char *ptr, int len)
-{
+	if (len > MAX_LABEL_LENGTH)
+	{
+		printf("\nLabel exceeding the allowed length of 30 chars. (Line %d)\n\n", lineCounter);
+		return ERROR;	
+	}
+	
 	if (!isalpha(ptr[0]))
 	{
 		printf("\nLabel name starts with non-letter. (Line %d)\n\n", lineCounter);
+		return ERROR;
+	}
+	
+	if (ptr[0] == 'r' && ptr[1] >= '0' && ptr[1] <= '7' && ptr[2] == ':')
+	{
+		printf("\nLabel name is the name of a register. (Line %d)\n\n", lineCounter);
+		return ERROR;
+	}
+	
+	for (i = 0; i < num_of_opcodes; ++i)
+		if (strcmp(ptr, opcodeTable[i].name) == 0)
+		{
+			printf("\nLabel name is the name of a command. (Line %d)\n\n", lineCounter);
+			return ERROR;
+		}
+	
+	if (strcmp(ptr, ".entry") == 0)
+	{
+		printf("\nLabel name cannot be \".entry\". (Line %d)\n\n", lineCounter);
+		return ERROR;
+	}
+	
+	if (strcmp(ptr, ".extern") == 0)
+	{
+		printf("\nLabel name cannot be \".extern\". (Line %d)\n\n", lineCounter);
 		return ERROR;
 	}
 	
@@ -249,14 +345,13 @@ int check_labelDuplicate(char *str)
 
 
 
-																																		/* TEMP- this is Tomer's */
-int isLabel(const char *ptr) {
+/* TEMP- this is Tomer's */
+int isLabel(char *ptr) {
     int len = 0;
-    while (ptr[len] && !isspace((unsigned char)ptr[len]) && ptr[len] != ':') {
-        len++;
-    }
-    if (check_labelName((char *)ptr, len) == 0) {
-        return 1;
-    }
-    return 0;
+    while (ptr[len] && !isspace((unsigned char)ptr[len]) && ptr[len] != ':') len++;
+    
+    if (ptr[len] == ':' && check_labelName(ptr) == ERROR)
+        return ERROR;
+    
+    return ptr[len] == ':';
 }
