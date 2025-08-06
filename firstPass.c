@@ -72,7 +72,7 @@ char *skipWhitespace(char *line) {
 int isLabel(char *ptr) {
     int len = 0;
     while (ptr[len] && !isspace((unsigned char)ptr[len]) && ptr[len] != ':') len++;
-    return (isalpha(ptr[0]) && ptr[len] == ':' && len > 0 && len <= MAX_LABEL_LENGTH);
+    return (ptr[len] == ':' && check_labelName(ptr) != ERROR);
 }
 
 int isData(char *word) {
