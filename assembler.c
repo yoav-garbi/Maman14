@@ -56,6 +56,20 @@ int main (int argc, char *argv[])
 
 
 	/* first pass here */
+	int i;
+	int firstPassError = 0;
+	for (i = 0; i < numFiles; i++) {
+    		int res = firstPass(i);
+    		if (res != 0) {
+        		printf("Error in first pass of file %s (%d errors found)\n", nameArr[i], res);
+        		firstPassError = 1;
+    		}
+	}
+	if (firstPassError) {
+    		printf("Errors were found in the first pass. Compilation stopped.\n");
+    		goto cleanUp;
+	}
+
 	
 
 	/* second pass */
