@@ -4,13 +4,50 @@
 
 int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char **nameArr)
 {
-	int errorFlag = 0, numFiles = argc - 1, obOffset = 2 * numFiles, entOffset = 3 * numFiles, extOffset = 4 * numFiles;
-	char *character, label[buffer_size], binAddress[address_binary_representation_size+1];
+	int errorFlag = 0, numFiles = argc - 1, obOffset = 2 * numFiles, entOffset = 3 * numFiles, extOffset = 4 * numFiles, type;
+	char *character, label[buffer_size], *labelPtr, binAddress[address_binary_representation_size+1];
 	binTree *node;
-	lineNode *line;
+	lineNode *line, *entryLine, *externLine;
 	FILE *tempFile;
 	
-	/* replace lebels with address */
+	
+	/* add/update enty labels across all labelTables */
+	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) /* each iteration deals with one file */
+		for (entryLine = entryLineArr[fileCounter]; entryLine != NULL; entryLine = entryLine->next) /* each iteration deals with one label */
+		{
+			labelPtr = entryLine->line;
+			
+			/* mark this label's real definition as an entry */
+			if (addEntryLocal(labelPtr) == ERROR)
+				return ERROR;
+			
+			/* import the label into other files as an external label */
+			node = search(labelTable[fileCounter], labelPtr);
+			if (node != NULL)
+				addExternAcross(entryLine->line, node->symbolType, numFiles);
+		}
+	
+	/* mark existing nodes as external or insert a new node with address=0 */
+	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) /* each iteration deals with one file */
+		for (externLine = externLineArr[fileCounter]; externLine != NULL; externLine = externLine->next) /* each iteration deals with one label */
+		{ 
+			labelPtr = externLine->line;
+			node = search(labelTable[fileCounter], labelPtr);
+			
+			if (node != NULL) /* there is already an existing node- mark it as external */
+				node->isExternal = 1;
+				
+			else /* there is no symbol yet- insert an external label node (address=0) */
+			{
+				type = check_isExternalLabelDefinedInOtherFile(labelPtr, numFiles);
+				
+				if (type != ERROR)
+					addNode(&labelTable[fileCounter], labelPtr, 0, CODE, 1, 0);
+			}
+		}
+	
+	
+	/* replace labels with address */
 	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) /* each iteration is one file */
 	{
 		if (lineArr[fileCounter] == NULL)
