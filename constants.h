@@ -2,9 +2,12 @@
 #define CONSTANTS_H
 
 /* --- Length Barriers --- */
+#define WORD_LENGTH 12
 #define MAX_LINE_LENGTH 81
 #define MAX_LABEL_LENGTH 31
 #define ASSEMBLED_LINE_LENGTH 24
+#define NUM_OF_OPCODES 16
+#define MAX_TOTAL_ADDRESSES 256
 
 /* --- Macro Marks --- */
 #define MACRO_START_MARK "mcro"
@@ -29,3 +32,4 @@
 #define DC_INIT_VALUE 0
 
 #endif /* CONSTANTS_H */
+
