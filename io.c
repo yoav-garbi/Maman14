@@ -152,53 +152,37 @@ int closeFiles(int argc, FILE **fileArr)
 
 
 
-/* take in the next line of text to the buffer */
+/* read lines until you reach a non-note and non-white-space-only line */
 int takeInLine(char buffer[], FILE *source)
 {
-	void *status;
-	
-	status = fgets(buffer, buffer_size, source);
-	lineCounter++;
-	
-	if (status == NULL)	/* fgets returns NULL if the entire input is EOF (an empty line) */
-		return EOF_only_line;
-	
-	if (check_lineLength(buffer) == ERROR)
-		return ERROR;
-	
-	return 0;
-}
-
-
-
-/* read lines until you reach a non-note and non-white-space-only line */
-int skipNotesAndWhiteLines(char buffer[], FILE *source)
-{
-	int i, count, status;
-	char c;
+	int i, flag;
+	char c, *fgetsStatus;
 	
 	do
 	{
-		status = takeInLine(buffer, source);	/* take line into buffer */
-		if (status == EOF_only_line)	/* if encountered a line that only has EOF then end the task */
-			break;
-		
-		if (status == ERROR)	/* if takeInLine returned error this means that the line is too long, so we can skip it */
+		/* take in line */
+		fgetsStatus = fgets(buffer, buffer_size, source);
+		lineCounter++;
+	
+		if (fgetsStatus == NULL) /* fgets returns NULL if the entire input is EOF (an empty line)- end the task */
+			return EOF_only_line;
+	
+		if (check_lineLength(buffer) == ERROR) /* line is too long, so we can skip it */
 			continue;
 		
 		c = buffer[0];
 		if (c == ';')
 			continue;
 		
-		for (i = 0, count = 0; c != EOF && c != '\0'; ++i)	/* read the line with c and mark count with 1 if encountering a non-white-space (this means a real line) */
+		for (i = 0, flag = 0; c != EOF && c != '\0'; ++i)	/* read the line with c and mark count with 1 if encountering a non-white-space (this means a real line) */
 		{
 			c = buffer[i];
 			
 			if (c != ' ' || c != '\t' || c != '\n')
-				count = 1;
+				flag = 1;
 		}
 		
-	} while (count == 0);	/* perform this action as long as count is 0 (as long as the lines are blank) */
+	} while (flag == 0);	/* perform this action as long as count is 0 (as long as the lines are blank) */
 	
 	return 0;
 }
