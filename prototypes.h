@@ -60,7 +60,12 @@ typedef struct lineNode
 	
 } lineNode;
 
-
+/*will hold the current line operands */
+typedef struct {
+	char op1[MAX_LABEL_LENGTH];
+	char op2[MAX_LABEL_LENGTH];
+	int operandCount;
+} operands;
 
 
 extern int lineCounter;
