@@ -9,6 +9,11 @@ int check_lineGeneral(char *line, int addressingMethod_opernad1, int addressingM
 	int status, charsRead, command_num, offsetCount = 0;
 	char word[MAX_LINE_LENGTH], *legalStart1, *legalStart2, *legalStart3;
 	
+	
+	/* check for ilegal line length */
+	if (check_lineLength(line) == ERROR)
+		return ERROR;
+	
 	/* check for extrenous text (chars that are not an .entry/.extern or label or command) */
 	sscanf(line, "%s%n", word, &charsRead);
 	offsetCount += charsRead;
@@ -293,10 +298,9 @@ int check_labelExist_or_legalExternalUse(binTree *node, char *label, lineNode *l
 	if (node != NULL)	/* label found locally or as extern placeholder */
 		return 0;
 	
-	
 	if (check_existsInOtherFileAsEntry(label, fileNum))
 	{
-		printf("\nLabel \"%s\" is illegally external for this file. (Line %d)\n\n", label, line->lineNum);
+		printf("\nLabel \"%s\" is an entry form another file but not imported with .extern in this file- unuseable here.  (Line %d)\n\n", label, line->lineNum);
 		return ERROR;
 	}
 	
@@ -325,33 +329,31 @@ int check_labelDuplicate(char *str)
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* TEMP- this is Tomer's */
-int isLabel(char *ptr) {
-    int len = 0;
-    while (ptr[len] && !isspace((unsigned char)ptr[len]) && ptr[len] != ':') len++;
-    
-    if (ptr[len] == ':' && check_labelName(ptr) == ERROR)
-        return ERROR;
-    
-    return ptr[len] == ':';
+int check_isExternalLabelDefinedInOtherFile(char *label, int numFiles)
+{
+	int i, type, found = 0;
+	binTree *def;
+	
+	for (i = 0; i < numFiles; ++i)
+	{
+		if (i == fileCounter)
+			continue;
+		
+		def = search(labelTable[i], label);
+		
+		if (def != NULL) /* there is an actual decleration of the label in another file */
+		{
+			type = def->symbolType;
+			found = 1;
+			break;
+		}
+	}
+	
+	if (found != 1)
+	{
+		printf("\nEntry \"%s\" doesn't have a definition in any file. (Line %d)\n\n", label, lineCounter);
+		return ERROR;
+	}	
+	
+	return type;
 }
