@@ -259,14 +259,14 @@ int addEntryLocal(char *str)
 
 
 /* update this label in all labelTables except of the file the entry is originaly from- these files can now extern it into themselves */
-int addExternAcross(char *str, int type, int fileNum, int curFile)
+int addExternAcross(char *str, int type, int fileNum)
 {
 	int i;
 	binTree *node;
 
 	for (i = 0; i < fileNum; ++i)
 	{
-		if (i == curFile)	/* skip the file the entry is originaly from */
+		if (i == fileCounter)	/* skip the file the entry is originaly from */
 			continue;
 		
 		node = search(labelTable[i], str);
@@ -399,3 +399,12 @@ int freeFileArr(FILE ***arr) /* arr = pointer to a pointer to an array of FILE p
 	*arr = NULL;
 	return 0;
 }
+
+
+
+
+
+
+
+
+
