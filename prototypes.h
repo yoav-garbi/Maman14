@@ -70,6 +70,8 @@ extern opcd opcodeTable[16];
 extern int *icArr;
 extern int *dcArr;
 extern lineNode **entryLineArr;
+extern lineNode **externLineArr;
+
 
 
 /* io.c */
@@ -83,7 +85,6 @@ int create_extFile(int, FILE **, char **, int);
 
 int closeFiles(int, FILE **);
 int takeInLine(char [], FILE *);
-int skipNotesAndWhiteLines(char [], FILE *);
 int recognize_opcode(char *);
 int findCommand(char *);
 int writeEnt(FILE *, binTree *);
@@ -106,6 +107,7 @@ int check_existsInOtherFileAsEntry(char *, int);
 int check_labelExist_or_legalExternalUse(binTree *, char *, lineNode *, int);
 int check_entryWithLocalDefinition(binTree *, char *);
 int check_labelDuplicate(char *);
+int check_isExternalLabelDefinedInOtherFile(char *, int);
 
 
 
@@ -135,7 +137,7 @@ int freeTree(binTree **);
 int freeLabelTable(binTree ***, int);
 int addIC(binTree **, int);
 int addEntryLocal(char *);
-int addExternAcross(char *, int, int, int);
+int addExternAcross(char *, int, int);
 
 
 
@@ -149,20 +151,7 @@ int freeNameArr(char ***, int);
 int freeFileArr(FILE ***);
 
 
-int firstPass(int index);
+
 
 /* secondPass.c */
 int secondPass(int, char *[], FILE **, lineNode *[], char **);
-
-
-
-
-
-
-
-
-
-
-
-																																		/* TEMP */
-int isLabel(char *ptr);
