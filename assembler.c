@@ -66,7 +66,7 @@ int main (int argc, char *argv[])
     		}
 	}
 	if (firstPassError) {
-    		printf("Errors were found in the first pass. Compilation stopped.\n");
+    		printf("Errors were found in the first pass. Compilation stopped\n");
     		goto cleanUp;
 	}
 
