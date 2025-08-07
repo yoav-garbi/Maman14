@@ -469,6 +469,12 @@ int firstPass(int index) {
 
     dcArr[index]=DC;
     icArr[index]=IC;
+
+    if (IC+DC<MAX_TOTAL_ADDRESSES) {
+        printf("Program size (IC + DC = %d) exceeds maximum memory limit (%d) \n", (IC + DC), MAX_TOTAL_ADDRESSES);
+        countError++;
+    }
+    
     if (countError > 0) {
         return countError;
     }
