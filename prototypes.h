@@ -77,7 +77,10 @@ extern int *dcArr;
 extern lineNode **entryLineArr;
 extern lineNode **externLineArr;
 
-
+extern lineNode **lineArr;
+extern  char **nameArr;
+extern  FILE *fileArr;
+/* TODO:yoav these above should be there no? */
 
 /* io.c */
 FILE **getFiles(int, char *[]);
