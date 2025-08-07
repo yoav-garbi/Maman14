@@ -149,7 +149,7 @@ int freeNameArr(char ***, int);
 int freeFileArr(FILE ***);
 
 
-
+int firstPass(int index);
 
 /* secondPass.c */
 int secondPass(int, char *[], FILE **, lineNode *[], char **);
