@@ -5,6 +5,7 @@
 #include "constants.h"
 #include "prototypes.h"
 
+
 /*
  * Checks if the word is data (.data, .string, .mat).
  * Returns 1 if data, 0 if not.
@@ -72,10 +73,11 @@ char *skipWhitespace(char *line) {
 int isLabel(char *ptr) {
     int len = 0;
     while (ptr[len] && !isspace((unsigned char)ptr[len]) && ptr[len] != ':') len++;
-    
+    return (ptr[len] == ':' && check_labelName(ptr) != ERROR);
+
     if (ptr[len] == ':' && check_labelName(ptr) == ERROR)
         return ERROR;
-    
+
     return ptr[len] == ':';
 }
 
@@ -292,7 +294,7 @@ int getOpcodeIndex(char *opcodeName) {
 int getAddressingMethod(char *operand) {
     if (operand[0] == '#') return 0;
     if (strchr(operand, '[') != NULL) return 2;
-    if (operand[0] == 'r' && operand[1] >= '0' && operand[1] <= '7' && operand[2] == '\0') return 3;
+    if (operand[0] == 'r' && operand[1] >= '0' && operand[1] <= '7') return 3;
     return 1;
 }
 
@@ -333,13 +335,10 @@ operands parseOperands(char *lineAfterOpcode, char *opcodeName) {
     return ops;
 }
 
-
 int hasOnlyDestOperand(char *opcodeName) {
-    return (strcmp(opcodeName, "clr") == 0 || strcmp(opcodeName, "not") == 0 ||
-            strcmp(opcodeName, "inc") == 0 || strcmp(opcodeName, "dec") == 0 ||
-            strcmp(opcodeName, "jmp") == 0 || strcmp(opcodeName, "bne") == 0 ||
-            strcmp(opcodeName, "jsr") == 0 || strcmp(opcodeName, "red") == 0 ||
-            strcmp(opcodeName, "prn") == 0);
+    return (strcmp(opcodeName, "clr") == 0 || strcmp(opcodeName, "not") == 0 || strcmp(opcodeName, "inc") == 0 || strcmp(opcodeName, "dec") == 0 ||
+        strcmp(opcodeName, "jmp") == 0 || strcmp(opcodeName, "bne") == 0 || strcmp(opcodeName, "jsr") == 0 || strcmp(opcodeName, "red") == 0 ||
+        strcmp(opcodeName, "prn") == 0);
 }
 
 
@@ -356,9 +355,9 @@ lineNode *concatLists(lineNode *list1, lineNode *list2) {
     p->next = list2;
     return list1;
 }
-
+/* -------------------------------------------------------------------------------------------------*/
 /* in main need to reset the labelTable and the two lists */
-int firstPass(const char *fileName, binTree **labelTable, lineNode **codeList, lineNode **dataList) {
+int firstPass(int index) {
     FILE *fp;
     int IC = IC_INIT_VALUE;
     int DC = DC_INIT_VALUE;
@@ -370,7 +369,13 @@ int firstPass(const char *fileName, binTree **labelTable, lineNode **codeList, l
     char *ptr;
     char *nextPtr;
     int readLine;
+    const char *fileName = nameArr[index];
     operands operands;
+    lineNode *codeList = NULL;
+    lineNode *dataList = NULL;
+    binTree **curLabelTable = &labelTable[index];
+
+
 
     fp = fopen(fileName, "r");
     if (fp == NULL) {
@@ -419,6 +424,9 @@ int firstPass(const char *fileName, binTree **labelTable, lineNode **codeList, l
         }
 
         if (strcmp(first_word, ".entry") == 0) {
+            nextPtr = skipWhitespace(ptr + strlen(".entry"));
+            sscanf(nextPtr, "%s", first_word);
+            addLineNode(&entryLineArr[index], first_word, 0, lineNumber);
             lineNumber++;
             readLine = takeInLine(currentLine.content, fp);
             continue;
@@ -426,7 +434,7 @@ int firstPass(const char *fileName, binTree **labelTable, lineNode **codeList, l
 
         if (strcmp(first_word, ".extern") == 0) {
             sscanf(nextPtr, "%s", currentLine.label);
-            addNode(labelTable, currentLine.label, 0, 3, 1, 0);
+            addNode(curLabelTable, currentLine.label, 0, 3, 1, 0);
             lineNumber++;
             readLine = takeInLine(currentLine.content, fp);
             continue;
@@ -434,15 +442,15 @@ int firstPass(const char *fileName, binTree **labelTable, lineNode **codeList, l
 
         if (isData(first_word)) {
             if (currentLine.hasLabel) {
-                addSymbolToData(labelTable, currentLine.label, DC);
+                addSymbolToData(curLabelTable, currentLine.label, DC);
             }
-            processDataLine(nextPtr, &DC, dataList, lineNumber);
+            processDataLine(nextPtr, &DC, &dataList, lineNumber);
         } else if (isInstruction(first_word)) {
             if (currentLine.hasLabel) {
-                addNode(*labelTable, currentLine.label, IC, CODE, 0, 0);
+                addNode(*curLabelTable, currentLine.label, IC, CODE, 0, 0);
             }
             operands = parseOperands(nextPtr, first_word);
-            processInstructionLine(first_word, operands, &IC, codeList, lineNumber);
+            processInstructionLine(first_word, operands, &IC, &codeList, lineNumber);
         } else {
             strcpy(currentLine.error, "Unknown command");
             currentLine.hasError = 1;
@@ -452,13 +460,15 @@ int firstPass(const char *fileName, binTree **labelTable, lineNode **codeList, l
         lineNumber++;
         readLine = takeInLine(currentLine.content, fp);
     }
-    addIC(labelTable, IC);
-    addICList(*dataList, IC);
+    addIC(curLabelTable, IC);
+    addICList(dataList, IC);
 
-    *codeList = concatLists(*codeList, *dataList);
+    lineArr[index] = concatLists(codeList, dataList);
 
     fclose(fp);
 
+    dcArr[index]=DC;
+    icArr[index]=IC;
     if (countError > 0) {
         return countError;
     }
