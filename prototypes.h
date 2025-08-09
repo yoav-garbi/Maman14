@@ -125,6 +125,7 @@ int check_lineGeneral(char *);
 int check_fileExistence(void*);
 int check_newFileExistence(void *);
 int check_fileEntered(int);
+int check_fileName(int, char *[]);
 int check_opcodeName(int);
 int check_lineLength(char []);
 int check_registerNumber(char []);
