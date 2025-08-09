@@ -2,150 +2,423 @@
 
 
 
-int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char **nameArr)
+int initializeLabelTables(int argc)
 {
-	int errorFlag = 0, numFiles = argc - 1, obOffset = 2 * numFiles, entOffset = 3 * numFiles, extOffset = 4 * numFiles, type;
-	char *character, label[buffer_size], *labelPtr, binAddress[address_binary_representation_size+1];
-	binTree *node;
-	lineNode *line, *entryLine, *externLine;
-	FILE *tempFile;
-	
-	
-	/* add/update enty labels across all labelTables */
-	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) /* each iteration deals with one file */
-		for (entryLine = entryLineArr[fileCounter]; entryLine != NULL; entryLine = entryLine->next) /* each iteration deals with one label */
-		{
-			labelPtr = entryLine->line;
-			
-			/* mark this label's real definition as an entry */
-			if (addEntryLocal(labelPtr) == ERROR)
-				return ERROR;
-			
-			/* import the label into other files as an external label */
-			node = search(labelTable[fileCounter], labelPtr);
-			if (node != NULL)
-				addExternAcross(entryLine->line, node->symbolType, numFiles);
-		}
-	
-	/* mark existing nodes as external or insert a new node with address=0 */
-	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) /* each iteration deals with one file */
-		for (externLine = externLineArr[fileCounter]; externLine != NULL; externLine = externLine->next) /* each iteration deals with one label */
-		{ 
-			labelPtr = externLine->line;
-			node = search(labelTable[fileCounter], labelPtr);
-			
-			if (node != NULL) /* there is already an existing node- mark it as external */
-				node->isExternal = 1;
-				
-			else /* there is no symbol yet- insert an external label node (address=0) */
-			{
-				type = check_isExternalLabelDefinedInOtherFile(labelPtr, numFiles);
-				
-				if (type != ERROR)
-					addNode(&labelTable[fileCounter], labelPtr, 0, CODE, 1, 0);
-			}
-		}
-	
-	
-	/* replace labels with address */
-	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) /* each iteration is one file */
-	{
-		if (lineArr[fileCounter] == NULL)
-			break;
-		
-		for (line = lineArr[fileCounter], lineCounter = 0; line != NULL; line = line->next) /* each iteration is one line */
-		{
-			character = line->line;
-			
-			if (*character != ' ') /* if there's a label in the line, it is always the first thing in the line */
-				continue;
-			
-			if (*character == '\n')
-				continue;
-			
-			sscanf(character, "%s", label);
-			node = search(labelTable[fileCounter], label);
-			
-			if (check_labelExist_or_legalExternalUse(node, label, line, numFiles) == ERROR) /* if label is ilegaly external or isn't in labelTable at all */
-			{
-				errorFlag = 1;
-				continue; /* go to next line */
-			}
-			
-			base10_to_base2_forAddress(node->address, binAddress); /* translate address to binary */
-			
-			memcpy(character + 1, binAddress, 8); /* use address to overwrite the label */
-			
-			while (*character != ' ')	/* delete any remaining parts of the label */
-				*character = ' ';
-		}
-	}
-
-
-		
-	if (errorFlag == 1)
+	/* create an array of labelTables- each cell points to a binTree that acts as a labelTable for one file */
+	labelTable = calloc(argc - 1, sizeof(binTree *));
+	if (check_allocation(labelTable) == ERROR)
 		return ERROR;
 	
+	return 0;
+}
+
+
+
+/* creates a node and fills it with the data entered (branches are set to NULL) */
+binTree * makeNode(char *str, int address, int type, int external, int entry)
+{
+	binTree *node = malloc(sizeof(binTree));
+	if (node == NULL)
+		return NULL;
 	
+	node->str = strDuplicate(str);
+	node->address = address;
+	node->symbolType = type;
+	node->isExternal = external;
+	node->isEntry = entry;
+	node->left = NULL;
+	node->right = NULL;
 	
-	/* create .ob file (copy lines to file and translate to base4) */
-	for (fileCounter = 0; fileCounter < numFiles && lineArr[fileCounter] != NULL; fileCounter++) /* each iteration is one file */
+	return node;
+}
+
+/* allows to change the pointer to the left */
+int setL(binTree *node, binTree *left)
+{
+	node->left = left;
+	
+	return 0;
+}
+
+/* allows to change the pointer to the right */
+int setR(binTree *node, binTree *right)
+{
+	node->right = right;
+	
+	return 0;
+}
+
+/* prints the tree (in order) */
+int printTree(binTree *root)																								/* TEMP */
+{
+	if (root == NULL)
+		return 0;
+	
+	printTree(root->left);
+	printf("str: %s\taddress: %d\tsymbolType: %d\tisExternal: %d\tisEntry: %d\n", root->str, root->address, root->symbolType, root->isExternal, root->isEntry);
+	printTree(root->right);
+	
+	return 0;
+}
+
+
+/* adds a node to the correct place in the tree. time compexity = O(log n) because every level cuts down the number of option by half. space complexity = O(n)- there is no waste of space because nodes are initiallized as needed and not ahead of time. Each node is O(n) because of the string but that is out of out control. In this prohect we will look at a node as a single unit so the space complexity of each node is O(1) 
+The correct place in the tree is determined with the help of strcmp (from <string.h>) that compares 2 string an returns if they are identical or if one has a bigger value (lexicographically) */
+int addNode(binTree **root, char *str, int address, int type, int external, int entry)
+{
+	binTree *temp;
+	
+	if (*root == NULL)
 	{
-		create_obFile(argc, fileArr, nameArr, fileCounter);
-		
-		/* write IC in first line */
-		base10_to_base2(icArr[fileCounter], binAddress);
-		fprintf(fileArr[obOffset + fileCounter], "%s\t\t\t", binAddress);
-		
-		/* write DC in first line */
-		base10_to_base2(dcArr[fileCounter], binAddress);
-		fprintf(fileArr[obOffset + fileCounter], "%s\t\t\t", binAddress);
-		
-		for (line = lineArr[fileCounter]; line != NULL; line = line->next) /* each iteration is one line */
-		{
-			base10_to_base2_forAddress(node->address, binAddress);
-			fprintf(fileArr[obOffset + fileCounter], "%s\t\t", binAddress);
-			
-			for (character = line->line; *character != '\0'; character++) /* each iteration is one char */
-			{
-				if (*character == ' ')
-					continue;
-			
-				fputc(*character, fileArr[obOffset + fileCounter]);
-			}
-		}
-		
-		tempFile = fopen("temp", "w+");
-		if (check_newFileExistence(tempFile) == ERROR)
-			return ERROR;
-			
-		copyFile(fileArr[obOffset + fileCounter], tempFile);
-		freopen(NULL, "w+", fileArr[obOffset + fileCounter]); /* truncate and reopen the ob file */
-		
-		base2_to_base4_fileToFile(tempFile, fileArr[obOffset + fileCounter]);
-		
-		fclose(tempFile);
-		remove("temp");
+		*root = makeNode(str, address, type, external, entry);
+		return 0;
 	}
 	
-	
-	
-	
-	/* create extension files (if there were no errors) */
-	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) /* each iteration is one file */
+	temp = search(*root, str);
+	/* this label is already in this binTree (as a placeholder- it isn't complete yet) because it was passed as an entry from another file. The fact that the label isn't external yet means that it hasn't been added to this binTree from it's own source file yet, so we can add it now */
+	if (temp != NULL && temp->isEntry && !temp->isExternal)
 	{
-		if (searchEnt(labelTable[fileCounter]))	/* if there is an entry to put in .ent file */
-		{
-			create_entFile(argc, fileArr, nameArr, fileCounter);
-			writeEnt(fileArr[entOffset + fileCounter], labelTable[fileCounter]);
-		}
-		
-		if (searchExt(labelTable[fileCounter]))	/* if there is an extern label to put in .ext file */
-		{
-			create_extFile(argc, fileArr, nameArr, fileCounter);
-			writeExt(fileArr[extOffset + fileCounter], labelTable[fileCounter]);
-		}
+		temp->address = address;
+		temp->isExternal = 1;
+		return 0;
 	}
 	
+	/* check for duplicate definition in same file- two labels declared in the same file with the same name */
+	if (temp != NULL)
+	{
+		check_labelDuplicate(str);
+		return ERROR;
+	}
+	
+	/* completely new label (not in the tree at all yet) */
+	addNodePrivate(*root, str, address, type, external, entry);
+	return 0;
+}
+
+
+int addNodePrivate(binTree *root, char *str, int address, int type, int external, int entry)
+{
+	int comp;
+	
+	if (root == NULL)
+		return 0;
+	
+	comp = strcmp(str, root->str);
+	
+	
+	if (comp < 0)
+	{
+		if (root->left == NULL)
+		{
+			setL(root, makeNode(str, address, type, external, entry));
+			return 0;
+		}
+		
+		addNodePrivate(root->left, str, address, type, external, entry); /* use recursion to decend 1 more level */
+	}
+	
+	else if (comp > 0)
+	{
+		if (root->right == NULL)
+		{
+			setR(root, makeNode(str, address, type, external, entry));
+			return 0;
+		}
+		
+		addNodePrivate(root->right, str, address, type, external, entry); /* use recursion to decend 1 more level */
+	}
+	
+	else /* this label already exists, and isn't an entry */
+	{
+		check_labelDuplicate(str);
+		return ERROR;
+	}
+	
+	return 0;
+}
+
+
+
+/* searches a node (a string) in the tree. time compexity = O(log n) because every level cuts down the number of option by half.
+If the node in question doesnt't exist, the funcion returns NULL  */
+binTree * search(binTree *root, char *str)
+{
+	int comp;
+	
+	if (root == NULL)
+		return NULL;
+	
+	comp = strcmp(str, root->str);
+	
+	
+	if (comp < 0)
+	{
+		if (root->left == NULL)
+			return NULL;
+		
+		return search(root->left, str); /* use recursion to decend 1 more level */
+	}
+	
+	else if (comp > 0)
+	{
+		if (root->right == NULL)
+			return NULL;
+		
+		return search(root->right, str); /* use recursion to decend 1 more level */
+	}
+	
+	return root;
+}
+
+
+/* search if there is at least one entry label. yes = 1, no = 0 */
+int searchEnt(binTree *root)
+{
+	if (root == NULL)
+		return 0;
+	
+	if (root->isEntry)
+		return 1;
+	
+	return searchEnt(root->left) || searchEnt(root->right);
+}
+
+/* search if there is at least one extern label. yes = 1, no = 0 */
+int searchExt(binTree *root)
+{
+	if (root == NULL)
+		return 0;
+	
+	if (root->isExternal)
+		return 1;
+	
+	return searchExt(root->left) || searchExt(root->right);
+}
+
+/* free all allocated memory for this tree */
+int freeTree(binTree **root)
+{
+	if (*root == NULL)
+		return 0;
+	
+	freeTree(&((*root)->left));
+	freeTree(&((*root)->right));
+	
+	free((*root)->str);
+	free(*root);
+	*root = NULL;
+	return 0;
+}
+
+
+/* free binTree array */
+int freeLabelTable(binTree ***arr, int fileNum)
+{
+	int i;
+	binTree *root;
+	
+	for (i = 0; i < fileNum; ++i)
+	{
+		root = (*arr)[i];
+		if (root == NULL)
+			return 0;
+	
+		freeTree(&root);
+	}
+	
+	free(*arr);
+	*arr = NULL;
+	return 0;
+}
+
+int addIC(binTree **root, int IC)
+{
+	if (*root == NULL)
+		return 0;
+	
+	if ((*root)->symbolType == DATA)
+		(*root)->address += IC;
+	
+	addIC(&((*root)->left), IC);
+	addIC(&((*root)->right), IC);
+	return 0;
+}
+
+
+/* update this label (only on the labelTable of this file)- it's now an entry */
+int addEntryLocal(char *str)
+{
+	binTree *node = search(labelTable[fileCounter], str);
+	
+	if (check_entryWithLocalDefinition(node, str) == ERROR)
+		return ERROR;
+	
+	node->isEntry = 1;
+	return 0;
+}
+
+
+/* update this label in all labelTables except of the file the entry is originaly from- these files can now extern it into themselves */
+int addExternAcross(char *str, int type, int fileNum)
+{
+	int i;
+	binTree *node;
+
+	for (i = 0; i < fileNum; ++i)
+	{
+		if (i == fileCounter)	/* skip the file the entry is originaly from */
+			continue;
+		
+		node = search(labelTable[i], str);
+		
+		if (node != NULL)
+			node->isExternal = 1;
+		else
+			addNode(&labelTable[i], str, 0, type, 1, 0); /* address will be filled later in second pass */
+	}
+	
+	return 0;
+}
+
+
+
+
+/* ============================================================================================ */
+
+
+
+int addLineNode(lineNode **head, char *line, int address, int lineNum)
+{
+	lineNode *newNode = malloc(sizeof(lineNode)), *current;
+
+	if (check_allocation(newNode) == ERROR)
+		return ERROR;
+
+	newNode->line = malloc(strlen(line) + 1);
+
+	if (check_allocation(newNode->line) == ERROR)
+		return ERROR;
+
+	strcpy(newNode->line, line);
+	newNode->address = address;
+	newNode->lineNum = lineNum;
+	newNode->next = NULL;
+
+	if (*head == NULL)
+	{
+		*head = newNode;
+		return 0;
+	}
+
+	current = *head;
+	while (current->next != NULL)
+		current = current->next;
+
+	current->next = newNode;
+	
+	return 0;
+}
+
+
+																																		/* TEMP */
+int printList(lineNode *node)
+{
+	if (node == NULL)
+		return 0;
+	
+	printf("address: %d\t\tline: %s\n", node->address, node->line);
+	printList(node->next);
+	
+	return 0;
+}
+
+
+/* free all allocated memory for this list */
+int freeList(lineNode **node)
+{
+	if (*node == NULL)
+		return 0;
+	
+	freeList(&((*node)->next));
+	free(*node);
+	return 0;
+}
+
+
+/* free all allocated memory for the array of lists. arr = pointer to pointer to an array of list pointers */
+int freeListArr(lineNode ***arr, int fileNum)
+{
+	int i;
+	
+	if ((*arr) == NULL)
+		return 0;
+	
+	for (i = 0; i < fileNum; ++i)
+		if ((*arr)[i] != NULL)
+			freeList(&((*arr)[i]));
+	
+	free(*arr);
+	*arr = NULL;
+	return 0;
+}
+
+
+/* check if the label is already in entryLineArr (if it was declared as an entry in this file) */
+int isAlreadyEntry(char *label)
+{
+	lineNode *node;
+	for (node = entryLineArr[fileCounter]; node != NULL; node = node->next)
+		if (strcmp(node->line, label) == 0)
+			return 1;
+	
+	return 0;
+}
+
+/* check if the label is already in externLineArr (if it was declared as extern in this file) */
+int isAlreadyExtern(char *label)
+{
+	lineNode *node;
+	for (node = externLineArr[fileCounter]; node != NULL; node = node->next)
+		if (strcmp(node->line, label) == 0)
+			return 1;
+	
+	return 0;
+}
+
+
+
+/* ================================================================================================================================ */
+
+
+
+int freeNameArr(char ***arr, int fileNum) /* arr = pointer -> pointer -> array of char pointers */
+{
+	int i;
+	
+	if ((*arr) == NULL)
+		return 0;
+	
+	for (i = 0; i < fileNum; ++i)
+		if ((*arr)[i] != NULL)
+			free((*arr)[i]); 	/* free each string */
+	
+	free(*arr);
+	*arr = NULL;
+	return 0;
+}
+
+
+
+/* ================================================================================================================================ */
+
+
+
+int freeFileArr(FILE ***arr) /* arr = pointer to a pointer to an array of FILE pointers */
+{
+	if ((*arr) == NULL)
+		return 0;
+	
+	free(*arr);
+	*arr = NULL;
 	return 0;
 }
