@@ -1,5 +1,9 @@
 #include "prototypes.h"
+#include "header.h"
 
+lineNode **lineArr;
+char **nameArr;
+FILE **fileArr;
 binTree **labelTable;
 int *icArr;
 int *dcArr;
@@ -9,13 +13,9 @@ lineNode **entryLineArr;
 lineNode **externLineArr;
 
 
-
 int main (int argc, char *argv[])
 {
-	int numFiles = argc-1, i, errorFlag = 0, res;
-	lineNode **lineArr = NULL;
-	char **nameArr =  NULL;
-	FILE **fileArr = NULL;
+	int numFiles = argc-1, errorFlag = 0, res;
 	labelTable = NULL;
 	icArr = NULL;
 	dcArr = NULL;
@@ -69,14 +69,15 @@ int main (int argc, char *argv[])
 
 	
 	/* 5) first pass */
-	for (i = 0; i < numFiles; i++)
+	/*for (fileCounter = 0; fileCounter < numFiles; fileCounter++)
 	{
-    		res = firstPass(i);
+    		lineCounter = 0;
+			res = firstPass(i);
     		if (res != 0) {
         		printf("Error in first pass of file %s (%d errors found)\n", nameArr[i], res);
         		errorFlag = 1;
     		}
-	}
+	}*/
 	
 	if (errorFlag)
 	{
