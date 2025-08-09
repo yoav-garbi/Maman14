@@ -118,6 +118,14 @@ int base10_to_base2(int num, char str[])
 	int i, bitCount;
 	char tempStr[buffer_size];
 	
+	/* handle zero explicitly to avoid returning an empty string */
+        if (num == 0)
+        {
+                str[0] = '0';
+                str[1] = '\0';
+                return 0;
+        }
+	
 	/* translate num from decimal to binary into the temporary str (it is needed because the number comes out backwards) */
 	for (i = 0; num != 0; i++)
 	{
@@ -212,3 +220,142 @@ char *strDuplicate(char *str)
 
 
 
+char *skipWhiteSpace(char *c)
+{
+	while (*c == ' ' || *c == '\t')
+		c++;
+	return c;
+}
+
+
+int isEndOfLine_or_whiteSpaceOnly(char *c)
+{
+	c = skipWhiteSpace(c);
+	return *c == '\0' || *c == '\n';
+}
+
+
+int isRequiredComma(char **pointer)
+{
+	char *c;
+	c = skipWhiteSpace(*pointer);
+	
+	if (*c != ',')
+		return 0;
+	c++;
+	c = skipWhiteSpace(c);
+	*pointer = c;
+	
+	return 1;
+}
+
+/* read a label and advance pointer. return: 0 if not label, 1 if label */
+int scanLabel(char **line, char *label)
+{
+	char *lineP = *line, *labelP = label;
+	int len = 0;
+	
+	if (!isalpha((unsigned char)*lineP)) /* first char isn't a letter- can't be a label */
+		return 0;
+	
+	while (isalnum((unsigned char)*lineP)) /* all non-first chars of the label can be a number too (alnum- both alphabet or numbers) */
+	{
+		if (len >= MAX_LABEL_LENGTH)
+			return 0;
+		
+		*labelP++ = *lineP;
+		lineP++;
+		len++;
+	}
+	
+	*labelP = '\0';
+	*line = lineP; /* advance the actual line pointer (from the caller) */
+	return 1;
+}
+
+
+/* scan for an int. int will be held in num. return: 0 if failed to detect a number, 1 if success */
+int scanInt(char **line, int *num)
+{
+	char *c;
+	int sign = 1;
+	int val = 0;
+	int gotDigit = 0;
+	
+	c = skipWhiteSpace(*line);
+	
+	if (*c == '+' || *c == '-')
+	{
+		if (*c == '-')
+			sign = -1;
+		
+		c++;
+	}
+	
+	while (isdigit((unsigned char)*c))
+	{
+		gotDigit = 1;
+		val = val * 10 + (*c - '0');
+		c++;
+	}
+	
+	if (!gotDigit) /* no number was detected */
+		return 0;
+	
+	*num = sign * val;
+	*line = c; /* advance caller's pointer to after the number */
+	return 1;
+}
+
+
+/* scan for a string that bordered by " " */
+int scanString(char **line, char *str)
+{
+	char *start;
+	char *c, *end = NULL;
+	int len = 0;
+	
+	start = skipWhiteSpace(*line);
+	
+	if (*start != '"') /* not starting " found */
+	{
+		printf("\nMissing \" before string. (Line %d)\n\n", lineCounter);
+		return ERROR;
+	}
+	
+	/* look ahead to find the closing " and count the length of the string */
+	c = start + 1;
+	
+	while (*c && *c != '\n')
+	{
+		if (*c == '"')
+		{
+			end = c;
+			break;
+		}
+		c++;
+	}
+	
+	if (end == NULL) /* no closing " was found */
+	{
+		printf("\nMissing \" after string. (Line %d)\n\n", lineCounter);
+		return ERROR;
+	}
+	
+	len = end - (start + 1);
+	
+	if (len >= buffer_size) /* string too long */
+	{
+		printf("\nString is too long (Line %d)\n\n", lineCounter);
+		return ERROR;
+	}
+
+	/* copy string and add \0 */
+	if (len > 0)
+		memcpy(str, start + 1, (size_t)len);
+	str[len] = '\0';
+
+	/* advance caller pointer to right after the closing " */
+	*line = end + 1;
+	return 1;
+}
