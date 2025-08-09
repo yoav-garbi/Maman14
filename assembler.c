@@ -23,11 +23,9 @@ int main (int argc, char *argv[])
 	externLineArr = NULL;
 	
 	
-	/* 1) check that source file/s were entered */
-	if (check_fileEntered(argc) == ERROR)
+	/* 1) check that source file/s were entered, and are legal */
+	if (check_fileEntered(argc) == ERROR || check_fileName(numFiles, argv) == ERROR)
 		goto cleanUp;
-	
-	
 	
 	
 	/* 2) initialize relevant structs and arrays */
