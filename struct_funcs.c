@@ -422,3 +422,12 @@ int freeFileArr(FILE ***arr) /* arr = pointer to a pointer to an array of FILE p
 	*arr = NULL;
 	return 0;
 }
+
+
+
+
+
+
+
+
+
