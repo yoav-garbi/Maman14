@@ -457,7 +457,7 @@ int firstPass(int index) {
 
         ptr = skipWhitespace(currentLine.content);
 
-        if (isLabel(ptr)) {
+        if (isLabel(ptr) == 1) {
             sscanf(ptr, "%[^:]:", label);
             currentLine.hasLabel = 1;
             strcpy(currentLine.label, label);
