@@ -5,7 +5,6 @@
 /* take in the arguments into the FILEs array */
 FILE **getFiles(int argc, char *argv[])
 {
-	int i;
 	FILE *filePointer;
 	FILE **fileArr = calloc(total_num_of_files(argc), sizeof(FILE *));
 	
@@ -13,14 +12,14 @@ FILE **getFiles(int argc, char *argv[])
 		return NULL;
 	
 	/* open .as files */
-	for (i = 0; i < argc - 1; ++i)
+	for (fileCounter = 0; fileCounter < argc - 1; ++fileCounter)
 	{
-		filePointer = fopen(argv[i+1], "r");
+		filePointer = fopen(argv[fileCounter+1], "r");
 		
 		if (check_fileExistence(filePointer) == ERROR)	/* check if the file has opened succesfuly */
 			return NULL;
 		
-		fileArr[i] = filePointer;
+		fileArr[fileCounter] = filePointer;
 	}
 	
 	return fileArr;
