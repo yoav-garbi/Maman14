@@ -198,7 +198,11 @@ int check_lineLength(char buffer[])
 	int len = strlen(buffer);
 	int status = len > 0 && len <= MAX_LINE_LENGTH;
 	
-	if (len == MAX_LINE_LENGTH && buffer[80] != '\n');	/* this check makes sure that a line that has 81 chars and EOF doesn't go unnoticed */
+	if (len == MAX_LINE_LENGTH && buffer[80] != '\n') /* this check makes sure that a line that has 81 chars and EOF doesn't go unnoticed */
+	{
+		printf("\nLine exceeding the allowed length of 80 chars. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		return ERROR;
+	}
 	
 	else if (status)
 		return 0; /* this means that the line has legal length */
@@ -279,9 +283,9 @@ int check_labelName(char *ptr)	/* ptr entered should be "(labelStr):\0" */
 		return ERROR;
 	}
 	
-	if (strcmp(ptr, ".mata") == 0)
+	if (strcmp(ptr, ".mat") == 0)
 	{
-		printf("\nLabel name cannot be \".mata\". (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		printf("\nLabel name cannot be \".mat\". (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
 		return ERROR;
 	}
 	
