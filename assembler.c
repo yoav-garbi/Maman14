@@ -67,15 +67,15 @@ int main (int argc, char *argv[])
 
 	
 	/* 5) first pass */
-	/*for (fileCounter = 0; fileCounter < numFiles; fileCounter++)
+	for (fileCounter = 0; fileCounter < numFiles; fileCounter++)
 	{
     		lineCounter = 0;
-			res = firstPass(i);
+			res = firstPass(fileCounter);
     		if (res != 0) {
-        		printf("Error in first pass of file %s (%d errors found)\n", nameArr[i], res);
+        		printf("Error in first pass of file %s (%d errors found)\n", nameArr[fileCounter], res);
         		errorFlag = 1;
     		}
-	}*/
+	}
 	
 	if (errorFlag)
 	{
