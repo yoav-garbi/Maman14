@@ -254,7 +254,7 @@ void addExternIfNeeded(char *operand, int IC, binTree *labelTable, lineNode **ex
     if (operand == NULL) return;
 
     binTree *sym = search(labelTable, operand);
-    if (sym != NULL && sym->symbolType == EXTERN) {
+    if (sym != NULL && sym->isExternal) {
         addLineNode(externLineArr, operand, IC, 0);
     }
 }
