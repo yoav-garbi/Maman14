@@ -319,6 +319,17 @@ int addLineNode(lineNode **head, char *line, int address, int lineNum)
 	return 0;
 }
 
+int addICList(lineNode *dataList, int IC_FINAL) {
+	if (dataList==NULL)
+		return 0;
+	lineNode *current = dataList;
+	while (current != NULL) {
+		current->address += IC_FINAL;
+		current = current->next;
+	}
+	return 0;
+}
+
 
 																																		/* TEMP */
 int printList(lineNode *node)
