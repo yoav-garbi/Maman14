@@ -192,7 +192,7 @@ int recognize_opcode(char *code)
 {
 	int i, status;
 	
-	for (i = 0; strcmp(code, opcodeTable[i].name); ++i);
+	for (i = 0; i < num_of_opcodes && strcmp(code, opcodeTable[i].name); ++i);
 
 	status = check_opcodeName(i);
 	if(status == 0)	/* command found- return index */
