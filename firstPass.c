@@ -170,6 +170,7 @@ void processMatDirective(char *line, int *DC, lineNode **dataList, int lineNum) 
     char *p;
     int rows = 0, cols = 0, total, count = 0;
     char *token;
+    char binaryLine[buffer_size];	
 
     /* parse dimensions */
     p = strchr(line, '[');
@@ -414,7 +415,7 @@ int firstPass(int index) {
     }
 
     readLine = takeInLine(currentLine.content, fp);
-    while (readLine != EOF) {
+    while (readLine != EOF_only_line) {
         if (readLine != 0) {
             countError++;
             lineNumber++;
