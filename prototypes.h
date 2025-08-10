@@ -16,6 +16,7 @@
 
 #define CODE 0
 #define DATA 1
+#define EXTERN 2
 
 #define wordIsLABEL 0
 #define wordIsCOMMAND 1
