@@ -57,6 +57,7 @@ int main (int argc, char *argv[])
 	if (fileArr == NULL)
 		goto cleanUp;
 	
+
 	
 	/* 4) build nameArr- an array of strings, each one is a name of a .as file */
 	nameArr = make_nameArr(argc, argv);
