@@ -510,7 +510,7 @@ int firstPass(int index) {
 
     if (IC + DC >= MAX_TOTAL_ADDRESSES) {
         printf("\nProgram size (IC + DC = %d) exceeds maximum memory limit (%d) in file \"%s\"\n\n",
-               (IC + DC), MAX_TOTAL_ADDRESSES, nameArr[amOffset + fileCounter+1]);
+               (IC + DC), MAX_TOTAL_ADDRESSES, nameArr[fileCounter+1]);
         countError++;
     }
 
