@@ -1123,3 +1123,76 @@ int check_macroName(char *ptr)
 	
 	return 0;
 }
+
+
+int check_macroOpenLine(char *line)
+{
+	int charsRead, status;
+	char *ptr, word[buffer_size];
+	ptr = line;
+	
+	/* length */
+	if (check_lineLength(line) == ERROR)
+		return ERROR;
+	
+	/* skip mcro */
+	status = sscanf(ptr, "%s%n", word, &charsRead);
+	if (status != 1 || strcmp(word, "mcro") != 0)
+	{
+		printf("\nMissing 'mcro' directive at start of line. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		return ERROR;
+	}
+	ptr += charsRead; /* advance through the line (skip "mcro") */
+	
+	/* check macro name */
+	status = sscanf(ptr, "%s%n", word, &charsRead);
+	if (status != 1)
+	{
+		printf("\nMissing macro name. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		return ERROR;
+	}
+	
+	else if (check_macroName(word) == ERROR)
+		return ERROR;
+	ptr += charsRead; /* advance through the line (skip macro name) */
+	
+	/* check for garbage text */
+	if (!isEndOfLine_or_whiteSpaceOnly(ptr))
+	{
+		printf("\nExtraneous text after line. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		return ERROR;
+	}
+	
+	return 0;
+}
+
+
+
+int check_macroCloseLine(char *line)
+{
+	int charsRead, status;
+	char *ptr, word[buffer_size];
+	ptr = line;
+	
+	/* length */
+	if (check_lineLength(line) == ERROR)
+		return ERROR;
+	
+	/* skip mcroend */
+	status = sscanf(ptr, "%s%n", word, &charsRead);
+	if (status != 1 || strcmp(word, "mcroend") != 0)
+	{
+		printf("\nMissing 'mcroend' directive. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		return ERROR;
+	}
+	ptr += charsRead; /* advance through the line (skip "mcro") */
+	
+	/* check for garbage text */
+	if (!isEndOfLine_or_whiteSpaceOnly(ptr))
+	{
+		printf("\nExtraneous text after line. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		return ERROR;
+	}
+	
+	return 0;
+}
