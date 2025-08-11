@@ -1,6 +1,5 @@
 #include "prototypes.h"
 
-/* ===================== Prototypes (short usage notes) ===================== */
 /* Trim trailing spaces/tabs/newlines in-place. Use before parsing. */
 static void rstrip(char *s);
 /* True if line is empty or comment (';') after leading spaces. */
@@ -15,13 +14,17 @@ static const char *leading_label(const char *s, char *label, size_t label_sz);
 static const char *first_token(const char *s, char *buf, size_t buf_sz);
 /* Lookup a macro by name in your global macroArr. */
 static macro *find_macro_by_name(const char *name);
-/* Write all lines of a stored macro to 'out'. */
+/* Emit all stored lines of a macro to 'out'. */
 static void write_macro_body(FILE *out, const macro *m);
 /* Read macro body lines until 'mcroend' and store via addLineToMacro. */
 static int collect_macro_block(FILE *fp, const char *macroName, int *pLineCounter);
+/* True if rest of line (from p) is only spaces/tabs or a ';' comment. */
+static int is_ws_or_comment_rest(const char *p);
+/* Expand macro; if label given, attach it to first meaningful line. Return 1 if expanded. */
+static int expand_macro_with_optional_label(FILE *out, const macro *m, const char *opt_label);
 
 
-/* ============================ Implementations ============================= */
+/* ======================================================================================= */
 
 static void rstrip(char *s) {
     size_t n;
@@ -126,9 +129,40 @@ static int collect_macro_block(FILE *fp, const char *macroName, int *pLineCounte
     return 0;
 }
 
+static int is_ws_or_comment_rest(const char *p) {
+    p = skipWhiteSpace((char *)p);
+    return (*p == '\0' || *p == '\n' || *p == ';');
+}
 
-/* =============================== Main routine ============================== */
-/* Pre-assembler (single pass): collect macros + expand calls into .am output. */
+static int expand_macro_with_optional_label(FILE *out, const macro *m, const char *opt_label) {
+    int i, first_real = -1;
+    if (!m) return 0;
+
+    for (i = 0; i < m->lineAmount; ++i) {
+        const char *s = skipWhiteSpace(m->macroLines[i]);
+        if (*s != '\0' && *s != '\n' && *s != ';') { first_real = i; break; }
+    }
+
+    if (opt_label && first_real < 0) {
+        return 0;
+    }
+
+    if (opt_label && first_real >= 0) {
+        for (i = 0; i < first_real; ++i) { fputs(m->macroLines[i], out); fputc('\n', out); }
+        fputs(opt_label, out);
+        fputc(' ', out);
+        fputs(m->macroLines[first_real], out);
+        fputc('\n', out);
+        for (i = first_real + 1; i < m->lineAmount; ++i) { fputs(m->macroLines[i], out); fputc('\n', out); }
+        return 1;
+    }
+
+    write_macro_body(out, m);
+    return 1;
+}
+
+
+/* ========================================================================================== */
 int preAssemble(int index) {
 
     FILE *fp;
@@ -143,10 +177,7 @@ int preAssemble(int index) {
     char *fileName = nameArr[index];
     char outName[MAX_LINE_LENGTH];
     size_t len;
-
-    (void)first_word; /* silence unused if not needed */
-
-    /* diagnostics context for your error printers */
+    
     fileCounter = index;
     lineCounter = 0;
 
@@ -157,7 +188,6 @@ int preAssemble(int index) {
         return ERROR;
     }
 
-    /* derive ".am" safely by swapping the last char 's'->'m' */
     strncpy(outName, nameArr[index], sizeof(outName)-1);
     outName[sizeof(outName)-1] = '\0';
     len = strlen(outName);
@@ -190,7 +220,6 @@ int preAssemble(int index) {
 
         rstrip(currentLine.content);
 
-        /* 1) Macro definition: collect body; do not emit the block */
         {
             char macroName[MAX_LABEL_LENGTH];
             if (extract_macro_name_after_check(currentLine.content, macroName, sizeof(macroName))) {
@@ -205,7 +234,6 @@ int preAssemble(int index) {
             }
         }
 
-        /* 2) Empty/comment line → copy as-is */
         if (is_empty_or_comment(currentLine.content)) {
             fputs(currentLine.content, output);
             fputc('\n', output);
@@ -213,36 +241,36 @@ int preAssemble(int index) {
             continue;
         }
 
-        /* 3) Regular line: maybe "LABEL: MACRO" or "MACRO" */
         ptr = currentLine.content;
         nextPtr = (char *)leading_label(ptr, label, sizeof(label));
 
         if (nextPtr != NULL) {
             char tok[MAX_LABEL_LENGTH];
+            const char *after_tok;
             macro *mm;
 
             nextPtr = (char *)skipWhiteSpace(nextPtr);
-            first_token(nextPtr, tok, sizeof(tok));
+            after_tok = first_token(nextPtr, tok, sizeof(tok));
             mm = (tok[0] ? find_macro_by_name(tok) : NULL);
 
-            if (mm) {
-                /* write label on its own line, then the macro body */
-                fputs(label, output);
-                fputc('\n', output);
-                write_macro_body(output, mm);
+            if (mm && is_ws_or_comment_rest(after_tok)) {
+                if (!expand_macro_with_optional_label(output, mm, label)) {
+                    fputs(currentLine.content, output); fputc('\n', output);
+                }
             } else {
                 fputs(currentLine.content, output);
                 fputc('\n', output);
             }
         } else {
             char tok[MAX_LABEL_LENGTH];
+            const char *after_tok;
             macro *mm;
 
-            first_token(currentLine.content, tok, sizeof(tok));
+            after_tok = first_token(currentLine.content, tok, sizeof(tok));
             mm = (tok[0] ? find_macro_by_name(tok) : NULL);
 
-            if (mm) {
-                write_macro_body(output, mm);
+            if (mm && is_ws_or_comment_rest(after_tok)) {
+                (void)expand_macro_with_optional_label(output, mm, NULL);
             } else {
                 fputs(currentLine.content, output);
                 fputc('\n', output);
