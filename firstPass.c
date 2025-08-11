@@ -405,7 +405,7 @@ int firstPass(int index) {
     lineNode *dataList = NULL;
     binTree **curLabelTable = &labelTable[index];
 
-    fp = fopen(fileName, "r");
+    fp = fileArr[index];
     if (fp == NULL) {
         return -1;
     }
