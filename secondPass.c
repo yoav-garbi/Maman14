@@ -1,151 +1,122 @@
 #include "prototypes.h"
+#include "header.h"
+
+lineNode **lineArr;
+char **nameArr;
+FILE **fileArr;
+binTree **labelTable;
+macro **macroArr;
+int *icArr;
+int *dcArr;
+int lineCounter;
+int fileCounter;
+int macroCounter;
+lineNode **entryLineArr;
+lineNode **externLineArr;
+char ***argvPointer;
+int amOffset;
 
 
-
-int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char **nameArr)
+int main (int argc, char *argv[])
 {
-	int errorFlag = 0, numFiles = argc - 1, obOffset = 2 * numFiles, entOffset = 3 * numFiles, extOffset = 4 * numFiles, type;
-	char *character, label[buffer_size], *labelPtr, binAddress[address_binary_representation_size+1];
-	binTree *node;
-	lineNode *line, *entryLine, *externLine;
-	FILE *tempFile;
+	int numFiles = argc-1, errorFlag = 0, res;
+	labelTable = NULL;
+	macroArr = NULL;
+	macroCounter = 0;
+	icArr = NULL;
+	dcArr = NULL;
+	entryLineArr = NULL;
+	externLineArr = NULL;
+	argvPointer = &argv;
+	amOffset = numFiles;
 	
 	
-	/* add/update enty labels across all labelTables */
-	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) /* each iteration deals with one file */
-		for (entryLine = entryLineArr[fileCounter]; entryLine != NULL; entryLine = entryLine->next) /* each iteration deals with one label */
-		{
-			labelPtr = entryLine->line;
-			
-			/* mark this label's real definition as an entry */
-			if (addEntryLocal(labelPtr) == ERROR)
-				return ERROR;
-			
-			/* import the label into other files as an external label */
-			node = search(labelTable[fileCounter], labelPtr);
-			if (node != NULL)
-				addExternAcross(entryLine->line, node->symbolType, numFiles);
-		}
-	
-	/* mark existing nodes as external or insert a new node with address=0 */
-	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) /* each iteration deals with one file */
-		for (externLine = externLineArr[fileCounter]; externLine != NULL; externLine = externLine->next) /* each iteration deals with one label */
-		{ 
-			labelPtr = externLine->line;
-			node = search(labelTable[fileCounter], labelPtr);
-			
-			if (node != NULL) /* there is already an existing node- mark it as external */
-				node->isExternal = 1;
-				
-			else /* there is no symbol yet- insert an external label node (address=0) */
-			{
-				type = check_isExternalLabelDefinedInOtherFile(labelPtr, numFiles);
-				
-				if (type != ERROR)
-					addNode(&labelTable[fileCounter], labelPtr, 0, CODE, 1, 0);
-			}
-		}
+	/* 1) check that source file/s were entered, and are legal */
+	if (check_fileEntered(argc) == ERROR || check_fileName(numFiles) == ERROR)
+		goto cleanUp;
 	
 	
-	/* replace labels with address */
-	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) /* each iteration is one file */
-	{
-		if (lineArr[fileCounter] == NULL)
-			break;
+	/* 2) initialize relevant structs and arrays */
+	if (initializeLabelTables(argc) == ERROR) /* initialize labelTables array */
+		goto cleanUp;
+	
+	lineArr = calloc(numFiles, sizeof(lineNode *)); /* initialize lineArr- lineArr is an array of pointers to linked lists. each linked list is like a file because it holds all lines */
+	if (check_allocation(lineArr) == ERROR)
+		goto cleanUp;
+	
+	icArr = calloc(numFiles, sizeof(int)); /* initialize icArr */
+	dcArr = calloc(numFiles, sizeof(int)); /* initialize dcArr */
+	if (check_allocation(icArr) == ERROR || check_allocation(dcArr) == ERROR)
+		goto cleanUp;
+	
+	entryLineArr = calloc(numFiles, sizeof(lineNode *)); /* initialize entryLineArr- each list holds all entry-d labels from one file */
+	if (check_allocation(entryLineArr) == ERROR)
+		goto cleanUp;
+	
+	externLineArr = calloc(numFiles, sizeof(lineNode *)); /* initialize externLineArr- each list holds all raw lines (from one file) that used an external label */
+	if (check_allocation(externLineArr) == ERROR)
+		goto cleanUp;
+	
+	if (initializeMacroArr() == ERROR) /* initialize macro array */
+		goto cleanUp;
+	
+	
+	
+	/* 3) open .as files (store in fileArr) */
+	fileArr = getFiles(argc, argv);
+	if (fileArr == NULL)
+		goto cleanUp;
+	
+	
+	/* 4) build nameArr- an array of strings, each one is a name of a .as file */
+	nameArr = make_nameArr(argc, argv);
+	if (nameArr == NULL)
+		goto cleanUp;
+	
+	
+	/* 5) pre-assembler */
+	
+	
 		
-		for (line = lineArr[fileCounter], lineCounter = 0; line != NULL; line = line->next, ++lineCounter) /* each iteration is one line */
-		{
-			character = line->line;
-			
-			if (*character != ' ') /* if there's a label in the line, it is always the first thing in the line */
-				continue;
-			
-			if (*character == '\n')
-				continue;
-			
-			sscanf(character, "%s", label);
-			node = search(labelTable[fileCounter], label);
-			
-			if (check_labelExist_or_legalExternalUse(node, label, line, numFiles) == ERROR) /* if label is ilegaly external or isn't in labelTable at all */
-			{
-				errorFlag = 1;
-				continue; /* go to next line */
-			}
-			
-			base10_to_base2_forAddress(node->address, binAddress); /* translate address to binary */
-			
-			memcpy(character + 1, binAddress, 8); /* use address to overwrite the label */
-			
-			while (*character != ' ')	/* delete any remaining parts of the label */
-				*character = ' ';
-		}
+	/* 6) first pass */
+	for (fileCounter = 0; fileCounter < numFiles; fileCounter++)
+	{
+    		lineCounter = 0;
+			res = firstPass(fileCounter);
+    		if (res != 0) {
+        		printf("Error in first pass of file %s (%d errors found)\n", nameArr[fileCounter], res);
+        		errorFlag = 1;
+    		}
 	}
-
-
-		
-	if (errorFlag == 1)
-		return ERROR;
 	
-	
-	
-	/* create .ob file (copy lines to file and translate to base4) */
-	for (fileCounter = 0; fileCounter < numFiles && lineArr[fileCounter] != NULL; fileCounter++) /* each iteration is one file */
+	if (errorFlag)
 	{
-		create_obFile(argc, fileArr, nameArr, fileCounter);
-		
-		/* write IC in first line */
-		base10_to_base2(icArr[fileCounter], binAddress);
-		fprintf(fileArr[obOffset + fileCounter], "%s\t\t\t", binAddress);
-		
-		/* write DC in first line */
-		base10_to_base2(dcArr[fileCounter], binAddress);
-		fprintf(fileArr[obOffset + fileCounter], "%s\t\t\t", binAddress);
-		
-		for (line = lineArr[fileCounter]; line != NULL; line = line->next) /* each iteration is one line */
-		{
-			base10_to_base2_forAddress(node->address, binAddress);
-			fprintf(fileArr[obOffset + fileCounter], "%s\t\t", binAddress);
-			
-			for (character = line->line; *character != '\0'; character++) /* each iteration is one char */
-			{
-				if (*character == ' ')
-					continue;
-			
-				fputc(*character, fileArr[obOffset + fileCounter]);
-			}
-		}
-		
-		tempFile = fopen("temp", "w+");
-		if (check_newFileExistence(tempFile) == ERROR)
-			return ERROR;
-			
-		copyFile(fileArr[obOffset + fileCounter], tempFile);
-		freopen(NULL, "w+", fileArr[obOffset + fileCounter]); /* truncate and reopen the ob file */
-		
-		base2_to_base4_fileToFile(tempFile, fileArr[obOffset + fileCounter]);
-		
-		fclose(tempFile);
-		remove("temp");
+    		printf("\nErrors were found in the first pass. Compilation terminated\n");
+    		goto cleanUp;
 	}
 	
 	
 	
+	/* 7) second pass */
+	if (secondPass(argc, argv, fileArr, lineArr, nameArr) == ERROR)
+		goto cleanUp;
 	
-	/* create extension files (if there were no errors) */
-	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) /* each iteration is one file */
-	{
-		if (searchEnt(labelTable[fileCounter]))	/* if there is an entry to put in .ent file */
-		{
-			create_entFile(argc, fileArr, nameArr, fileCounter);
-			writeEnt(fileArr[entOffset + fileCounter], labelTable[fileCounter]);
-		}
-		
-		if (searchExt(labelTable[fileCounter]))	/* if there is an extern label to put in .ext file */
-		{
-			create_extFile(argc, fileArr, nameArr, fileCounter);
-			writeExt(fileArr[extOffset + fileCounter], labelTable[fileCounter]);
-		}
-	}
+	
+	
+	/* 8) cleanup everything- close all files and free all memory */
+	cleanUp:
+	closeFiles(argc, fileArr); /* close all open files */
+	
+	/* free all allocated storage */
+	freeLabelTable(&labelTable, numFiles);
+	freeListArr(&lineArr, numFiles);
+	freeNameArr(&nameArr, numFiles);
+	freeMacroArr();
+	freeFileArr(&fileArr);
+	free(icArr);
+	free(dcArr);
+	freeListArr(&entryLineArr, numFiles);
+	freeListArr(&externLineArr, numFiles);
 	
 	return 0;
 }
