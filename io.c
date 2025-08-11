@@ -165,12 +165,12 @@ int takeInLine(char buffer[], FILE *source)
 	
 		if (fgetsStatus == NULL) /* fgets returns NULL if the entire input is EOF (an empty line)- end the task */
 			return EOF_only_line;
-	
-		if (check_lineLength(buffer) == ERROR) /* line is too long, so we can skip it */
-			continue;
-		
+
 		c = buffer[0];
 		if (c == ';')
+			continue;
+		
+		if (check_lineLength(buffer) == ERROR) /* line is too long, so we can skip it */
 			continue;
 		
 		for (i = 0, flag = 0; c != EOF && c != '\0'; ++i)	/* read the line with c and mark count with 1 if encountering a non-white-space (this means a real line) */
