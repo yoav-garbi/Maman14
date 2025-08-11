@@ -170,7 +170,7 @@ void processMatDirective(char *line, int *DC, lineNode **dataList, int lineNum) 
     char *p;
     int rows = 0, cols = 0, total, count = 0;
     char *token;
-    char binaryLine[buffer_size];	
+    char binaryLine[buffer_size];
 
     /* parse dimensions */
     p = strchr(line, '[');
@@ -429,6 +429,14 @@ int firstPass(int index) {
         currentLine.hasLabel = 0;
         currentLine.error[0] = '\0';
         currentLine.label[0] = '\0';
+
+        /* run surface-level line checks before parsing */
+        if (check_lineGeneral(currentLine.content) != 0) {
+            countError++;
+            lineNumber++;
+            readLine = takeInLine(currentLine.content, fp);
+            continue;
+        }
 
         ptr = skipWhitespace(currentLine.content);
 
