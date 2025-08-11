@@ -166,6 +166,12 @@ int check_fileName(int numFiles)
 			return ERROR;
 		}
 		
+		if (len > MAX_LINE_LENGTH)
+		{
+			printf("\nFile name is too long. (File: \"%s\")\n\n", (*argvPointer)[fileCounter]);
+			return ERROR;
+		}
+		
 		c = &((*argvPointer)[fileCounter+1][len - 3]); /* -3: (file name) + ".as" */
 		
 		if (strcmp(c,".as") != 0)
