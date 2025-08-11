@@ -14,7 +14,6 @@ int macroCounter;
 lineNode **entryLineArr;
 lineNode **externLineArr;
 char ***argvPointer;
-int amOffset;
 
 
 int main (int argc, char *argv[])
@@ -28,7 +27,6 @@ int main (int argc, char *argv[])
 	entryLineArr = NULL;
 	externLineArr = NULL;
 	argvPointer = &argv;
-	amOffset = numFiles;
 	
 	
 	/* 1) check that source file/s were entered, and are legal */
@@ -76,7 +74,6 @@ int main (int argc, char *argv[])
 	
 	/* 5) pre-assembler */
 	
-
 	
 		
 	/* 6) first pass */
