@@ -196,8 +196,6 @@ int addIC(binTree **, int);
 int addEntryLocal(char *);
 int addExternAcross(char *, int, int);
 
-
-
 int addLineNode(lineNode **, char *, int, int);
 int addICList(lineNode *, int);
 int printList(lineNode *);																								/* TEMP */
@@ -206,7 +204,6 @@ int freeListArr(lineNode ***, int);
 int isAlreadyEntry(char *);
 int isAlreadyExtern(char *);
 
-
 int freeNameArr(char ***, int);
 
 int freeFileArr(FILE ***);
@@ -214,6 +211,7 @@ int freeFileArr(FILE ***);
 int initializeMacroArr();
 int addMacro(char *);
 int addLineToMacro(char *, char *);
+int freeMacroArr();
 
 
 
