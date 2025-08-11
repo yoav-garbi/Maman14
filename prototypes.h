@@ -156,8 +156,8 @@ int check_matValues(char **, int);
 int check_stringData(char **);
 int check_commandOperands(char **, char *);
 int check_macroName(char *);
-int check_garbageTextBeforeMacro(char *);
-int check_garbageTextAfterMacro(char *);
+int check_macroOpenLine(char *);
+int check_macroCloseLine(char *);
 
 
 
