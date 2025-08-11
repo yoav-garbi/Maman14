@@ -319,10 +319,13 @@ int addLineNode(lineNode **head, char *line, int address, int lineNum)
 	return 0;
 }
 
+
 int addICList(lineNode *dataList, int IC_FINAL) {
+	lineNode *current;
 	if (dataList==NULL)
 		return 0;
-	lineNode *current = dataList;
+	
+	current = dataList;
 	while (current != NULL) {
 		current->address += IC_FINAL;
 		current = current->next;
@@ -436,9 +439,142 @@ int freeFileArr(FILE ***arr) /* arr = pointer to a pointer to an array of FILE p
 
 
 
+/* ================================================================================================================================ */
 
 
 
+int initializeMacroArr()
+{
+	/* create an dinamic array of macros */
+	macroArr = (macro **)calloc(1, sizeof(macro *));
+	if (check_allocation(macroArr) == ERROR)
+		return ERROR;
+	
+	return 0;
+}
+
+
+int addMacro(char *name)
+{
+	int len;
+	macro **tempArr, *newMacro;
+	
+	len = (int)strlen(name);
+	
+	if (macroCounter != 0) /* need to reallocate memory */
+	{
+		tempArr = (macro **)realloc(macroArr, (macroCounter + 1) * sizeof(macro *));
+		if (check_allocation(tempArr) == ERROR)
+			return ERROR;
+		macroArr = tempArr;
+	}
+	
+	/* create macro */
+	newMacro = (macro *)malloc(sizeof(macro));
+	if (check_allocation(newMacro) == ERROR)
+		return ERROR;
+	
+	/* allocate for lines */
+	newMacro->macroLines = calloc(1, sizeof(char *));
+	if (check_allocation(newMacro->macroLines) == ERROR)
+		return ERROR;
+	
+	/* allocate for name */
+	newMacro->name = (char *)malloc(len+1); /* +1 for \0 */
+	if (check_allocation(newMacro->name) == ERROR)
+		return ERROR;
+	strcpy(newMacro->name, name);
+	
+	
+	newMacro->lineAmount = 0;
+	macroArr[macroCounter] = newMacro;
+	macroCounter++;
+	
+	return 0;
+}
+
+
+int addLineToMacro(char *name, char *line)
+{
+	int i, lineAmount;
+	char **tempLines, *lineCopy;
+	
+	for (i = 0; i < macroCounter && strcmp(name, macroArr[i]->name) != 0; ++i);
+	
+	if (i == macroCounter) /* macro doesn't exist */
+		return ERROR;
+	
+	lineAmount = macroArr[i]->lineAmount;
+	
+	
+	if (lineAmount != 0) /* need to reallocate memory */
+	{
+		tempLines = (char **)realloc(macroArr[i]->macroLines, sizeof(char *) * (lineAmount+1));
+		if (check_allocation(tempLines) == ERROR)
+			return ERROR;
+		macroArr[i]->macroLines = tempLines;
+	}
+	
+	/* allocate memory for the line */
+	lineCopy = (char *)malloc(strlen(line) + 1); /* +1 for \0 */
+	if (check_allocation(lineCopy) == ERROR)
+		return ERROR;
+	strcpy(lineCopy, line);
+	
+	macroArr[i]->macroLines[lineAmount] = lineCopy;
+	macroArr[i]->lineAmount = lineAmount + 1;
+	
+	return 0;
+}
 
 
 
+/* free allocated memory for macroArr and all inner components */
+int freeMacroArr()
+{
+	int i, j;
+	macro *m;
+	
+	if (macroArr == NULL) /* macroArr not initialized yet */
+		return 0;
+	
+	for (i = 0; i < macroCounter; ++i) /* for every macro */
+	{
+		m = macroArr[i];
+		if (m == NULL)
+			continue;
+	
+		/* free each line */
+		if (m->macroLines != NULL)
+		{
+			for (j = 0; j < m->lineAmount; ++j)
+			{
+				if (m->macroLines[j] != NULL)
+				{
+					free(m->macroLines[j]);
+					m->macroLines[j] = NULL;
+				}
+			}
+			free(m->macroLines);
+			m->macroLines = NULL;
+		}
+	
+		/* free the macro name */
+		if (m->name != NULL)
+		{
+			free(m->name);
+			m->name = NULL;
+		}
+	
+		/* free the macro object */
+		free(m);
+		macroArr[i] = NULL;
+	}
+	
+	/* free the pointer array */
+	free(macroArr);
+	macroArr = NULL;
+	macroCounter = 0; /* reset for reuse */
+
+	return 0;
+}
