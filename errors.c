@@ -153,35 +153,40 @@ int check_fileEntered(int argc)
 
 int check_fileName(int numFiles)
 {
-	int len;
-	char *c;
+	int len, errorFlag = 0;
+	char *c, *name;
+	
 	
 	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter)
 	{
-		len = strlen((*argvPointer)[fileCounter+1]);
+		name = (*argvPointer)[fileCounter + 1];
+		len = strlen(name);
 			
 		if (len < 4)
 		{
-			printf("\nFile name must end with '.as' and isn't allowed to be only '.as' (no name). (File: \"%s\")\n\n", (*argvPointer)[fileCounter]);
-			return ERROR;
+			printf("\nFile name must end with '.as' and isn't allowed to be only '.as' (no name). (File: \"%s\")\n\n", name);
+			errorFlag = ERROR;
+			continue;
 		}
 		
-		if (len > MAX_LINE_LENGTH)
+		if (len > MAX_LINE_LENGTH-2) /* -2 because: -\n -\0 */
 		{
-			printf("\nFile name is too long. (File: \"%s\")\n\n", (*argvPointer)[fileCounter]);
-			return ERROR;
+			printf("\nFile name is too long. (File: \"%s\")\n\n", name);
+			errorFlag = ERROR;
+			continue;
 		}
 		
-		c = &((*argvPointer)[fileCounter+1][len - 3]); /* -3: (file name) + ".as" */
+		c = &(name[len - 3]); /* -3: (file name) + ".as" */
 		
 		if (strcmp(c,".as") != 0)
 		{
-			printf("\nFile name must end with '.as'. (File: \"%s\")\n\n", (*argvPointer)[fileCounter]);
-			return ERROR;
+			printf("\nFile name must end with '.as'. (File: \"%s\")\n\n", name);
+			errorFlag = ERROR;
+			continue;
 		}
 	}
 	
-	return 0;
+	return errorFlag;
 }
 
 
@@ -240,17 +245,24 @@ int check_labelName(char *ptr)	/* ptr entered should be "(labelStr):\0" */
 		return ERROR;	
 	}
 	
-	if (len > MAX_LABEL_LENGTH)
+	if (len > MAX_LABEL_LENGTH-1) /* -1 because -\0 */
 	{
 		printf("\nLabel exceeding the allowed length of 30 chars. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
 		return ERROR;	
 	}
 	
-	if (!isalpha(ptr[0]))
+	if (!isalpha(ptr[0])) /* check that macro name starts with letter- this eliminates directive names (because they start with '.') */
 	{
 		printf("\nLabel name starts with non-letter. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
 		return ERROR;
 	}
+	
+	for (i = 0; i < len; ++i)
+		if (!isalnum(ptr[i]) && ptr[i] != ':')
+		{
+			printf("\nLabel name contains a non-alnum. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+			return ERROR;
+		}
 	
 	if (ptr[0] == 'r' && ptr[1] >= '0' && ptr[1] <= '7' && ptr[2] == ':')
 	{
@@ -265,37 +277,7 @@ int check_labelName(char *ptr)	/* ptr entered should be "(labelStr):\0" */
 			return ERROR;
 		}
 	
-	if (strcmp(ptr, ".entry") == 0)
-	{
-		printf("\nLabel name cannot be \".entry\". (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
-		return ERROR;
-	}
-	
-	if (strcmp(ptr, ".extern") == 0)
-	{
-		printf("\nLabel name cannot be \".extern\". (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
-		return ERROR;
-	}
-	
-	if (strcmp(ptr, ".data") == 0)
-	{
-		printf("\nLabel name cannot be \".data\".(Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
-		return ERROR;
-	}
-	
-	if (strcmp(ptr, ".string") == 0)
-	{
-		printf("\nLabel name cannot be \".string\". (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
-		return ERROR;
-	}
-	
-	if (strcmp(ptr, ".mat") == 0)
-	{
-		printf("\nLabel name cannot be \".mat\". (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
-		return ERROR;
-	}
-	
-	if (ptr[len] != ':')
+	if (len >= 2 && ptr[len-1] != ':')
 	{
 		printf("\nMissing ':' at the end of label. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
 		return ERROR;
@@ -1098,4 +1080,46 @@ int check_commandOperands(char **line, char *commandName)
 	
 	*line = c; /* move caller's line pointer */
 	return 1;
+}
+
+
+
+/* check that macro name is legal: not a command/register, starts with letter, alnum for every other char, not directive (already checked by ptr[0] == isdigit) */
+int check_macroName(char *ptr)
+{
+	int len = strlen(ptr), i;
+	
+	if (len > MAX_LABEL_LENGTH - 1) /* -1 because -\0 */
+	{
+		printf("\nMacro name exceeding the allowed length. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		return ERROR;	
+	}
+	
+	if (!isalpha(ptr[0]))
+	{
+		printf("\nMacro name starts with non-letter. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		return ERROR;
+	}
+	
+	for (i = 0; i < len; ++i)
+		if (!isalnum(ptr[i]))
+		{
+			printf("\nMacro name contains a non-alnum. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+			return ERROR;
+		}
+	
+	if (len == 2 && ptr[0] == 'r' && ptr[1] >= '0' && ptr[1] <= '7')
+	{
+		printf("\nMacro name is the name of a register. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		return ERROR;
+	}
+	
+	for (i = 0; i < num_of_opcodes; ++i)
+		if (strcmp(ptr, opcodeTable[i].name) == 0)
+		{
+			printf("\nMacro name is the name of a command. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+			return ERROR;
+		}
+	
+	return 0;
 }
