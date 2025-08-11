@@ -111,6 +111,7 @@ extern int *dcArr;
 extern lineNode **entryLineArr;
 extern lineNode **externLineArr;
 extern char ***argvPointer;
+extern int amOffset;
 
 
 
