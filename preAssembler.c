@@ -1,0 +1,260 @@
+#include "prototypes.h"
+
+/* ===================== Prototypes (short usage notes) ===================== */
+/* Trim trailing spaces/tabs/newlines in-place. Use before parsing. */
+static void rstrip(char *s);
+/* True if line is empty or comment (';') after leading spaces. */
+static int is_empty_or_comment(const char *s);
+/* If line is valid 'mcro <name>' (per your checker), return 1 and copy name. */
+static int extract_macro_name_after_check(const char *line, char *out_name, size_t out_sz);
+/* True if line is valid 'mcroend' (per your checker). */
+static int is_mcro_close(const char *line);
+/* If line starts with 'LABEL:' return ptr after ':' and copy label (incl. ':'). */
+static const char *leading_label(const char *s, char *label, size_t label_sz);
+/* Copy first token after spaces to buf; return ptr after token. */
+static const char *first_token(const char *s, char *buf, size_t buf_sz);
+/* Lookup a macro by name in your global macroArr. */
+static macro *find_macro_by_name(const char *name);
+/* Write all lines of a stored macro to 'out'. */
+static void write_macro_body(FILE *out, const macro *m);
+/* Read macro body lines until 'mcroend' and store via addLineToMacro. */
+static int collect_macro_block(FILE *fp, const char *macroName, int *pLineCounter);
+
+
+/* ============================ Implementations ============================= */
+
+static void rstrip(char *s) {
+    size_t n;
+    if (!s) return;
+    n = strlen(s);
+    while (n > 0 && (s[n-1] == '\n' || s[n-1] == '\r' || s[n-1] == ' ' || s[n-1] == '\t'))
+        s[--n] = '\0';
+}
+
+static int is_empty_or_comment(const char *s) {
+    const char *p = skipWhiteSpace((char *)s);
+    return (*p == '\0' || *p == '\n' || *p == ';');
+}
+
+static int extract_macro_name_after_check(const char *line, char *out_name, size_t out_sz) {
+    int ok, n1;
+    char dummy[MAX_LINE_LENGTH];
+    const char *p;
+
+    (void)out_sz; /* name length already validated by your checker */
+
+    ok = check_macroOpenLine((char *)line);
+    if (ok != 0) return 0;
+
+    p = line;
+    if (sscanf(p, "%s%n", dummy, &n1) != 1) return 0; /* "mcro" */
+    p += n1;
+    if (sscanf(p, "%s", out_name) != 1) return 0;     /* macro name */
+    return 1;
+}
+
+static int is_mcro_close(const char *line) {
+    return (check_macroCloseLine((char *)line) == 0);
+}
+
+static const char *leading_label(const char *s, char *label, size_t label_sz) {
+    const char *p = skipWhiteSpace((char *)s);
+    const char *q = p;
+    size_t len;
+
+    while (*q && *q != ':' && !isspace((unsigned char)*q)) q++;
+    if (*q != ':') return NULL;
+
+    len = (size_t)(q - p) + 1; /* include ':' */
+    if (label_sz) {
+        if (len >= label_sz) len = label_sz - 1;
+        memcpy(label, p, len);
+        label[len] = '\0';
+    }
+    return q + 1;
+}
+
+static const char *first_token(const char *s, char *buf, size_t buf_sz) {
+    const char *p = skipWhiteSpace((char *)s);
+    size_t i = 0;
+    while (*p && !isspace((unsigned char)*p)) {
+        if (i + 1 < buf_sz) buf[i++] = *p;
+        p++;
+    }
+    if (buf_sz > 0) buf[i] = '\0';
+    return p;
+}
+
+static macro *find_macro_by_name(const char *name) {
+    int i;
+    if (!macroArr || macroCounter <= 0) return NULL;
+    for (i = 0; i < macroCounter; ++i) {
+        if (macroArr[i] && macroArr[i]->name && strcmp(macroArr[i]->name, name) == 0)
+            return macroArr[i];
+    }
+    return NULL;
+}
+
+static void write_macro_body(FILE *out, const macro *m) {
+    int i;
+    if (!m) return;
+    for (i = 0; i < m->lineAmount; ++i) {
+        fputs(m->macroLines[i], out);
+        fputc('\n', out);
+    }
+}
+
+static int collect_macro_block(FILE *fp, const char *macroName, int *pLineCounter) {
+    LineData lineBuf;
+    int readLine;
+
+    for (;;) {
+        readLine = takeInLine(lineBuf.content, fp);
+        if (readLine == EOF_only_line) {
+            printf("\nUnexpected EOF before 'mcroend'. (File: \"%s\")\n\n", (*argvPointer)[fileCounter]);
+            return ERROR;
+        }
+        (*pLineCounter)++;
+        if (readLine != 0) continue;
+
+        rstrip(lineBuf.content);
+        if (is_mcro_close(lineBuf.content)) break;
+
+        if (addLineToMacro((char *)macroName, lineBuf.content) == ERROR)
+            return ERROR;
+    }
+    return 0;
+}
+
+
+/* =============================== Main routine ============================== */
+/* Pre-assembler (single pass): collect macros + expand calls into .am output. */
+int preAssemble(int index) {
+
+    FILE *fp;
+    FILE *output;
+    char first_word[MAX_LABEL_LENGTH];
+    char label[MAX_LABEL_LENGTH];
+    int lineNumber = 1;
+    int countError = 0;
+    LineData currentLine;
+    char *ptr, *nextPtr;
+    int readLine;
+    char *fileName = nameArr[index];
+    char outName[MAX_LINE_LENGTH];
+    size_t len;
+
+    (void)first_word; /* silence unused if not needed */
+
+    /* diagnostics context for your error printers */
+    fileCounter = index;
+    lineCounter = 0;
+
+    fp = fopen(fileName, "r");
+    if (fp == NULL) {
+        printf("Error opening file %s\n", fileName);
+        countError++;
+        return ERROR;
+    }
+
+    /* derive ".am" safely by swapping the last char 's'->'m' */
+    strncpy(outName, nameArr[index], sizeof(outName)-1);
+    outName[sizeof(outName)-1] = '\0';
+    len = strlen(outName);
+    if (len >= 3) outName[len - 1] = 'm';   /* ".as" -> ".am" */
+
+    output = fopen(outName, "w");
+    if (output == NULL) {
+        printf("Error opening file %s\n", outName);
+        fclose(fp);
+        countError++;
+        return ERROR;
+    }
+
+    if (initializeMacroArr() == ERROR) {
+        fclose(fp);
+        fclose(output);
+        return ERROR;
+    }
+
+    readLine = takeInLine(currentLine.content, fp);
+    while (readLine != EOF_only_line) {
+        lineCounter++;
+        lineNumber = lineCounter;
+
+        if (readLine != 0) {
+            countError++;
+            readLine = takeInLine(currentLine.content, fp);
+            continue;
+        }
+
+        rstrip(currentLine.content);
+
+        /* 1) Macro definition: collect body; do not emit the block */
+        {
+            char macroName[MAX_LABEL_LENGTH];
+            if (extract_macro_name_after_check(currentLine.content, macroName, sizeof(macroName))) {
+                if (addMacro(macroName) == ERROR) {
+                    countError++;
+                } else {
+                    if (collect_macro_block(fp, macroName, &lineCounter) == ERROR)
+                        countError++;
+                }
+                readLine = takeInLine(currentLine.content, fp);
+                continue;
+            }
+        }
+
+        /* 2) Empty/comment line → copy as-is */
+        if (is_empty_or_comment(currentLine.content)) {
+            fputs(currentLine.content, output);
+            fputc('\n', output);
+            readLine = takeInLine(currentLine.content, fp);
+            continue;
+        }
+
+        /* 3) Regular line: maybe "LABEL: MACRO" or "MACRO" */
+        ptr = currentLine.content;
+        nextPtr = (char *)leading_label(ptr, label, sizeof(label));
+
+        if (nextPtr != NULL) {
+            char tok[MAX_LABEL_LENGTH];
+            macro *mm;
+
+            nextPtr = (char *)skipWhiteSpace(nextPtr);
+            first_token(nextPtr, tok, sizeof(tok));
+            mm = (tok[0] ? find_macro_by_name(tok) : NULL);
+
+            if (mm) {
+                /* write label on its own line, then the macro body */
+                fputs(label, output);
+                fputc('\n', output);
+                write_macro_body(output, mm);
+            } else {
+                fputs(currentLine.content, output);
+                fputc('\n', output);
+            }
+        } else {
+            char tok[MAX_LABEL_LENGTH];
+            macro *mm;
+
+            first_token(currentLine.content, tok, sizeof(tok));
+            mm = (tok[0] ? find_macro_by_name(tok) : NULL);
+
+            if (mm) {
+                write_macro_body(output, mm);
+            } else {
+                fputs(currentLine.content, output);
+                fputc('\n', output);
+            }
+        }
+
+        readLine = takeInLine(currentLine.content, fp);
+    }
+
+    fclose(fp);
+    fclose(output);
+    freeMacroArr();
+
+    return countError;
+}
