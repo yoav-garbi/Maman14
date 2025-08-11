@@ -48,7 +48,6 @@ int isInstruction(char *word) {
 int addSymbolToData(binTree **root, char *str, int address) {
     binTree *found = search(*root, str);
     if (found != NULL) {
-        printf("Error symbol '%s' already exists!\n", str);
         return 0; /* already there */
     }
 
@@ -131,13 +130,11 @@ void processStringDirective(char *data, int *DC, lineNode **dataList, int lineNu
 
     start = strchr(data, '"');
     if (!start) {
-        printf("Error: No opening quote at line %d\n", lineNum);
         return;
     }
 
     end = strchr(start + 1, '"');
     if (!end || end <= start) {
-        printf("Error: Invalid string format at line %d\n", lineNum);
         return;
     }
 
@@ -181,7 +178,6 @@ void processMatDirective(char *line, int *DC, lineNode **dataList, int lineNum) 
     }
 
     if (rows <= 0 || cols <= 0) {
-        printf("Error: Invalid matrix dimensions at line %d\n", lineNum);
         return;
     }
 
@@ -411,7 +407,6 @@ int firstPass(int index) {
 
     fp = fopen(fileName, "r");
     if (fp == NULL) {
-        printf("Error opening file %s\n", fileName);
         return -1;
     }
 
@@ -514,8 +509,8 @@ int firstPass(int index) {
     icArr[index] = IC;
 
     if (IC + DC >= MAX_TOTAL_ADDRESSES) {
-        printf("Program size (IC + DC = %d) exceeds maximum memory limit (%d)\n",
-               (IC + DC), MAX_TOTAL_ADDRESSES);
+        printf("\nProgram size (IC + DC = %d) exceeds maximum memory limit (%d) in file \"%s\"\n\n",
+               (IC + DC), MAX_TOTAL_ADDRESSES, nameArr[amOffset + fileCounter+1]);
         countError++;
     }
 
