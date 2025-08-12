@@ -537,7 +537,7 @@ int check_garbageTextBeforeLine(char *line, int *matHeight, int *matLength)
 		}
 		charsRead++;
 		
-		if (!isEndOfLine_or_whiteSpaceOnly(c)) /* not end of line after .mat decleration */
+		if (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\0') /* excessive text sticked to .mat decleration */
 		{
 			printf("\nExtraneous text after '.mat'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
@@ -687,7 +687,7 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 		charsRead++;
 		c++;
 		
-		if (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\0') /* not end of line after .mat decleration */
+		if (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\0') /* excessive text sticked to .mat decleration */
 		{
 			printf("\nExtraneous text after '.mat'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
