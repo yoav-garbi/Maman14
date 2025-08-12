@@ -687,7 +687,7 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 		charsRead++;
 		c++;
 		
-		if (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\0') /* excessive text sticked to .mat decleration */
+		if (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\0') /* not end of line after .mat decleration */
 		{
 			printf("\nExtraneous text after '.mat'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
@@ -875,16 +875,20 @@ int check_dataValues(char **line, int *valueCount)
 	/* skip leading spaces before first int */
 	c = skipWhiteSpace(c);
 	
-	/* Require the first integer (empty list is illegal for .data) */
+	/* require the first integer (empty list is illegal for .data) */
 	status = scanInt(&c, &num);
-	if (!status) /* valueCount == NULL means we didn't call the func for a mat[][] check */
+	
+	if (!status) /* no data */
 	{
+		if (valueCount == NULL) /* valueCount == NULL means we didn't call the func for a mat[][] check */
+		{
+			*valueCount = 0;
+			return 1;
+		}
+		
 		printf("\nMissing value after '.data' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
         return ERROR;
 	}
-	
-	if (valueCount != NULL)
-		*valueCount  = 1;
 
 	/* take in: ", int" until no more or error */
 	while(1)
