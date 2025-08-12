@@ -1,6 +1,9 @@
 #include "prototypes.h"
 
 
+
+
+
 static void rstrip(char *s) {
     size_t n;
     if (!s) return;
@@ -156,7 +159,6 @@ int preAssemble(int index) {
 
     readLine = takeInLine(currentLine.content, fp);
     while (readLine != EOF_only_line) {
-        lineCounter++;
         lineNumber = lineCounter;
 
         if (readLine != 0) {
