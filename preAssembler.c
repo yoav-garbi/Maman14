@@ -4,7 +4,8 @@
 
 
 
-static void rstrip(char *s) {
+
+void rstrip(char *s) {
     size_t n;
     if (!s) return;
     n = strlen(s);
@@ -12,12 +13,12 @@ static void rstrip(char *s) {
         s[--n] = '\0';
 }
 
-static int is_empty_or_comment(const char *s) {
+int is_empty_or_comment(const char *s) {
     const char *p = skipWhiteSpace((char *)s);
     return (*p == '\0' || *p == '\n' || *p == ';');
 }
 
-static int extract_macro_name_after_check(const char *line, char *out_name, size_t out_sz) {
+int extract_macro_name_after_check(const char *line, char *out_name, size_t out_sz) {
     int ok, n1;
     char dummy[MAX_LINE_LENGTH];
     const char *p;
@@ -34,11 +35,11 @@ static int extract_macro_name_after_check(const char *line, char *out_name, size
     return 1;
 }
 
-static int is_mcro_close(const char *line) {
+int is_mcro_close(const char *line) {
     return (check_macroCloseLine((char *)line) == 0);
 }
 
-static const char *leading_label(const char *s, char *label, size_t label_sz) {
+const char *leading_label(const char *s, char *label, size_t label_sz) {
     const char *p = skipWhiteSpace((char *)s);
     const char *q = p;
     size_t len;
@@ -55,7 +56,7 @@ static const char *leading_label(const char *s, char *label, size_t label_sz) {
     return q + 1;
 }
 
-static const char *first_token(const char *s, char *buf, size_t buf_sz) {
+const char *first_token(const char *s, char *buf, size_t buf_sz) {
     const char *p = skipWhiteSpace((char *)s);
     size_t i = 0;
     while (*p && !isspace((unsigned char)*p)) {
@@ -66,7 +67,7 @@ static const char *first_token(const char *s, char *buf, size_t buf_sz) {
     return p;
 }
 
-static macro *find_macro_by_name(const char *name) {
+macro *find_macro_by_name(const char *name) {
     int i;
     if (!macroArr || macroCounter <= 0) return NULL;
     for (i = 0; i < macroCounter; ++i) {
@@ -76,7 +77,7 @@ static macro *find_macro_by_name(const char *name) {
     return NULL;
 }
 
-static void write_macro_body(FILE *out, const macro *m) {
+void write_macro_body(FILE *out, const macro *m) {
     int i;
     if (!m) return;
     for (i = 0; i < m->lineAmount; ++i) {
@@ -85,7 +86,7 @@ static void write_macro_body(FILE *out, const macro *m) {
     }
 }
 
-static int collect_macro_block(FILE *fp, const char *macroName, int *pLineCounter) {
+int collect_macro_block(FILE *fp, const char *macroName, int *pLineCounter) {
     LineData lineBuf;
     int readLine;
 
@@ -107,12 +108,12 @@ static int collect_macro_block(FILE *fp, const char *macroName, int *pLineCounte
     return 0;
 }
 
-static int is_ws_or_comment_rest(const char *p) {
+int is_ws_or_comment_rest(const char *p) {
     p = skipWhiteSpace((char *)p);
     return (*p == '\0' || *p == '\n' || *p == ';');
 }
 
-static int expand_macro_with_optional_label(FILE *out, const macro *m, const char *opt_label) {
+int expand_macro_with_optional_label(FILE *out, const macro *m, const char *opt_label) {
     int i, first_real = -1;
     if (!m) return 0;
 
