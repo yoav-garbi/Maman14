@@ -13,6 +13,7 @@ char *skipWhitespace(char *line) {
 
 int isLabel(char *ptr) {
     int len = 0;
+    char label[MAX_LABEL_LENGTH + 1]; /* +1 for ':' */
 
     /* find end of potential label */
     while (ptr[len] && !isspace((unsigned char)ptr[len]) && ptr[len] != ':')
@@ -21,8 +22,13 @@ int isLabel(char *ptr) {
     if (ptr[len] != ':')
         return 0;
 
-    /* TODO: check label validity */
-    if (check_labelName(ptr) == ERROR) {
+	/* copy only the label (including ':') for checking */
+	if (len + 1 >= (int)sizeof(label))
+		return ERROR;
+	memcpy(label, ptr, len + 1);
+	label[len + 1] = '\0';
+
+	if (check_labelName(label) == ERROR) {
         return ERROR;
     }
 
