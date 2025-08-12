@@ -229,9 +229,12 @@ int check_lineLength(char buffer[])
 }
 
 
-int check_registerNumber(char name[3])
+int check_registerNumber(char *name)
 {
-	if (name[0] == 'r' && (name[1] >= '0' && name[1] <= '7') && name[2] == '\0')
+	int len;
+	len = strlen(name);	
+	
+	if (len == 3 && name[0] == 'r' && (name[1] >= '0' && name[1] <= '7') && name[2] == '\0')
 		return 0; /* register name is correct */
 	
 	printf("\nRegister with this name doesn't exist. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
@@ -577,6 +580,10 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 	}
 	if (*c == '\0')
 		return EMPTY_LINE;
+		
+	/* whole-line comment */
+    if (*c == ';')
+            return EMPTY_LINE;
 
 	/* scan next word */
 	if (sscanf(c, "%s%n", word, &charsRead) < 1)
@@ -693,7 +700,7 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 			return ERROR;
 		}
 		
-		return wordIsMAT;
+		return wordIsDATA;
 	}
 
 	/* is this a command? */
@@ -870,7 +877,7 @@ int check_dataValues(char **line, int *valueCount)
 	int num, status;
 	char *c;
 	
-	c = *line;
+	c = *line;	
 	
 	/* skip leading spaces before first int */
 	c = skipWhiteSpace(c);
