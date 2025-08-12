@@ -502,8 +502,6 @@ int firstPass(int index) {
 
     lineArr[index] = concatLists(codeList, dataList);
 
-    fclose(fp);
-
     dcArr[index] = DC;
     icArr[index] = IC;
 
