@@ -11,6 +11,7 @@ int *dcArr;
 int lineCounter;
 int fileCounter;
 int macroCounter;
+int amOffset;
 lineNode **entryLineArr;
 lineNode **externLineArr;
 char ***argvPointer;
@@ -27,6 +28,7 @@ int main (int argc, char *argv[])
 	entryLineArr = NULL;
 	externLineArr = NULL;
 	argvPointer = &argv;
+	amOffset = numFiles;
 	
 	
 	/* 1) check that source file/s were entered, and are legal */
