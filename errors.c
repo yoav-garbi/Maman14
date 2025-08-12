@@ -656,7 +656,7 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 		}
 		
 		charsRead = 0;
-		if (sscanf(c, "%d%n", matHeight, &charsRead) == 0)
+		if (sscanf(++c, "%d%n", matHeight, &charsRead) == 0)
 		{
 			printf("\nMissing mat height in '.mat[][]' decleration or non-int value. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
@@ -679,14 +679,15 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 		c += charsRead;
 		
 		c = skipWhiteSpace(c);
-		if (*(c++) != ']')
+		if (*(c) != ']')
 		{
 			printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		charsRead++;
+		c++;
 		
-		if (!isEndOfLine_or_whiteSpaceOnly(c)) /* not end of line after .mat decleration */
+		if (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\0') /* not end of line after .mat decleration */
 		{
 			printf("\nExtraneous text after '.mat'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
