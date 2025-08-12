@@ -264,7 +264,7 @@ int check_labelName(char *ptr)	/* ptr entered should be "(labelStr):\0" */
 	}
 	
 	for (i = 0; i < len; ++i)
-		if (!isalnum(ptr[i]) && ptr[i] != ':')
+		if (!isalnum(ptr[i]) && ptr[i] != ':' && ptr[i] != '\0')
 		{
 			printf("\nLabel name contains a non-alnum. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
@@ -415,6 +415,9 @@ int check_externNotAlsoEntryed(char *label)
 	return 0;
 }
 
+
+
+
 /* check that there is no garbage text before the line, and that the first word is legal and valid */
 int check_garbageTextBeforeLine(char *line, int *matHeight, int *matLength)
 {
@@ -425,9 +428,9 @@ int check_garbageTextBeforeLine(char *line, int *matHeight, int *matLength)
 	/* skip white spaces before line */
 	while (*c == ' ' || *c == '\t')
 		c++;
-	if (*c == '\0')
+	if (*c == '\0' || *c == ';')
 		return EMPTY_LINE;
-
+	
 	/* scan first word */
 	if (sscanf(c, "%s%n", word, &charsRead) < 1)
 		return ERROR;
@@ -493,39 +496,48 @@ int check_garbageTextBeforeLine(char *line, int *matHeight, int *matLength)
 	
 	
 	/* is this .mat[][]? */
-	if (strncmp(word, ".mat[", 5) == 0)
+	if (strncmp(word, ".mat", 4) == 0)
 	{
-		c = word + 5;
+		c = word + 4;
+		c = skipWhiteSpace(c);
+		if (*c != '[')
+		{
+			printf("\nMissing '[' in '.mat' decleration or extaneous text in-line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+			return ERROR;
+		}
+		
 		charsRead = 0;
 		if (sscanf(c, "%d%n", matHeight, &charsRead) == 0)
 		{
-			printf("\nMissing mat height in '.mat[][]' decleration or non-int value. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+			printf("\nMissing mat height in '.mat[][]' decleration or non-int value. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		c += charsRead;
 		
+		c = skipWhiteSpace(c);
 		if (*(c++) != ']' || *(c++) != '[')
 		{
-			printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+			printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		charsRead += 2;
 		
 		if (sscanf(c, "%d%n", matLength, &charsRead) == 0)
 		{
-			printf("\nMissing mat length in '.mat[][]' decleration or non-int value. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+			printf("\nMissing mat length in '.mat[][]' decleration or non-int value. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		c += charsRead;
 		
+		c = skipWhiteSpace(c);
 		if (*(c++) != ']')
 		{
-			printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+			printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		charsRead++;
 		
-		if (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\0') /* no white space or end of line after .mat decleration */
+		if (!isEndOfLine_or_whiteSpaceOnly(c)) /* not end of line after .mat decleration */
 		{
 			printf("\nExtraneous text after '.mat'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
@@ -533,6 +545,7 @@ int check_garbageTextBeforeLine(char *line, int *matHeight, int *matLength)
 		
 		return wordIsMAT;
 	}
+	
 
 	/* is this a command? */
 	for (i = 0; i < num_of_opcodes; ++i)
@@ -626,7 +639,7 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 	
 	
 	/* is this .mat[][]? */
-	if (strncmp(word, ".mat[", 5) == 0)
+	if (strncmp(word, ".mat", 4) == 0)
 	{
 		if (firstWord != wordIsLABEL) /* only case when .mat is allowed as second word is after label decleration */
 		{
@@ -634,7 +647,14 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 			return ERROR;
 		}
 		
-		c = word + 5;
+		c += charsRead;
+		c = skipWhiteSpace(c);
+		if (*c != '[')
+		{
+			printf("\nMissing '[' in '.mat' decleration or extaneous text in-line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+			return ERROR;
+		}
+		
 		charsRead = 0;
 		if (sscanf(c, "%d%n", matHeight, &charsRead) == 0)
 		{
@@ -643,6 +663,7 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 		}
 		c += charsRead;
 		
+		c = skipWhiteSpace(c);
 		if (*(c++) != ']' || *(c++) != '[')
 		{
 			printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
@@ -657,6 +678,7 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 		}
 		c += charsRead;
 		
+		c = skipWhiteSpace(c);
 		if (*(c++) != ']')
 		{
 			printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
@@ -664,7 +686,7 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 		}
 		charsRead++;
 		
-		if (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\0') /* no white space or end of line after .mat decleration */
+		if (!isEndOfLine_or_whiteSpaceOnly(c)) /* not end of line after .mat decleration */
 		{
 			printf("\nExtraneous text after '.mat'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
@@ -696,7 +718,7 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 	
 	
 	/* no legal opening was matched- this is garbage text */
-	printf("\nExtraneous text \"%s\". (Line %d, File: \"%s\")\n\n", word, lineCounter, nameArr[fileCounter]);
+	printf("\nExtraneous text: \"%s\". (Line %d, File: \"%s\")\n\n", word, lineCounter, nameArr[fileCounter]);
 	return ERROR;
 }
 
@@ -1020,7 +1042,7 @@ int check_commandOperands(char **line, char *commandName)
 		c = skipWhiteSpace(c);
 		if (!isRequiredComma(&c))
 		{
-			printf("\nMissing comma between operands for '%s'. (Line %d, File: \"%s\")\n\n", commandName, lineCounter, nameArr[fileCounter+1]);
+			printf("\nMissing comma between operands for '%s'. (Line %d, File: \"%s\")\n\n", commandName, lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		c = skipWhiteSpace(c);
