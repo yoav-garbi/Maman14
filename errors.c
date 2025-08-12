@@ -880,7 +880,7 @@ int check_dataValues(char **line, int *valueCount)
 	
 	if (!status) /* no data */
 	{
-		if (valueCount == NULL) /* valueCount == NULL means we didn't call the func for a mat[][] check */
+		if (valueCount != NULL) /* valueCount == NULL means we didn't call the func for a mat[][], so != NULL means this is for data- blank declaration illegal */
 		{
 			*valueCount = 0;
 			return 1;
@@ -889,6 +889,9 @@ int check_dataValues(char **line, int *valueCount)
 		printf("\nMissing value after '.data' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
         return ERROR;
 	}
+	
+	if (valueCount != NULL)
+		*valueCount  = 1;
 
 	/* take in: ", int" until no more or error */
 	while(1)
