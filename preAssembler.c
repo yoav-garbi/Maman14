@@ -229,5 +229,5 @@ int preAssemble(int index) {
         readLine = takeInLine(currentLine.content, fp);
     }
 
-    return countError;
+    return countError;
 }
