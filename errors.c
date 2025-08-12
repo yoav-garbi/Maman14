@@ -106,12 +106,33 @@ int check_lineGeneral(char *line)
         	return ERROR;
 		}
 		
-		capacity = matHeight * matLength; 
+		capacity = matHeight * matLength;
+
+		/* skip the dimension declaration before checking values */
+		line = skipWhiteSpace(line);
+		if (*line == '[')
+		{
+			line++;
+			while (*line && *line != ']')
+				line++;
+			if (*line == ']')
+				line++;
+			line = skipWhiteSpace(line);
+			if (*line == '[')
+			{
+				line++;
+				while (*line && *line != ']')
+					line++;
+				if (*line == ']')
+					line++;
+			}
+		}
+
 		status = check_matValues(&line, capacity);
 		if (status == ERROR)
 			return ERROR;
 		return 0;
-	}
+		}
 	
 	
 	return 0; /* default- success */
