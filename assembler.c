@@ -88,13 +88,14 @@ int main (int argc, char *argv[])
         		errorFlag = 1;
     		}
 	}
+	printf("======= First pass completed =======\n");																							/* TEMP */
 	
 	if (errorFlag)
 	{
-    		printf("\nErrors were found in the first pass. Compilation terminated\n");
+    		printf("Errors were found in the first pass. Compilation terminated\n");
     		goto cleanUp;
 	}
-	
+	printf("======= First pass completed succesfuly =======\n");																				/* TEMP */
 	
 	
 	/* 7) second pass */
