@@ -1,5 +1,9 @@
 #include "prototypes.h"
 
+
+
+
+
 static void trim_right(char *s) {
     size_t n;
     if (!s) return;
@@ -7,6 +11,26 @@ static void trim_right(char *s) {
     while (n > 0 && (s[n-1] == '\n' || s[n-1] == '\r' || s[n-1] == ' ' || s[n-1] == '\t'))
         s[--n] = '\0';
 }
+
+
+int extract_macro_name_after_check(const char *line, char *out_name, size_t out_sz) {
+	int n1;
+	char directive[MAX_LINE_LENGTH];
+	const char *p;
+
+	(void)out_sz; /* name length already validated by your checker */
+
+	p = skipWhiteSpace((char *)line);
+	if (sscanf(p, "%s%n", directive, &n1) != 1) return 0; /* first token */
+	if (strcmp(directive, "mcro") != 0) return 0;       /* not a macro line */
+
+	if (check_macroOpenLine((char *)line) != 0) return 0;
+
+	p += n1;
+	if (sscanf(p, "%s", out_name) != 1) return 0;      /* macro name */
+	return 1;
+}
+
 
 static int parse_mcro_open(const char *line, char *out_name, size_t out_sz) {
     int ok, n1;
@@ -20,7 +44,7 @@ static int parse_mcro_open(const char *line, char *out_name, size_t out_sz) {
     p = line;
     if (sscanf(p, "%s%n", dummy, &n1) != 1) return 0; /* "mcro" */
     p += n1;
-    if (sscanf(p, "%s", out_name) != 1) return 0;     /* macro name */
+    if (sscanf(p, "%s", out_name) != 1) return 0; /* macro name */
     return 1;
 }
 
@@ -129,12 +153,14 @@ static int expand_macro(FILE *out, const macro *m, const char *opt_label) {
 /* =================================================================================== */
 int preAssemble(int index) {
     FILE *in_fp, *out_fp;
-    char label[MAX_LABEL_LENGTH];
+    char label[MAX_LABEL_LENGTH], firstToken[MAX_LABEL_LENGTH];
     int countError = 0;
     LineData currentLine;
     char *ptr, *after_label;
     int readLine;
-
+    int isMcroLine;
+	fpos_t pos;
+	
     in_fp  = fileArr[index];
     out_fp = fileArr[amOffset + index];
 
@@ -154,10 +180,19 @@ int preAssemble(int index) {
         }
 
         trim_right(currentLine.content);
+        
+        isMcroLine = 0;
+        fgetpos(in_fp, &pos); /* save file position */
+        fscanf(in_fp, "%s", firstToken);
+        fsetpos(in_fp, &pos); /* restore file position */
+        if (strcmp(firstToken, "mcro") == 0)
+        	isMcroLine = 1;
 
         {
             char macroName[MAX_LABEL_LENGTH];
-            if (parse_mcro_open(currentLine.content, macroName, sizeof(macroName))) {
+            
+            
+            if (isMcroLine && parse_mcro_open(currentLine.content, macroName, sizeof(macroName))) {
                 if (addMacro(macroName) == ERROR) {
                     countError++;
                 } else {
