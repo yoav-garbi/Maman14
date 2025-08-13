@@ -429,10 +429,11 @@ int firstPass(int index) {
     lineNode *dataList = NULL;
     binTree **curLabelTable = &labelTable[index];
 
-    fp = fileArr[index];
+	fp = fileArr[amOffset + index];
     if (fp == NULL) {
         return -1;
     }
+	rewind(fp);
 
     readLine = takeInLine(currentLine.content, fp);
     while (readLine != EOF_only_line) {
