@@ -21,9 +21,13 @@ int base2_to_base4_fileToFile(FILE *source, FILE *dest)
 			/* write \n */
 			if (buffer[i] == '\n')
 			{
-				fputc('\n', dest);
+				fputc(buffer[i], dest);
 				break;
 			}
+			
+			/* write other white spaces */
+			if (buffer[i] == '\t' || buffer[i] == ' ')
+				fputc(buffer[i], dest);
 			
 			c1 = buffer[i++];
 			c2 = buffer[i++];
