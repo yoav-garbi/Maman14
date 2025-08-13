@@ -129,8 +129,8 @@ int closeFiles(int, FILE **);
 int takeInLine(char [], FILE *);
 int recognize_opcode(char *);
 int findCommand(char *);
-int writeEnt(FILE *, binTree *);
-int writeExt(FILE *, binTree *);
+int writeEnt(FILE *);
+int writeExt(FILE *);
 
 
 
