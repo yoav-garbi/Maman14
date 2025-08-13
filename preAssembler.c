@@ -49,7 +49,10 @@ static int parse_mcro_open(const char *line, char *out_name, size_t out_sz) {
 }
 
 static int mcro_is_close(const char *line) {
-    return (check_macroCloseLine((char *)line) == 0);
+	const char *p = skipWhiteSpace((char *)line);
+	if (strncmp(p, "mcroend", 7) != 0)
+		return 0;
+	return (check_macroCloseLine((char *)line) == 0);
 }
 
 static const char *scan_label_prefix(const char *s, char *label, size_t label_sz) {
@@ -152,14 +155,12 @@ static int expand_macro(FILE *out, const macro *m, const char *opt_label) {
 
 /* =================================================================================== */
 int preAssemble(int index) {
-    FILE *in_fp, *out_fp;
-    char label[MAX_LABEL_LENGTH], firstToken[MAX_LABEL_LENGTH];
-    int countError = 0;
-    LineData currentLine;
-    char *ptr, *after_label;
-    int readLine;
-    int isMcroLine;
-	fpos_t pos;
+	FILE *in_fp, *out_fp;
+	char label[MAX_LABEL_LENGTH];
+	int countError = 0;
+	LineData currentLine;
+	char *ptr, *after_label;
+	int readLine;
 	
     in_fp  = fileArr[index];
     out_fp = fileArr[amOffset + index];
@@ -179,30 +180,24 @@ int preAssemble(int index) {
             continue;
         }
 
-        trim_right(currentLine.content);
-        
-        isMcroLine = 0;
-        fgetpos(in_fp, &pos); /* save file position */
-        fscanf(in_fp, "%s", firstToken);
-        fsetpos(in_fp, &pos); /* restore file position */
-        if (strcmp(firstToken, "mcro") == 0)
-        	isMcroLine = 1;
+		trim_right(currentLine.content);
 
-        {
-            char macroName[MAX_LABEL_LENGTH];
-            
-            
-            if (isMcroLine && parse_mcro_open(currentLine.content, macroName, sizeof(macroName))) {
-                if (addMacro(macroName) == ERROR) {
-                    countError++;
-                } else {
-                    if (read_mcro_body(in_fp, macroName, &lineCounter) == ERROR)
-                        countError++;
-                }
-                readLine = takeInLine(currentLine.content, in_fp);
-                continue;
-            }
-        }
+		{
+		char macroName[MAX_LABEL_LENGTH];
+		char firstToken[MAX_LABEL_LENGTH];
+		const char *p = skipWhiteSpace(currentLine.content);
+
+		if (sscanf(p, "%s", firstToken) == 1 && strcmp(firstToken, "mcro") == 0 && parse_mcro_open(currentLine.content, macroName, sizeof(macroName))) {
+			if (addMacro(macroName) == ERROR) {
+			countError++;
+		} else {
+			if (read_mcro_body(in_fp, macroName, &lineCounter) == ERROR)
+			countError++;
+			}
+				readLine = takeInLine(currentLine.content, in_fp);
+				continue;
+			}
+		}
 
         ptr = currentLine.content;
         after_label = (char *)scan_label_prefix(ptr, label, sizeof(label));
