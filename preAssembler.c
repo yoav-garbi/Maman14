@@ -206,6 +206,5 @@ int preAssemble(int index) {
         readLine = takeInLine(currentLine.content, in_fp);
     }
 
-    freeMacroArr();
     return countError;
 }
