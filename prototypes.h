@@ -219,28 +219,26 @@ int freeMacroArr();
 
 
 /* preAssembler.c */
-/* Trim trailing spaces/tabs/newlines in-place. Use before parsing. */
-void rstrip(char *s);
-/* True if line is empty or comment (';') after leading spaces. */
-int is_empty_or_comment(const char *s);
-/* If line is valid 'mcro <name>' (per your checker), return 1 and copy name. */
-int extract_macro_name_after_check(const char *line, char *out_name, size_t out_sz);
-/* True if line is valid 'mcroend' (per your checker). */
-int is_mcro_close(const char *line);
-/* If line starts with 'LABEL:' return ptr after ':' and copy label (incl. ':'). */
-const char *leading_label(const char *s, char *label, size_t label_sz);
-/* Copy first token after spaces to buf; return ptr after token. */
-const char *first_token(const char *s, char *buf, size_t buf_sz);
-/* Lookup a macro by name in your global macroArr. */
-macro *find_macro_by_name(const char *name);
-/* Emit all stored lines of a macro to 'out'. */
-void write_macro_body(FILE *out, const macro *m);
-/* Read macro body lines until 'mcroend' and store via addLineToMacro. */
-int collect_macro_block(FILE *fp, const char *macroName, int *pLineCounter);
-/* True if rest of line (from p) is only spaces/tabs or a ';' comment. */
-int is_ws_or_comment_rest(const char *p);
-/* Expand macro; if label given, attach it to first meaningful line. Return 1 if expanded. */
-int expand_macro_with_optional_label(FILE *out, const macro *m, const char *opt_label);
+/* Trim trailing spaces/tabs/newlines in-place */
+static void trim_right(char *s);
+/* If line is valid "mcro <name>" (via your checker), return 1 and copy name */
+static int  parse_mcro_open(const char *line, char *out_name, size_t out_sz);
+/* True if line is valid "mcroend" (via your checker) */
+static int  mcro_is_close(const char *line);
+/* If line starts with "LABEL:" copy it (incl. ':') and return ptr after ':' */
+static const char *scan_label_prefix(const char *s, char *label, size_t label_sz);
+/* Copy first token after spaces to buf; return ptr right after the token */
+static const char *scan_token(const char *s, char *buf, size_t buf_sz);
+/* Lookup macro by name in global macroArr */
+static macro *find_macro(const char *name);
+/* Write all lines of a stored macro to 'out' */
+static void emit_macro_body(FILE *out, const macro *m);
+/* Read lines until "mcroend" and store them with addLineToMacro */
+static int  read_mcro_body(FILE *fp, const char *macroName, int *pLineCounter);
+/* True if rest of line (from p) is only spaces/tabs or a ';' comment */
+static int  only_ws_or_comment(const char *p);
+/* Expand macro; if label is given, attach it to first meaningful body line */
+static int  expand_macro(FILE *out, const macro *m, const char *opt_label);
 
 
 
