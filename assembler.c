@@ -29,55 +29,92 @@ int main (int argc, char *argv[])
 	externLineArr = NULL;
 	argvPointer = &argv;
 	amOffset = numFiles;
-	
-	
+
+
 	/* 1) check that source file/s were entered, and are legal */
 	if (check_fileEntered(argc) == ERROR || check_fileName(numFiles) == ERROR)
 		goto cleanUp;
-	
-	
+
+
 	/* 2) initialize relevant structs and arrays */
 	if (initializeLabelTables(argc) == ERROR) /* initialize labelTables array */
 		goto cleanUp;
-	
+
 	lineArr = calloc(numFiles, sizeof(lineNode *)); /* initialize lineArr- lineArr is an array of pointers to linked lists. each linked list is like a file because it holds all lines */
 	if (check_allocation(lineArr) == ERROR)
 		goto cleanUp;
-	
+
 	icArr = calloc(numFiles, sizeof(int)); /* initialize icArr */
 	dcArr = calloc(numFiles, sizeof(int)); /* initialize dcArr */
 	if (check_allocation(icArr) == ERROR || check_allocation(dcArr) == ERROR)
 		goto cleanUp;
-	
+
 	entryLineArr = calloc(numFiles, sizeof(lineNode *)); /* initialize entryLineArr- each list holds all entry-d labels from one file */
 	if (check_allocation(entryLineArr) == ERROR)
 		goto cleanUp;
-	
+
 	externLineArr = calloc(numFiles, sizeof(lineNode *)); /* initialize externLineArr- each list holds all raw lines (from one file) that used an external label */
 	if (check_allocation(externLineArr) == ERROR)
 		goto cleanUp;
-	
+
 	if (initializeMacroArr() == ERROR) /* initialize macro array */
 		goto cleanUp;
-	
-	
-	
+
+
+
 	/* 3) open .as files (store in fileArr) */
 	fileArr = getFiles(argc, argv);
 	if (fileArr == NULL)
 		goto cleanUp;
-	
-	
+
+
 	/* 4) build nameArr- an array of strings, each one is a name of a .as file */
 	nameArr = make_nameArr(argc, argv);
 	if (nameArr == NULL)
 		goto cleanUp;
-	
-	
+
+
 	/* 5) pre-assembler */
-	
-	
-		
+	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) {
+		int res_pa;
+		char *newName;
+		size_t L;
+
+		lineCounter = 0;
+		res_pa = preAssemble(fileCounter);
+		if (res_pa != 0) {
+			printf("Pre-assembler found %d issue(s) in file %s\n", res_pa, nameArr[fileCounter]);
+			errorFlag = 1; /* keep going to list all files’ issues */
+		}
+
+		/* switch .as -> .am for subsequent passes */
+		newName = strDuplicate(nameArr[fileCounter]);
+		if (check_allocation(newName) == ERROR) goto cleanUp;
+		L = strlen(newName);
+		/* assumes validated '.as' */
+		if (L >= 3) newName[L - 1] = 'm'; /* ".as" -> ".am" */
+
+		/* close old FILE* and reopen the .am */
+		if (fileArr[fileCounter]) fclose(fileArr[fileCounter]);
+		fileArr[fileCounter] = fopen(newName, "r");
+		if (check_fileExistence(fileArr[fileCounter]) == ERROR) {
+			free(newName);
+			errorFlag = 1;
+			continue;
+		}
+
+		/* replace nameArr entry with .am */
+		free(nameArr[fileCounter]);
+		nameArr[fileCounter] = newName;
+	}
+
+	if (errorFlag) {
+		printf("Errors were found in pre-assembler. Compilation terminated.\n");
+		goto cleanUp;
+	}
+	printf("======= Pre-assembler completed succesfully =======\n");  /* TEMP */
+
+
 	/* 6) first pass */
 	for (fileCounter = 0; fileCounter < numFiles; fileCounter++)
 	{
@@ -89,25 +126,25 @@ int main (int argc, char *argv[])
     		}
 	}
 	printf("======= First pass completed =======\n");																							/* TEMP */
-	
+
 	if (errorFlag)
 	{
     		printf("Errors were found in the first pass. Compilation terminated\n");
     		goto cleanUp;
 	}
-	printf("======= First pass completed succesfuly =======\n");																				/* TEMP */
-	
-	
+	printf("======= First pass completed succesfuly =======\n");		/* TEMP */
+
+
 	/* 7) second pass */
 	if (secondPass(argc, argv, fileArr, lineArr, nameArr) == ERROR)
 		goto cleanUp;
-	
-	
-	
-	/* 8) cleanup everything- close all files and free all memory */
+
+
+
+	/* 8) cleanup everything - close all files and free all memory */
 	cleanUp:
 	closeFiles(argc, fileArr); /* close all open files */
-	
+
 	/* free all allocated storage */
 	freeLabelTable(&labelTable, numFiles);
 	freeListArr(&lineArr, numFiles);
@@ -118,6 +155,6 @@ int main (int argc, char *argv[])
 	free(dcArr);
 	freeListArr(&entryLineArr, numFiles);
 	freeListArr(&externLineArr, numFiles);
-	
+
 	return 0;
 }
