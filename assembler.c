@@ -75,37 +75,34 @@ int main (int argc, char *argv[])
 
 
 	/* 5) pre-assembler */
-	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) {
-		int res_pa;
-		char *newName;
-		size_t L;
+	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter)
+	{
+		int res;
 
 		lineCounter = 0;
-		res_pa = preAssemble(fileCounter);
-		if (res_pa != 0) {
-			printf("Pre-assembler found %d issue(s) in file %s\n", res_pa, nameArr[fileCounter]);
-			errorFlag = 1; /* keep going to list all files’ issues */
-		}
 
-		/* switch .as -> .am for subsequent passes */
-		newName = strDuplicate(nameArr[fileCounter]);
-		if (check_allocation(newName) == ERROR) goto cleanUp;
-		L = strlen(newName);
-		/* assumes validated '.as' */
-		if (L >= 3) newName[L - 1] = 'm'; /* ".as" -> ".am" */
-
-		/* close old FILE* and reopen the .am */
-		if (fileArr[fileCounter]) fclose(fileArr[fileCounter]);
-		fileArr[fileCounter] = fopen(newName, "r");
-		if (check_fileExistence(fileArr[fileCounter]) == ERROR) {
-			free(newName);
+		if (create_amFile(argc, fileArr, nameArr, fileCounter) == ERROR) {
 			errorFlag = 1;
 			continue;
 		}
 
-		/* replace nameArr entry with .am */
-		free(nameArr[fileCounter]);
-		nameArr[fileCounter] = newName;
+		res = preAssemble(fileCounter);
+		if (res != 0) {
+			printf("Pre-assembler found %d issue(s) in file %s\n", res, (*argvPointer)[fileCounter+1]);
+			errorFlag = 1;
+		}
+
+		if (fileArr[fileCounter]) { fclose(fileArr[fileCounter]); fileArr[fileCounter] = NULL; }
+		if (fileArr[(argc-1) + fileCounter]) {
+			fflush(fileArr[(argc-1) + fileCounter]);
+			fclose(fileArr[(argc-1) + fileCounter]);
+			fileArr[(argc-1) + fileCounter] = NULL;
+		}
+		fileArr[fileCounter] = fopen(nameArr[fileCounter], "r");
+		if (check_fileExistence(fileArr[fileCounter]) == ERROR) {
+			errorFlag = 1;
+			continue;
+		}
 	}
 
 	if (errorFlag) {
@@ -113,6 +110,7 @@ int main (int argc, char *argv[])
 		goto cleanUp;
 	}
 	printf("======= Pre-assembler completed succesfully =======\n");  /* TEMP */
+
 
 
 	/* 6) first pass */
@@ -132,7 +130,7 @@ int main (int argc, char *argv[])
     		printf("Errors were found in the first pass. Compilation terminated\n");
     		goto cleanUp;
 	}
-	printf("======= First pass completed succesfuly =======\n");		/* TEMP */
+	printf("======= First pass completed succesfuly =======\n");																				/* TEMP */
 
 
 	/* 7) second pass */
