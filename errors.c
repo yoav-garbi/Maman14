@@ -1176,33 +1176,33 @@ int check_macroName(char *ptr)
 	
 	if (len > MAX_LABEL_LENGTH - 1) /* -1 because -\0 */
 	{
-		printf("\nMacro name exceeding the allowed length. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		printf("\nMacro name exceeding the allowed length. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 		return ERROR;	
 	}
 	
 	if (!isalpha(ptr[0]))
 	{
-		printf("\nMacro name starts with non-letter. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		printf("\nMacro name starts with non-letter. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 		return ERROR;
 	}
 	
 	for (i = 0; i < len; ++i)
 		if (!isalnum(ptr[i]))
 		{
-			printf("\nMacro name contains a non-alnum. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+			printf("\nMacro name contains a non-alnum. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 			return ERROR;
 		}
 	
 	if (len == 2 && ptr[0] == 'r' && ptr[1] >= '0' && ptr[1] <= '7')
 	{
-		printf("\nMacro name is the name of a register. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		printf("\nMacro name is the name of a register. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 		return ERROR;
 	}
 	
 	for (i = 0; i < num_of_opcodes; ++i)
 		if (strcmp(ptr, opcodeTable[i].name) == 0)
 		{
-			printf("\nMacro name is the name of a command. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+			printf("\nMacro name is the name of a command. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 			return ERROR;
 		}
 	
@@ -1224,7 +1224,7 @@ int check_macroOpenLine(char *line)
 	status = sscanf(ptr, "%s%n", word, &charsRead);
 	if (status != 1 || strcmp(word, "mcro") != 0)
 	{
-		printf("\nMissing 'mcro' directive at start of line. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		printf("\nMissing 'mcro' directive at start of line. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 		return ERROR;
 	}
 	ptr += charsRead; /* advance through the line (skip "mcro") */
@@ -1233,7 +1233,7 @@ int check_macroOpenLine(char *line)
 	status = sscanf(ptr, "%s%n", word, &charsRead);
 	if (status != 1)
 	{
-		printf("\nMissing macro name. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		printf("\nMissing macro name. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 		return ERROR;
 	}
 	
@@ -1244,7 +1244,7 @@ int check_macroOpenLine(char *line)
 	/* check for garbage text */
 	if (!isEndOfLine_or_whiteSpaceOnly(ptr))
 	{
-		printf("\nExtraneous text after line. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		printf("\nExtraneous text after line. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 		return ERROR;
 	}
 	
@@ -1267,7 +1267,7 @@ int check_macroCloseLine(char *line)
 	status = sscanf(ptr, "%s%n", word, &charsRead);
 	if (status != 1 || strcmp(word, "mcroend") != 0)
 	{
-		printf("\nMissing 'mcroend' directive. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		printf("\nMissing 'mcroend' directive. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 		return ERROR;
 	}
 	ptr += charsRead; /* advance through the line (skip "mcro") */
@@ -1275,7 +1275,7 @@ int check_macroCloseLine(char *line)
 	/* check for garbage text */
 	if (!isEndOfLine_or_whiteSpaceOnly(ptr))
 	{
-		printf("\nExtraneous text after line. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		printf("\nExtraneous text after line. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 		return ERROR;
 	}
 	
