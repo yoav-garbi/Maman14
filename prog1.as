@@ -1,18 +1,23 @@
-; file prog1.as
+ ;prog1.as
 .entry	LOOP
 .entry	LENGTH
 .extern	L3
 .extern	W
-MAIN:	mov M1[r2][r7],W
-	add r2,STR
-LOOP:	jmp W
+
+mcro MAC
 	prn #-5
 	sub r1, r4
 	inc K
+mcroend
 
+MAIN:	mov M1[r2][r7],W
+	add r2,STR
+LOOP:	jmp W
+	MAC
 	mov M1[r3][r3],r3
 	bne L3
 END:	stop
+
 STR:	.string "abcdef"
 LENGTH:	.data 6,-9,15
 K:	.data 22
