@@ -20,6 +20,7 @@ char ***argvPointer;
 int main (int argc, char *argv[])
 {
 	int numFiles = argc-1, errorFlag = 0, res;
+	
 	labelTable = NULL;
 	macroArr = NULL;
 	macroCounter = 0;
@@ -72,13 +73,13 @@ int main (int argc, char *argv[])
 	nameArr = make_nameArr(argc, argv);
 	if (nameArr == NULL)
 		goto cleanUp;
-
-
+	
+	
+	
+	
 	/* 5) pre-assembler */
 	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter)
 	{
-		int res;
-
 		lineCounter = 0;
 
 		if (create_amFile(argc, fileArr, nameArr, fileCounter) == ERROR) {
@@ -92,27 +93,23 @@ int main (int argc, char *argv[])
 			errorFlag = 1;
 		}
 
-		if (fileArr[fileCounter]) { fclose(fileArr[fileCounter]); fileArr[fileCounter] = NULL; }
-		if (fileArr[(argc-1) + fileCounter]) {
-			fflush(fileArr[(argc-1) + fileCounter]);
-			fclose(fileArr[(argc-1) + fileCounter]);
-			fileArr[(argc-1) + fileCounter] = NULL;
-		}
-		fileArr[fileCounter] = fopen(nameArr[fileCounter], "r");
-		if (check_fileExistence(fileArr[fileCounter]) == ERROR) {
-			errorFlag = 1;
-			continue;
+		if (fileArr[(argc-1) + fileCounter])
+		{
+			fflush(fileArr[amOffset + fileCounter]);
 		}
 	}
-
-	if (errorFlag) {
-		printf("Errors were found in pre-assembler. Compilation terminated.\n");
-		goto cleanUp;
+	
+	if (errorFlag)
+	{
+    		printf("Errors were found in the pre-assembler. Compilation terminated\n");
+    		goto cleanUp;
 	}
-	printf("======= Pre-assembler completed succesfully =======\n");  /* TEMP */
-
-
-
+	
+	printf("======= Pre-assembler completed succesfully =======\n");
+	
+	
+	
+	
 	/* 6) first pass */
 	for (fileCounter = 0; fileCounter < numFiles; fileCounter++)
 	{
@@ -123,20 +120,21 @@ int main (int argc, char *argv[])
         		errorFlag = 1;
     		}
 	}
-	printf("======= First pass completed =======\n");																							/* TEMP */
 
 	if (errorFlag)
 	{
     		printf("Errors were found in the first pass. Compilation terminated\n");
     		goto cleanUp;
 	}
-	printf("======= First pass completed succesfuly =======\n");																				/* TEMP */
+	
+	printf("======= First pass completed succesfully =======\n");
 
 
 	/* 7) second pass */
 	if (secondPass(argc, argv, fileArr, lineArr, nameArr) == ERROR)
 		goto cleanUp;
-
+	printf("======= Second pass completed succesfully =======\n");
+	printf("\n\n======= Compilation over =======\n");
 
 
 	/* 8) cleanup everything - close all files and free all memory */
