@@ -445,8 +445,8 @@ int check_externNotAlsoEntryed(char *label)
 /* check that there is no garbage text before the line, and that the first word is legal and valid */
 int check_garbageTextBeforeLine(char *line, int *matHeight, int *matLength)
 {
-	int charsRead = 0, i, len;
-	char word[MAX_LINE_LENGTH], *c;
+	int charsRead = 0, localRead = 0, i, len;
+	char word[MAX_LINE_LENGTH], *c, *p;
 	c = line;
 	
 	/* skip white spaces before line */
@@ -522,51 +522,65 @@ int check_garbageTextBeforeLine(char *line, int *matHeight, int *matLength)
 	/* is this .mat[][]? */
 	if (strncmp(word, ".mat", 4) == 0)
 	{
-		c = word + 4;
-		c = skipWhiteSpace(c);
-		if (*c != '[')
+		p = c + 4; /* after ".mat" in the line */
+		p = skipWhiteSpace(p); /* allow spaces before "[" */
+        
+		if (*p != '[')
 		{
 			printf("\nMissing '[' in '.mat' decleration or extaneous text in-line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
+		p++; /* skip '[' */
 		
-		charsRead = 0;
-		if (sscanf(c, "%d%n", matHeight, &charsRead) == 0)
-		{
-			printf("\nMissing mat height in '.mat[][]' decleration or non-int value. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
-			return ERROR;
-		}
-		c += charsRead;
-		
-		c = skipWhiteSpace(c);
-		if (*(c++) != ']' || *(c++) != '[')
-		{
-			printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
-			return ERROR;
-		}
-		charsRead += 2;
-		
-		if (sscanf(c, "%d%n", matLength, &charsRead) == 0)
+		/* scan height */
+        localRead = 0;
+        if (sscanf(p, "%d%n", matHeight, &localRead) != 1)
+        {
+            printf("\nMissing mat height in '.mat[][]' decleration or non-int value. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+            return ERROR;
+        }
+        p += localRead;
+
+        p = skipWhiteSpace(p);
+        if (*p != ']')
+        {
+            printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+            return ERROR;
+        }
+        p++; /* skip ']' */
+
+        p = skipWhiteSpace(p);
+        if (*p != '[')
+        {
+            printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+            return ERROR;
+        }
+        p++; /* skip '[' */
+
+		/* scan length */
+		localRead = 0;
+		if (sscanf(p, "%d%n", matLength, &localRead) != 1)
 		{
 			printf("\nMissing mat length in '.mat[][]' decleration or non-int value. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
-		c += charsRead;
-		
-		c = skipWhiteSpace(c);
-		if (*(c++) != ']')
+		p += localRead;
+
+		p = skipWhiteSpace(p);
+		if (*p != ']')
 		{
 			printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
-		charsRead++;
-		
-		if (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\0') /* excessive text sticked to .mat decleration */
+		p++; /* skip ']' */
+
+		/* only whitespace or EOL allowed after the ".mat[H][W]" */
+		if (*p != ' ' && *p != '\t' && *p != '\n' && *p != '\0')
 		{
 			printf("\nExtraneous text after '.mat'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
-		
+
 		return wordIsMAT;
 	}
 	
@@ -590,8 +604,8 @@ int check_garbageTextBeforeLine(char *line, int *matHeight, int *matLength)
 /* check that there is no garbage text before next word, and that the new word is legal and valid */
 int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, int *matLength)
 {
-	int charsRead = 0, i, len;
-	char word[MAX_LINE_LENGTH], *c = line;
+	int charsRead = 0, localRead = 0, i, len;
+	char word[MAX_LINE_LENGTH], *c = line, *p;
 	
 	/* skip white spaces before line */
 	while (*c == ' ' || *c == '\t')
@@ -669,59 +683,66 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 	/* is this .mat[][]? */
 	if (strncmp(word, ".mat", 4) == 0)
 	{
-		if (firstWord != wordIsLABEL) /* only case when .mat is allowed as second word is after label decleration */
-		{
-			printf("\n'.mat' is not allowed here. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
-			return ERROR;
-		}
-		
-		c += charsRead;
-		c = skipWhiteSpace(c);
-		if (*c != '[')
+		p = c + 4; /* after ".mat" in the line */
+		p = skipWhiteSpace(p); /* allow spaces before "[" */
+        
+		if (*p != '[')
 		{
 			printf("\nMissing '[' in '.mat' decleration or extaneous text in-line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
+		p++; /* skip '[' */
 		
-		charsRead = 0;
-		if (sscanf(++c, "%d%n", matHeight, &charsRead) == 0)
-		{
-			printf("\nMissing mat height in '.mat[][]' decleration or non-int value. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
-			return ERROR;
-		}
-		c += charsRead;
-		
-		c = skipWhiteSpace(c);
-		if (*(c++) != ']' || *(c++) != '[')
-		{
-			printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
-			return ERROR;
-		}
-		charsRead += 2;
-		
-		if (sscanf(c, "%d%n", matLength, &charsRead) == 0)
+		/* scan height */
+        localRead = 0;
+        if (sscanf(p, "%d%n", matHeight, &localRead) != 1)
+        {
+            printf("\nMissing mat height in '.mat[][]' decleration or non-int value. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+            return ERROR;
+        }
+        p += localRead;
+
+        p = skipWhiteSpace(p);
+        if (*p != ']')
+        {
+            printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+            return ERROR;
+        }
+        p++; /* skip ']' */
+
+        p = skipWhiteSpace(p);
+        if (*p != '[')
+        {
+            printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+            return ERROR;
+        }
+        p++; /* skip '[' */
+
+		/* scan length */
+		localRead = 0;
+		if (sscanf(p, "%d%n", matLength, &localRead) != 1)
 		{
 			printf("\nMissing mat length in '.mat[][]' decleration or non-int value. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
-		c += charsRead;
-		
-		c = skipWhiteSpace(c);
-		if (*(c) != ']')
+		p += localRead;
+
+		p = skipWhiteSpace(p);
+		if (*p != ']')
 		{
 			printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
-		charsRead++;
-		c++;
-		
-		if (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\0') /* not end of line after .mat decleration */
+		p++; /* skip ']' */
+
+		/* only whitespace or EOL allowed after the ".mat[H][W]" */
+		if (*p != ' ' && *p != '\t' && *p != '\n' && *p != '\0')
 		{
 			printf("\nExtraneous text after '.mat'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
-		
-		return wordIsDATA;
+
+		return wordIsMAT;
 	}
 
 	/* is this a command? */
