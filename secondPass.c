@@ -137,13 +137,13 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 		if (searchEnt(labelTable[fileCounter]))	/* if there is an entry to put in .ent file */
 		{
 			create_entFile(argc, fileArr, nameArr, fileCounter);
-			writeEnt(fileArr[entOffset + fileCounter], labelTable[fileCounter]);
+			writeEnt(fileArr[entOffset + fileCounter]);
 		}
 		
 		if (searchExt(labelTable[fileCounter]))	/* if there is an extern label to put in .ext file */
 		{
 			create_extFile(argc, fileArr, nameArr, fileCounter);
-			writeExt(fileArr[extOffset + fileCounter], labelTable[fileCounter]);
+			writeExt(fileArr[extOffset + fileCounter]);
 		}
 	}
 	
