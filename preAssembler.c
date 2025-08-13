@@ -1,11 +1,6 @@
 #include "prototypes.h"
 
-
-
-
-
-
-void rstrip(char *s) {
+static void trim_right(char *s) {
     size_t n;
     if (!s) return;
     n = strlen(s);
@@ -13,18 +8,12 @@ void rstrip(char *s) {
         s[--n] = '\0';
 }
 
-int is_empty_or_comment(const char *s) {
-    const char *p = skipWhiteSpace((char *)s);
-    return (*p == '\0' || *p == '\n' || *p == ';');
-}
-
-int extract_macro_name_after_check(const char *line, char *out_name, size_t out_sz) {
+static int parse_mcro_open(const char *line, char *out_name, size_t out_sz) {
     int ok, n1;
     char dummy[MAX_LINE_LENGTH];
     const char *p;
 
-    (void)out_sz; /* name length already validated by your checker */
-
+    (void)out_sz;
     ok = check_macroOpenLine((char *)line);
     if (ok != 0) return 0;
 
@@ -35,11 +24,11 @@ int extract_macro_name_after_check(const char *line, char *out_name, size_t out_
     return 1;
 }
 
-int is_mcro_close(const char *line) {
+static int mcro_is_close(const char *line) {
     return (check_macroCloseLine((char *)line) == 0);
 }
 
-const char *leading_label(const char *s, char *label, size_t label_sz) {
+static const char *scan_label_prefix(const char *s, char *label, size_t label_sz) {
     const char *p = skipWhiteSpace((char *)s);
     const char *q = p;
     size_t len;
@@ -56,7 +45,7 @@ const char *leading_label(const char *s, char *label, size_t label_sz) {
     return q + 1;
 }
 
-const char *first_token(const char *s, char *buf, size_t buf_sz) {
+static const char *scan_token(const char *s, char *buf, size_t buf_sz) {
     const char *p = skipWhiteSpace((char *)s);
     size_t i = 0;
     while (*p && !isspace((unsigned char)*p)) {
@@ -67,7 +56,7 @@ const char *first_token(const char *s, char *buf, size_t buf_sz) {
     return p;
 }
 
-macro *find_macro_by_name(const char *name) {
+static macro *find_macro(const char *name) {
     int i;
     if (!macroArr || macroCounter <= 0) return NULL;
     for (i = 0; i < macroCounter; ++i) {
@@ -77,7 +66,7 @@ macro *find_macro_by_name(const char *name) {
     return NULL;
 }
 
-void write_macro_body(FILE *out, const macro *m) {
+static void emit_macro_body(FILE *out, const macro *m) {
     int i;
     if (!m) return;
     for (i = 0; i < m->lineAmount; ++i) {
@@ -86,9 +75,10 @@ void write_macro_body(FILE *out, const macro *m) {
     }
 }
 
-int collect_macro_block(FILE *fp, const char *macroName, int *pLineCounter) {
+static int read_mcro_body(FILE *fp, const char *macroName, int *pLineCounter) {
     LineData lineBuf;
     int readLine;
+    (void)pLineCounter;
 
     for (;;) {
         readLine = takeInLine(lineBuf.content, fp);
@@ -96,11 +86,10 @@ int collect_macro_block(FILE *fp, const char *macroName, int *pLineCounter) {
             printf("\nUnexpected EOF before 'mcroend'. (File: \"%s\")\n\n", (*argvPointer)[fileCounter]);
             return ERROR;
         }
-        (*pLineCounter)++;
         if (readLine != 0) continue;
 
-        rstrip(lineBuf.content);
-        if (is_mcro_close(lineBuf.content)) break;
+        trim_right(lineBuf.content);
+        if (mcro_is_close(lineBuf.content)) break;
 
         if (addLineToMacro((char *)macroName, lineBuf.content) == ERROR)
             return ERROR;
@@ -108,12 +97,12 @@ int collect_macro_block(FILE *fp, const char *macroName, int *pLineCounter) {
     return 0;
 }
 
-int is_ws_or_comment_rest(const char *p) {
+static int only_ws_or_comment(const char *p) {
     p = skipWhiteSpace((char *)p);
     return (*p == '\0' || *p == '\n' || *p == ';');
 }
 
-int expand_macro_with_optional_label(FILE *out, const macro *m, const char *opt_label) {
+static int expand_macro(FILE *out, const macro *m, const char *opt_label) {
     int i, first_real = -1;
     if (!m) return 0;
 
@@ -122,113 +111,101 @@ int expand_macro_with_optional_label(FILE *out, const macro *m, const char *opt_
         if (*s != '\0' && *s != '\n' && *s != ';') { first_real = i; break; }
     }
 
-    if (opt_label && first_real < 0) {
-        return 0;
-    }
+    if (opt_label && first_real < 0) return 0;
 
     if (opt_label && first_real >= 0) {
         for (i = 0; i < first_real; ++i) { fputs(m->macroLines[i], out); fputc('\n', out); }
-        fputs(opt_label, out);
-        fputc(' ', out);
-        fputs(m->macroLines[first_real], out);
-        fputc('\n', out);
+        fputs(opt_label, out); fputc(' ', out);
+        fputs(m->macroLines[first_real], out); fputc('\n', out);
         for (i = first_real + 1; i < m->lineAmount; ++i) { fputs(m->macroLines[i], out); fputc('\n', out); }
         return 1;
     }
 
-    write_macro_body(out, m);
+    emit_macro_body(out, m);
     return 1;
 }
 
 
-/* ========================================================================================== */
+/* =================================================================================== */
 int preAssemble(int index) {
-
-    FILE *fp;
-    FILE *output;
+    FILE *in_fp, *out_fp;
     char label[MAX_LABEL_LENGTH];
-    int lineNumber = 1;
     int countError = 0;
     LineData currentLine;
-    char *ptr, *nextPtr;
+    char *ptr, *after_label;
     int readLine;
-    
-    fileCounter = index;
-    lineCounter = 0;
-	fp = fileArr[index];
-	output = fileArr[index + amOffset];
 
-    readLine = takeInLine(currentLine.content, fp);
+    in_fp  = fileArr[index];
+    out_fp = fileArr[amOffset + index];
+
+    if (check_fileExistence(in_fp) == ERROR || check_fileExistence(out_fp) == ERROR)
+        return ERROR;
+
+    freeMacroArr();
+    if (initializeMacroArr() == ERROR)
+        return ERROR;
+
+    readLine = takeInLine(currentLine.content, in_fp);
     while (readLine != EOF_only_line) {
-        lineNumber = lineCounter;
-
         if (readLine != 0) {
             countError++;
-            readLine = takeInLine(currentLine.content, fp);
+            readLine = takeInLine(currentLine.content, in_fp);
             continue;
         }
 
-        rstrip(currentLine.content);
+        trim_right(currentLine.content);
 
         {
             char macroName[MAX_LABEL_LENGTH];
-            if (extract_macro_name_after_check(currentLine.content, macroName, sizeof(macroName))) {
+            if (parse_mcro_open(currentLine.content, macroName, sizeof(macroName))) {
                 if (addMacro(macroName) == ERROR) {
                     countError++;
                 } else {
-                    if (collect_macro_block(fp, macroName, &lineCounter) == ERROR)
+                    if (read_mcro_body(in_fp, macroName, &lineCounter) == ERROR)
                         countError++;
                 }
-                readLine = takeInLine(currentLine.content, fp);
+                readLine = takeInLine(currentLine.content, in_fp);
                 continue;
             }
         }
 
-        if (is_empty_or_comment(currentLine.content)) {
-            fputs(currentLine.content, output);
-            fputc('\n', output);
-            readLine = takeInLine(currentLine.content, fp);
-            continue;
-        }
-
         ptr = currentLine.content;
-        nextPtr = (char *)leading_label(ptr, label, sizeof(label));
+        after_label = (char *)scan_label_prefix(ptr, label, sizeof(label));
 
-        if (nextPtr != NULL) {
+        if (after_label != NULL) {
             char tok[MAX_LABEL_LENGTH];
             const char *after_tok;
-            macro *mm;
+            macro *m;
 
-            nextPtr = (char *)skipWhiteSpace(nextPtr);
-            after_tok = first_token(nextPtr, tok, sizeof(tok));
-            mm = (tok[0] ? find_macro_by_name(tok) : NULL);
+            after_label = (char *)skipWhiteSpace(after_label);
+            after_tok = scan_token(after_label, tok, sizeof(tok));
+            m = (tok[0] ? find_macro(tok) : NULL);
 
-            if (mm && is_ws_or_comment_rest(after_tok)) {
-                if (!expand_macro_with_optional_label(output, mm, label)) {
-                    fputs(currentLine.content, output); fputc('\n', output);
+            if (m && only_ws_or_comment(after_tok)) {
+                if (!expand_macro(out_fp, m, label)) {
+                    fputs(currentLine.content, out_fp); fputc('\n', out_fp);
                 }
             } else {
-                fputs(currentLine.content, output);
-                fputc('\n', output);
+                fputs(currentLine.content, out_fp); fputc('\n', out_fp);
             }
         } else {
             char tok[MAX_LABEL_LENGTH];
             const char *after_tok;
-            macro *mm;
+            macro *m;
 
-            after_tok = first_token(currentLine.content, tok, sizeof(tok));
-            mm = (tok[0] ? find_macro_by_name(tok) : NULL);
+            after_tok = scan_token(currentLine.content, tok, sizeof(tok));
+            m = (tok[0] ? find_macro(tok) : NULL);
 
-            if (mm && is_ws_or_comment_rest(after_tok)) {
-                (void)expand_macro_with_optional_label(output, mm, NULL);
+            if (m && only_ws_or_comment(after_tok)) {
+                (void)expand_macro(out_fp, m, NULL);
             } else {
-                fputs(currentLine.content, output);
-                fputc('\n', output);
+                fputs(currentLine.content, out_fp); fputc('\n', out_fp);
             }
         }
 
-        readLine = takeInLine(currentLine.content, fp);
+        readLine = takeInLine(currentLine.content, in_fp);
     }
 
+    freeMacroArr();
     return countError;
 }
