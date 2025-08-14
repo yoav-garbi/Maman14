@@ -506,7 +506,12 @@ int firstPass(int index) {
             if (currentLine.hasLabel) {
                 addSymbolToData(curLabelTable, currentLine.label, DC);
             }
-            processDataLine(nextPtr, &DC, &dataList, lineNumber);
+			if (strcmp(first_word, ".string") == 0)
+				processStringDirective(nextPtr, &DC, &dataList, lineNumber);
+			else if (strcmp(first_word, ".data") == 0)
+				processDataDirective(nextPtr, &DC, &dataList, lineNumber);
+			else if (strcmp(first_word, ".mat") == 0)
+				processMatDirective(nextPtr, &DC, &dataList, lineNumber);
         }
         else if (isInstruction(first_word)) {
             if (currentLine.hasLabel) {
