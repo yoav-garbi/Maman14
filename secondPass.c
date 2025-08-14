@@ -98,14 +98,14 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 		
 		/* write IC and DC in first line */
 		base10_to_base2(icArr[fileCounter], binAddress);
-		fprintf(fileArr[obOffset + fileCounter], "%s\t", binAddress);
+		fprintf(fileArr[obOffset + fileCounter], "\t %s  ", binAddress);
 		base10_to_base2(dcArr[fileCounter], binAddress);
 		fprintf(fileArr[obOffset + fileCounter], "%s\n", binAddress);
 		
 		
 		for (line = lineArr[fileCounter]; line != NULL; line = line->next) /* each iteration is one line */
 		{
-			base10_to_base2_forAddress(node->address, binAddress);
+			base10_to_base2_forAddress(line->address, binAddress);
 			fprintf(fileArr[obOffset + fileCounter], "%s\t\t", binAddress);
 			
 			for (character = line->line; *character != '\0'; character++) /* each iteration is one char */
