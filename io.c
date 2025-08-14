@@ -225,7 +225,7 @@ int writeExt(FILE *file)
 	char address[address_binary_representation_size+1];	/* +1 is for '\0' */
 	lineNode *node;
 	
-	for (node = entryLineArr[fileCounter]; node != NULL; node = node->next)
+	for (node = externLineArr[fileCounter]; node != NULL; node = node->next)
 	{
 		base10_to_base2_forAddress(node->address, address);
 		
