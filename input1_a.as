@@ -1,4 +1,4 @@
- ;prog1.as
+; file input1_a.as
 .entry	LOOP
 .entry	LENGTH
 .extern	L3
