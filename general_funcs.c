@@ -18,29 +18,21 @@ int base2_to_base4_fileToFile(FILE *source, FILE *dest)
 		
 		while (buffer[i] != '\0') /* until end of line */
 		{	
-			/* write other white spaces */
-			while (buffer[i++] == '\t')
-				fputc('\t', dest);
+			while (buffer[i] != '0' && buffer[i] != '1' && buffer[i] != '\0')
+				fputc(buffer[i++], dest);
 			
-			/* write \n */
-			if (buffer[i++] == '\n')
-			{
-				fputc('\n', dest);
+			if (buffer[i] == '\0')
 				break;
-			}
+			
 			c1 = buffer[i++];
 			
 			
-			/* write other white spaces */
-			while (buffer[i++] == '\t')
-				fputc('\t', dest);
-				
-			/* write \n */
-			if (buffer[i++] == '\n')
-			{
-				fputc('\n', dest);
+			while (buffer[i] != '0' && buffer[i] != '1' && buffer[i] != '\0')
+				fputc(buffer[i++], dest);
+			
+			if (buffer[i] == '\0')
 				break;
-			}			
+				
 			c2 = buffer[i++];
 			
 			
@@ -81,30 +73,22 @@ int base2_to_base4_strToFile(char *source, FILE *dest)
 	
 	while (source[i] != '\0') /* until end of line */
 	{	
-		/* write other white spaces */
-		while (source[i++] == '\t')
-			fputc('\t', dest);
-		
-		/* write \n */
-		if (source[i++] == '\n')
-		{
-			fputc('\n', dest);
-			break;
-		}
-		c1 = source[i++];
-		
-		
-		/* write other white spaces */
-		while (source[i++] == '\t')
-			fputc('\t', dest);
+		while (source[i] != '0' && source[i] != '1' && source[i] != '\0')
+				fputc(source[i++], dest);
 			
-		/* write \n */
-		if (source[i++] == '\n')
-		{
-			fputc('\n', dest);
-			break;
-		}			
-		c2 = source[i++];
+			if (source[i] == '\0')
+				break;
+			
+			c1 = source[i++];
+			
+			
+			while (source[i] != '0' && source[i] != '1' && source[i] != '\0')
+				fputc(source[i++], dest);
+			
+			if (source[i] == '\0')
+				break;
+				
+			c2 = source[i++];
 	
 	
 		if (c1 == '0' && c2 == '0')
