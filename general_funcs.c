@@ -17,28 +17,32 @@ int base2_to_base4_fileToFile(FILE *source, FILE *dest)
 		i = 0;
 		
 		while (buffer[i] != '\0') /* until end of line */
-		{
-			/* skip white spaces */
-			while (buffer[i] == '\t' || buffer[i] == ' ')
-				c1 = buffer[i++];
+		{	
+			/* write other white spaces */
+			while (buffer[i] == '\t')
+				fputc('\t', dest);
 			
 			/* write \n */
 			if (buffer[i] == '\n')
 			{
-				fputc(buffer[i], dest);
+				fputc('\n', dest);
 				break;
 			}
+			c1 = buffer[i++];
 			
-			/* skip white spaces */
-			while (buffer[i] == '\t' || buffer[i] == ' ')
-				c2 = buffer[i++];
 			
+			/* write other white spaces */
+			while (buffer[i++] == '\t')
+				fputc('\t', dest);
+				
 			/* write \n */
 			if (buffer[i] == '\n')
 			{
-				fputc(buffer[i], dest);
+				fputc('\n', dest);
 				break;
-			}
+			}			
+			c2 = buffer[i++];
+			
 			
 			
 			if (c1 == '0' && c2 == '0')
