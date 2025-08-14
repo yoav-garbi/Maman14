@@ -19,11 +19,11 @@ int base2_to_base4_fileToFile(FILE *source, FILE *dest)
 		while (buffer[i] != '\0') /* until end of line */
 		{	
 			/* write other white spaces */
-			while (buffer[i] == '\t')
+			while (buffer[i++] == '\t')
 				fputc('\t', dest);
 			
 			/* write \n */
-			if (buffer[i] == '\n')
+			if (buffer[i++] == '\n')
 			{
 				fputc('\n', dest);
 				break;
@@ -36,7 +36,7 @@ int base2_to_base4_fileToFile(FILE *source, FILE *dest)
 				fputc('\t', dest);
 				
 			/* write \n */
-			if (buffer[i] == '\n')
+			if (buffer[i++] == '\n')
 			{
 				fputc('\n', dest);
 				break;
