@@ -78,30 +78,32 @@ int base2_to_base4_strToFile(char *source, FILE *dest)
 	
 	if (source == NULL)
 		return ERROR;
-
-	while (source[i] != '\0')
-	{
-		/* skip and write white spaces */
-		while (source[i] != '0' && source[i] != '1' && source[i] != '\0') 
+	
+	while (source[i] != '\0') /* until end of line */
+	{	
+		/* write other white spaces */
+		while (source[i++] == '\t')
+			fputc('\t', dest);
+		
+		/* write \n */
+		if (source[i++] == '\n')
 		{
-			fprintf(dest, "%c", source[i++]);
-		}
-	
-		if (source[i] == '\0')
+			fputc('\n', dest);
 			break;
-	
+		}
 		c1 = source[i++];
-	
-	
-		/* skip and write white spaces */
-		while (source[i] != '0' && source[i] != '1' && source[i] != '\0') 
+		
+		
+		/* write other white spaces */
+		while (source[i++] == '\t')
+			fputc('\t', dest);
+			
+		/* write \n */
+		if (source[i++] == '\n')
 		{
-			fprintf(dest, "%c", source[i++]);
-		}
-	
-		if (source[i] == '\0')
+			fputc('\n', dest);
 			break;
-	
+		}			
 		c2 = source[i++];
 	
 	
