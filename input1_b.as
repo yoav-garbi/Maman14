@@ -1,4 +1,4 @@
-; prog2.as
+	; file input1_b.as
 .extern	LOOP
 .extern	LENGTH
 .entry	L3
