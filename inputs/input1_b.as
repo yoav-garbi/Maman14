@@ -1,4 +1,4 @@
-	; file input1_b.as
+; input1_b.as - valid code, no errors
 .extern	LOOP
 .extern	LENGTH
 .entry	L3
