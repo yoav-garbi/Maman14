@@ -18,6 +18,10 @@ int base2_to_base4_fileToFile(FILE *source, FILE *dest)
 		
 		while (buffer[i] != '\0') /* until end of line */
 		{
+			/* skip white spaces */
+			while (buffer[i] == '\t' || buffer[i] == ' ')
+				c1 = buffer[i++];
+			
 			/* write \n */
 			if (buffer[i] == '\n')
 			{
@@ -25,12 +29,17 @@ int base2_to_base4_fileToFile(FILE *source, FILE *dest)
 				break;
 			}
 			
-			/* write other white spaces */
-			if (buffer[i] == '\t' || buffer[i] == ' ')
-				fputc(buffer[i], dest);
+			/* skip white spaces */
+			while (buffer[i] == '\t' || buffer[i] == ' ')
+				c2 = buffer[i++];
 			
-			c1 = buffer[i++];
-			c2 = buffer[i++];
+			/* write \n */
+			if (buffer[i] == '\n')
+			{
+				fputc(buffer[i], dest);
+				break;
+			}
+			
 			
 			if (c1 == '0' && c2 == '0')
 				result = 'a';
@@ -362,4 +371,17 @@ int scanString(char **line, char *str)
 	/* advance caller pointer to right after the closing " */
 	*line = end + 1;
 	return 1;
+}
+
+
+																																			/* TEMP */
+int printFile(FILE *fp)
+{
+	int c;
+	rewind(fp);
+	while ((c = fgetc(fp)) != EOF)
+		putchar(c);
+	
+	rewind(fp);
+	return 0;
 }
