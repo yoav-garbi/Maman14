@@ -108,7 +108,7 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 			
 			for (character = line->line; *character != '\0'; character++) /* each iteration is one char */
 			{
-				if (*character == ' ')
+				if (*character == ' ' || *character == '\t')
 					continue;
 			
 				fputc(*character, fileArr[obOffset + fileCounter]);
@@ -120,8 +120,9 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 			return ERROR;
 			
 		copyFile(fileArr[obOffset + fileCounter], tempFile);
+		printFile(fileArr[obOffset + fileCounter]);												/* TEMP */
 		freopen(NULL, "w+", fileArr[obOffset + fileCounter]); /* truncate and reopen the ob file */
-		
+
 		base2_to_base4_fileToFile(tempFile, fileArr[obOffset + fileCounter]);
 		
 		fclose(tempFile);
