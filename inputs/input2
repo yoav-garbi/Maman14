@@ -1,1 +1,1 @@
-
+; input2 - file with no .as suffix = should cause fatal error
