@@ -1,5 +1,4 @@
-
-  ; .data with no arguments
+	; .data with no arguments
 	.data
 	
 	; .data with number too large
