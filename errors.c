@@ -641,7 +641,7 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 		c++;
 		charsRead++;
 	}
-	if (*c == '\0')
+	if (*c == '\0' || *c == '\n')
 		return EMPTY_LINE;
 		
 	/* whole-line comment */
@@ -817,7 +817,7 @@ int check_scanOperand(char **line, int *addrMode, char *labelForCaller)
 	if (*c == '#')
 	{
 		temp = c + 1;
-		if (!scanInt(&temp, &val))
+		if (scanInt(&temp, &val) == 0)
 		{
 			printf("\nIllegal immediate value after '#'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
@@ -955,7 +955,7 @@ int check_dataValues(char **line, int *valueCount)
 	/* require the first integer (empty list is illegal for .data) */
 	status = scanInt(&c, &num);
 	
-	if (!status) /* no data */
+	if (status != 1) /* no data */
 	{
 		if (valueCount != NULL) /* valueCount == NULL means we didn't call the func for a mat[][], so != NULL means this is for data- blank declaration illegal */
 		{
@@ -963,7 +963,8 @@ int check_dataValues(char **line, int *valueCount)
 			return 1;
 		}
 		
-		printf("\nMissing value after '.data' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+		if (status == 0)
+			printf("\nMissing value after '.data' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
         return ERROR;
 	}
 	
@@ -991,13 +992,13 @@ int check_dataValues(char **line, int *valueCount)
 		status = scanInt(&c, &num);
 		if (!status) /* char after , was non-number or missing */
 		{
-			if (valueCount == NULL) /* .data line */
+			if (valueCount == NULL && status == 0) /* .data line */
 			{
 				printf("\nMissing value/non-number after comma in a '.data' line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 				return ERROR;
 			}
 			
-			if (valueCount != NULL) /* .mat line */
+			if (valueCount != NULL && status == 0) /* .mat line */
 			{
 				printf("\nMissing value/non-number after comma in a '.mat' line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 				return ERROR;
@@ -1073,7 +1074,10 @@ int check_stringData(char **line)
 	
 	status = scanString(&c, buffer);
 	if (!status)
+	{
+		*line = c;
 		return ERROR;
+	}
 	
 	/* only white spaces are allowed after the string */
 	c = skipWhiteSpace(c);
