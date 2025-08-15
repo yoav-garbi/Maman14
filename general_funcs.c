@@ -122,12 +122,16 @@ int base10_to_base2(int num, char str[])
 	char tempStr[buffer_size];
 	
 	/* handle zero explicitly to avoid returning an empty string */
-        if (num == 0)
-        {
-                str[0] = '0';
-                str[1] = '\0';
-                return 0;
-        }
+	if (num == 0)
+	{
+		/* ensure at least one full pair of bits for base-4 conversion */
+		str[0] = '0';
+		str[1] = '0';
+		str[2] = '0';
+		str[3] = '0';
+		str[4] = '\0';
+		return 0;
+	}
 	
 	/* translate num from decimal to binary into the temporary str (it is needed because the number comes out backwards) */
 	for (i = 0; num != 0; i++)
@@ -319,6 +323,12 @@ int scanString(char **line, char *str)
 	int len = 0;
 	
 	start = skipWhiteSpace(*line);
+	
+	if (isEndOfLine_or_whiteSpaceOnly(start)) /* not string data found */
+	{
+		printf("\nMissing string data after directive. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+		return ERROR;
+	}
 	
 	if (*start != '"') /* not starting " found */
 	{
