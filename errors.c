@@ -349,7 +349,7 @@ int check_existsInOtherFileAsEntry(char *str, int fileNum)
 
 int check_labelExist_or_legalExternalUse(binTree *node, char *label, lineNode *line, int fileNum)
 {
-	if (node != NULL || node->isExternal) /* label found locally or as extern placeholder */
+	if (node != NULL) /* label found locally or as extern placeholder */
 		return 0;
 	
 	if (check_existsInOtherFileAsEntry(label, fileNum))
