@@ -150,6 +150,7 @@ int check_labelExist_or_legalExternalUse(binTree *, char *, lineNode *, int);
 int check_entryWithLocalDefinition(binTree *, char *);
 int check_labelDuplicate(char *);
 int check_isExternalLabelDefinedInOtherFile(char *, int);
+int check_entryDeclaredInOtherFile(char *, int);
 int check_garbageTextBeforeLine(char *, int *, int *);
 int check_garbageTextAndClassifyWord(char *, int, int *, int *);
 int check_scanOperand(char **, int *, char *);
@@ -177,6 +178,7 @@ int isRequiredComma(char **);
 int scanLabel(char **, char *);
 int scanInt(char **, int *);
 int scanString(char **, char *);
+int printFile(FILE *fp);																									/* TEMP */
 
 
 
