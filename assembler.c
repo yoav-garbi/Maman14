@@ -101,8 +101,8 @@ int main (int argc, char *argv[])
 	
 	if (errorFlag)
 	{
-    		printf("Errors were found in the pre-assembler. Compilation terminated\n");
-    		goto cleanUp;
+		printf("Errors were found in the pre-assembler. Compilation terminated\n");
+		goto cleanUp;
 	}
 	
 	printf("======= Pre-assembler completed succesfully =======\n");
