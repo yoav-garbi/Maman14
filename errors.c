@@ -447,7 +447,7 @@ int check_entryNotAlsoExterned(char *label)
 {
 	if (isAlreadyExtern(label))
 	{
-		printf("Label \"%s\" cannot be both .entry and .extern in the same file (Line %d, File \"%s\")\n", label, lineCounter, nameArr[fileCounter]);
+		printf("\nLabel \"%s\" cannot be both .entry and .extern in the same file (Line %d, File \"%s\")\n\n", label, lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 	
@@ -460,7 +460,7 @@ int check_externNotAlsoEntryed(char *label)
 {
 	if (isAlreadyEntry(label))
 	{
-		printf("Label \"%s\" cannot be both .entry and .extern in the same file. (Line %d, file: \"%s\")\n\n", label, lineCounter, nameArr[fileCounter]);
+		printf("\nLabel \"%s\" cannot be both .entry and .extern in the same file. (Line %d, file: \"%s\")\n\n", label, lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 	
@@ -969,7 +969,13 @@ int check_dataValues(char **line, int *valueCount)
 	
 	if (valueCount != NULL)
 		*valueCount  = 1;
-
+	
+	if (num > max_data_int || num < min_data_int)
+	{
+		printf("\nNumber is out of legal range for a data-typed integer. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+		return ERROR;
+	}
+	
 	/* take in: ", int" until no more or error */
 	while(1)
 	{
@@ -985,12 +991,27 @@ int check_dataValues(char **line, int *valueCount)
 		status = scanInt(&c, &num);
 		if (!status) /* char after , was non-number or missing */
 		{
-			printf("\nMissing value/non-number after comma in a '.data' line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
-		    return ERROR;
+			if (valueCount == NULL) /* .data line */
+			{
+				printf("\nMissing value/non-number after comma in a '.data' line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+				return ERROR;
+			}
+			
+			if (valueCount != NULL) /* .mat line */
+			{
+				printf("\nMissing value/non-number after comma in a '.mat' line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+				return ERROR;
+			}
 		}
 		
 		if (valueCount != NULL)
 			(*valueCount)++;
+			
+		if (num > max_data_int || num < min_data_int)
+		{
+			printf("\nNumber is out of legal range for a data-typed integer. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+			return ERROR;
+		}
 	}
 
 	/* after end of ints allow only trailing white spaces */
