@@ -15,8 +15,3 @@
 	
 	; extern directive on a label that was not declared in any other file
 	.extern someLabel2
-	
-	; .entry and .extern directives on the same label in the same file
-	HELLO: mov r5, r6
-	.entry HELLO
-	.extern HELLO
