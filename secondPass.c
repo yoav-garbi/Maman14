@@ -64,10 +64,6 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 		}
 	
 	
-	if (errorFlag == 1)
-		return ERROR;
-	
-	
 	/* replace labels with address */
 	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter) /* each iteration is one file */
 	{
