@@ -217,6 +217,9 @@ int freeLabelTable(binTree ***arr, int fileNum)
 	int i;
 	binTree *root;
 	
+	if (arr == NULL || *arr == NULL)
+		return 0;
+	
 	for (i = 0; i < fileNum; ++i)
 	{
 		root = (*arr)[i];
