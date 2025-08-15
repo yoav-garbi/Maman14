@@ -349,7 +349,7 @@ int check_existsInOtherFileAsEntry(char *str, int fileNum)
 
 int check_labelExist_or_legalExternalUse(binTree *node, char *label, lineNode *line, int fileNum)
 {
-	if (node != NULL)	/* label found locally or as extern placeholder */
+	if (node != NULL || node->isExternal) /* label found locally or as extern placeholder */
 		return 0;
 	
 	if (check_existsInOtherFileAsEntry(label, fileNum))
@@ -371,7 +371,16 @@ int check_entryWithLocalDefinition(binTree *node, char *str)
 		printf("\nEntry \"%s\" doesn't have a local definition in this file. (Line %d, file: \"%s\")\n\n", str, lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
-	
+
+	if (node->isExternal)
+	{
+		if (node->address != 0)
+			printf("\nEntry \"%s\" was already declared in another file. (Line %d, file: \"%s\")\n\n", str, lineCounter, nameArr[fileCounter]);
+		else
+			printf("\nEntry \"%s\" doesn't have a local definition in this file. (Line %d, file: \"%s\")\n\n", str, lineCounter, nameArr[fileCounter]);
+		return ERROR;
+	}
+
 	return 0;
 }
 
@@ -385,32 +394,51 @@ int check_labelDuplicate(char *str)
 
 int check_isExternalLabelDefinedInOtherFile(char *label, int numFiles)
 {
-	int i, type, found = 0;
+	int i;
 	binTree *def;
-	
+
 	for (i = 0; i < numFiles; ++i)
 	{
 		if (i == fileCounter)
 			continue;
-		
+
 		def = search(labelTable[i], label);
-		
-		if (def != NULL) /* there is an actual decleration of the label in another file */
+
+		if (def != NULL)
 		{
-			type = def->symbolType;
-			found = 1;
-			break;
+			if (def->isEntry)
+				return def->symbolType; /* legal external – label is exported */
+
+			printf("\nExternal label \"%s\" isn't declared as .entry in any file. (Line %d, file: \"%s\")\n\n", label, lineCounter, nameArr[fileCounter]);
+			return ERROR;
 		}
 	}
-	
-	if (found != 1)
-	{
-		printf("\nEntry \"%s\" doesn't have a definition in any file. (Line %d, file: \"%s\")\n\n", label, lineCounter, nameArr[fileCounter]);
-		return ERROR;
-	}	
-	
-	return type;
+
+	printf("\nExternal label \"%s\" doesn't have a definition in any file. (Line %d, file: \"%s\")\n\n", label, lineCounter, nameArr[fileCounter]);
+	return ERROR;
 }
+
+int check_entryDeclaredInOtherFile(char *label, int numFiles)
+{
+	int i;
+	binTree *def;
+
+	for (i = 0; i < numFiles; ++i)
+	{
+		if (i == fileCounter)
+			continue;
+
+		def = search(labelTable[i], label);
+		if (def != NULL && def->isEntry)
+		{
+			printf("\nEntry \"%s\" was already declared in another file. (Line %d, file: \"%s\")\n\n", label, lineCounter, nameArr[fileCounter]);
+			return ERROR;
+		}
+	}
+
+	return 0;
+}
+
 
 
 
