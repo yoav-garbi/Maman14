@@ -87,3 +87,7 @@
 	
 	; extraneous text after .extern
 	.extern X more
+
+	; .entry and .extern directives on the same label in the same file
+	.extern HELLO
+	.entry HELLO
