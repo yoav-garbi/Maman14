@@ -309,6 +309,13 @@ int scanInt(char **line, int *num)
 	if (!gotDigit) /* no number was detected */
 		return 0;
 	
+	/* check if the number is a float (containing a '.') */
+	if (*c == '.')
+	{
+		printf("\nUse of a fraction (float)- illegal. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+		return ERROR;
+	}
+	
 	*num = sign * val;
 	*line = c; /* advance caller's pointer to after the number */
 	return 1;
@@ -327,12 +334,17 @@ int scanString(char **line, char *str)
 	if (isEndOfLine_or_whiteSpaceOnly(start)) /* not string data found */
 	{
 		printf("\nMissing string data after directive. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+		*line = start;
 		return ERROR;
 	}
 	
 	if (*start != '"') /* not starting " found */
 	{
 		printf("\nMissing \" before string. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+		c = start;
+		while (*c && *c != '\n')
+			c++;
+		*line = c;
 		return ERROR;
 	}
 	
@@ -352,6 +364,7 @@ int scanString(char **line, char *str)
 	if (end == NULL) /* no closing " was found */
 	{
 		printf("\nMissing \" after string. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+		*line = c;
 		return ERROR;
 	}
 	
