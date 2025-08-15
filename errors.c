@@ -1073,10 +1073,7 @@ int check_stringData(char **line)
 	
 	status = scanString(&c, buffer);
 	if (!status)
-	{
-		printf("\nMissing/illegal string after '.string'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 		return ERROR;
-	}
 	
 	/* only white spaces are allowed after the string */
 	c = skipWhiteSpace(c);
