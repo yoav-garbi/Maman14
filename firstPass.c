@@ -488,6 +488,8 @@ int firstPass(int index) {
         if (strcmp(first_word, ".entry") == 0) {
             nextPtr = skipWhitespace(ptr + strlen(".entry"));
             sscanf(nextPtr, "%s", first_word);
+			if (check_entryNotAlsoExterned(first_word) == ERROR)
+				countError++;
             addLineNode(&entryLineArr[index], first_word, 0, lineNumber);
             lineNumber++;
             readLine = takeInLine(currentLine.content, fp);
@@ -496,7 +498,13 @@ int firstPass(int index) {
 
         if (strcmp(first_word, ".extern") == 0) {
             sscanf(nextPtr, "%s", currentLine.label);
-            addNode(curLabelTable, currentLine.label, 0, EXTERN, 1, 0);
+			if (check_externNotAlsoEntryed(currentLine.label) == ERROR)
+				countError++;
+			addLineNode(&externLineArr[index], currentLine.label, 0, lineNumber);
+			
+			if (addNode(curLabelTable, currentLine.label, 0, EXTERN, 1, 0) == ERROR)
+				countError++;
+			
             lineNumber++;
             readLine = takeInLine(currentLine.content, fp);
             continue;
