@@ -62,7 +62,6 @@ int main (int argc, char *argv[])
 		goto cleanUp;
 
 
-
 	/* 3) open .as files (store in fileArr) */
 	fileArr = getFiles(argc, argv);
 	if (fileArr == NULL)
