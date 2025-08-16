@@ -13,6 +13,8 @@
 #define num_of_opcodes 16
 #define max_immediate_int 127
 #define min_immediate_int -128
+#define max_data_int 511
+#define min_data_int -512
 
 #define CODE 0
 #define DATA 1
