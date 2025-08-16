@@ -12,41 +12,58 @@
   int parse_mcro_open(const char *line, char *out_name, size_t out_sz, const char *fname_as)
 {
     const char *p = skipWhiteSpace((char *)line);
-    const char *after_mcro;
+    char tok[MAX_LINE_LENGTH];
+    const char *after;
     size_t i;
 
     if (out_sz > 0) out_name[0] = '\0';
 
-    if (strncmp(p, "mcro", 4) != 0) return 0;
+    if (sscanf(p, "%s", tok) != 1) return 0;
 
-    if (p[4] != ' ' && p[4] != '\t') {
+    if (strcmp(tok, "mcro") == 0) {
+        p += 4;
+        if (*p != ' ' && *p != '\t') {
+            printf("\nMissing white space between 'mcro' and macro name. (Line %d, file: \"%s\")\n\n",
+                   lineCounter, fname_as);
+            return -2;
+        }
+
+        after = skipWhiteSpace((char *)p);
+        if (*after == '\0' || *after == '\n' || *after == ';') {
+            printf("\nMissing macro name. (Line %d, file: \"%s\")\n\n", lineCounter, fname_as);
+            return -1;
+        }
+
+        i = 0;
+        while (after[i] && !isspace((unsigned char)after[i])) {
+            if (i + 1 < out_sz) out_name[i] = after[i];
+            i++;
+        }
+        if (out_sz > 0) out_name[(i < out_sz ? i : out_sz-1)] = '\0';
+        after += i;
+
+        after = skipWhiteSpace((char *)after);
+        if (*after != '\0' && *after != '\n' && *after != ';') {
+            printf("\nExtraneous text after line. (Line %d, file: \"%s\")\n\n",
+                   lineCounter, fname_as);
+            return -1;
+        }
+
+        return 1; /* valid mcro open */
+    }
+
+    if (strncmp(tok, "mcroend", 7) == 0) {
+        return 0;
+    }
+
+    if (strncmp(tok, "mcro", 4) == 0) {
         printf("\nMissing white space between 'mcro' and macro name. (Line %d, file: \"%s\")\n\n",
                lineCounter, fname_as);
         return -2;
     }
 
-    after_mcro = skipWhiteSpace((char *)(p + 4));
-    if (*after_mcro == '\0' || *after_mcro == '\n' || *after_mcro == ';') {
-        printf("\nMissing macro name. (Line %d, file: \"%s\")\n\n", lineCounter, fname_as);
-        return -1;
-    }
-
-    i = 0;
-    while (after_mcro[i] && !isspace((unsigned char)after_mcro[i])) {
-        if (i + 1 < out_sz) out_name[i] = after_mcro[i];
-        i++;
-    }
-    if (out_sz > 0) out_name[(i < out_sz ? i : out_sz-1)] = '\0';
-    after_mcro += i;
-
-    after_mcro = skipWhiteSpace((char *)after_mcro);
-    if (*after_mcro != '\0' && *after_mcro != '\n' && *after_mcro != ';') {
-        printf("\nExtraneous text after line. (Line %d, file: \"%s\")\n\n",
-               lineCounter, fname_as);
-        return -1;
-    }
-
-    return 1;
+    /* not a macro line */
+    return 0;
 }
 
   int mcro_close_status(const char *line, const char *fname_as)
@@ -313,3 +330,4 @@ int preAssemble(int index)
 
     return countError;
 }
+
