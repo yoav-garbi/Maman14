@@ -1,7 +1,6 @@
 #include "prototypes.h"
-#include <string.h>
 
-void trim_right(char *s)
+  void trim_right(char *s)
 {
     size_t n;
     if (!s) return;
@@ -10,60 +9,78 @@ void trim_right(char *s)
         s[--n] = '\0';
 }
 
-int parse_mcro_open(const char *line, char *out_name, size_t out_sz, const char *fname_as)
+  int parse_mcro_open(const char *line, char *out_name, size_t out_sz, const char *fname_as)
 {
-    const char *p;
-    char tok[MAX_LINE_LENGTH];
-    int n1, chk;
+    const char *p = skipWhiteSpace((char *)line);
+    const char *after_mcro;
+    size_t i;
 
     if (out_sz > 0) out_name[0] = '\0';
 
-    p = skipWhiteSpace((char *)line);
-    if (sscanf(p, "%s%n", tok, &n1) != 1) return 0;
-    if (strncmp(tok, "mcro", 4) != 0) return 0;
+    if (strncmp(p, "mcro", 4) != 0) return 0;
 
-    if (strcmp(tok, "mcro") != 0) {
-        printf("\nMissing white space between 'mcro' and macro name. (Line %d, file: \"%s\")\n\n", lineCounter, fname_as);
+    if (p[4] != ' ' && p[4] != '\t') {
+        printf("\nMissing white space between 'mcro' and macro name. (Line %d, file: \"%s\")\n\n",
+               lineCounter, fname_as);
         return -2;
     }
 
-    chk = check_macroOpenLine((char *)line);
-
-    p += n1;
-    if (sscanf(p, "%s", out_name) != 1)
-        return -1;
-
-    return (chk == 0) ? 1 : -1;
-}
-
-int mcro_close_status(const char *line, const char *fname_as)
-{
-    const char *p;
-    char tok[MAX_LINE_LENGTH];
-
-    p = skipWhiteSpace((char *)line);
-    if (sscanf(p, "%s", tok) != 1) return 0;
-
-    if (strncmp(tok, "mcroend", 7) == 0 && strcmp(tok, "mcroend") != 0) {
-        printf("\nText glued to 'mcroend' directive. (Line %d, file: \"%s\")\n\n", lineCounter, fname_as);
+    after_mcro = skipWhiteSpace((char *)(p + 4));
+    if (*after_mcro == '\0' || *after_mcro == '\n' || *after_mcro == ';') {
+        printf("\nMissing macro name. (Line %d, file: \"%s\")\n\n", lineCounter, fname_as);
         return -1;
     }
 
-    if (strcmp(tok, "mcroend") != 0) return 0;
-    return (check_macroCloseLine((char *)line) == 0) ? 1 : 2;
+    i = 0;
+    while (after_mcro[i] && !isspace((unsigned char)after_mcro[i])) {
+        if (i + 1 < out_sz) out_name[i] = after_mcro[i];
+        i++;
+    }
+    if (out_sz > 0) out_name[(i < out_sz ? i : out_sz-1)] = '\0';
+    after_mcro += i;
+
+    after_mcro = skipWhiteSpace((char *)after_mcro);
+    if (*after_mcro != '\0' && *after_mcro != '\n' && *after_mcro != ';') {
+        printf("\nExtraneous text after line. (Line %d, file: \"%s\")\n\n",
+               lineCounter, fname_as);
+        return -1;
+    }
+
+    return 1;
 }
 
-const char *scan_label_prefix(const char *s, char *label, size_t label_sz)
+  int mcro_close_status(const char *line, const char *fname_as)
 {
-    const char *p, *q;
+    const char *p = skipWhiteSpace((char *)line);
+
+    if (strncmp(p, "mcroend", 7) != 0) return 0;
+
+    if (p[7] != '\0' && p[7] != '\n' && p[7] != ' ' && p[7] != '\t' && p[7] != ';') {
+        printf("\nText glued to 'mcroend' directive. (Line %d, file: \"%s\")\n\n",
+               lineCounter, fname_as);
+        return -1;
+    }
+
+    p = skipWhiteSpace((char *)(p + 7));
+    if (*p != '\0' && *p != '\n' && *p != ';') {
+        printf("\nExtraneous text after line. (Line %d, file: \"%s\")\n\n",
+               lineCounter, fname_as);
+        return 2;
+    }
+
+    return 1;
+}
+
+  const char *scan_label_prefix(const char *s, char *label, size_t label_sz)
+{
+    const char *p = skipWhiteSpace((char *)s);
+    const char *q = p;
     size_t len;
 
-    p = skipWhiteSpace((char *)s);
-    q = p;
     while (*q && *q != ':' && !isspace((unsigned char)*q)) q++;
     if (*q != ':') return NULL;
 
-    len = (size_t)(q - p) + 1;
+    len = (size_t)(q - p) + 1; /* include ':' */
     if (label_sz) {
         if (len >= label_sz) len = label_sz - 1;
         memcpy(label, p, len);
@@ -72,12 +89,10 @@ const char *scan_label_prefix(const char *s, char *label, size_t label_sz)
     return q + 1;
 }
 
-const char *scan_token(const char *s, char *buf, size_t buf_sz)
+  const char *scan_token(const char *s, char *buf, size_t buf_sz)
 {
-    const char *p;
+    const char *p = skipWhiteSpace((char *)s);
     size_t i = 0;
-
-    p = skipWhiteSpace((char *)s);
     while (*p && !isspace((unsigned char)*p)) {
         if (i + 1 < buf_sz) buf[i++] = *p;
         p++;
@@ -86,17 +101,18 @@ const char *scan_token(const char *s, char *buf, size_t buf_sz)
     return p;
 }
 
-macro *find_macro(const char *name)
+  macro *find_macro(const char *name)
 {
     int i;
     if (!macroArr || macroCounter <= 0) return NULL;
-    for (i = 0; i < macroCounter; ++i)
+    for (i = 0; i < macroCounter; ++i) {
         if (macroArr[i] && macroArr[i]->name && strcmp(macroArr[i]->name, name) == 0)
             return macroArr[i];
+    }
     return NULL;
 }
 
-void emit_macro_body(FILE *out, const macro *m)
+  void emit_macro_body(FILE *out, const macro *m)
 {
     int i;
     if (!m) return;
@@ -106,10 +122,10 @@ void emit_macro_body(FILE *out, const macro *m)
     }
 }
 
-int read_mcro_body(FILE *fp, const char *macroName, int *pErr, const char *fname_as)
+  int read_mcro_body(FILE *fp, const char *macroName, int *pErr, const char *fname_as)
 {
     LineData lineBuf;
-    int readLine, st;
+    int readLine;
 
     for (;;) {
         readLine = takeInLine(lineBuf.content, fp);
@@ -123,10 +139,12 @@ int read_mcro_body(FILE *fp, const char *macroName, int *pErr, const char *fname
 
         trim_right(lineBuf.content);
 
-        st = mcro_close_status(lineBuf.content, fname_as);
-        if (st == 1) break;
-        if (st == 2) { if (pErr) (*pErr)++; break; }
-        if (st == -1) { if (pErr) (*pErr)++; }
+        {
+            int st = mcro_close_status(lineBuf.content, fname_as);
+            if (st == 1) break;
+            if (st == 2) { if (pErr) (*pErr)++; break; }
+            if (st == -1) { if (pErr) (*pErr)++; }
+        }
 
         if (addLineToMacro((char *)macroName, lineBuf.content) == ERROR)
             return ERROR;
@@ -134,16 +152,15 @@ int read_mcro_body(FILE *fp, const char *macroName, int *pErr, const char *fname
     return 0;
 }
 
-int only_ws_or_comment(const char *p)
+  int only_ws_or_comment(const char *p)
 {
     p = skipWhiteSpace((char *)p);
     return (*p == '\0' || *p == '\n' || *p == ';');
 }
 
-int expand_macro(FILE *out, const macro *m, const char *opt_label)
+  int expand_macro(FILE *out, const macro *m, const char *opt_label)
 {
     int i, first_real = -1;
-
     if (!m) return 0;
 
     for (i = 0; i < m->lineAmount; ++i) {
@@ -165,6 +182,9 @@ int expand_macro(FILE *out, const macro *m, const char *opt_label)
     return 1;
 }
 
+
+/* ============================================================================================== */
+/* read from fileArr[index] (.as), write to fileArr[amOffset+index] (.am) */
 int preAssemble(int index)
 {
     FILE *in_fp, *out_fp;
@@ -173,98 +193,122 @@ int preAssemble(int index)
     LineData currentLine;
     char *after_label;
     int readLine;
-    const char *fname_as;
 
-    if (argvPointer && *argvPointer && (*argvPointer)[fileCounter+1])
-        fname_as = (*argvPointer)[fileCounter+1];
-    else
-        fname_as = nameArr[fileCounter];
+    char fname_as[buffer_size];
+    {
+        const char *src = NULL;
+        if (argvPointer && *argvPointer && (*argvPointer)[index+1])
+            src = (*argvPointer)[index+1];
+        else
+            src = nameArr[index];
 
-    in_fp  = fileArr[index];
-    out_fp = fileArr[amOffset + index];
-
-    if (check_fileExistence(in_fp) == ERROR || check_fileExistence(out_fp) == ERROR)
-        return ERROR;
-
-    freeMacroArr();
-    if (initializeMacroArr() == ERROR)
-        return ERROR;
-
-    readLine = takeInLine(currentLine.content, in_fp);
-    while (readLine != EOF_only_line) {
-        if (readLine != 0) {
-            countError++;
-            readLine = takeInLine(currentLine.content, in_fp);
-            continue;
-        }
-
-        trim_right(currentLine.content);
+        strncpy(fname_as, src ? src : "unknown", sizeof(fname_as)-1);
+        fname_as[sizeof(fname_as)-1] = '\0';
 
         {
-            char macroName[MAX_LABEL_LENGTH];
-            int st = parse_mcro_open(currentLine.content, macroName, sizeof(macroName), fname_as);
-            if (st == 1) {
-                if (addMacro(macroName) == ERROR) {
-                    countError++;
-                } else {
-                    if (read_mcro_body(in_fp, macroName, &countError, fname_as) == ERROR)
-                        countError++;
-                }
-                readLine = takeInLine(currentLine.content, in_fp);
-                continue;
-            } else if (st == -1 || st == -2) {
-                LineData tmp;
-                int rl;
-                countError++;
-                for (;;) {
-                    rl = takeInLine(tmp.content, in_fp);
-                    if (rl == EOF_only_line) {
-                        printf("\nUnexpected EOF before 'mcroend'. (File: \"%s\")\n\n", fname_as);
-                        countError++;
-                        break;
-                    }
-                    if (rl != 0) continue;
-                    trim_right(tmp.content);
-                    if (mcro_close_status(tmp.content, fname_as) != 0) break;
-                }
-                readLine = takeInLine(currentLine.content, in_fp);
-                continue;
-            }
+            size_t L = strlen(fname_as);
+            if (L >= 3 && fname_as[L-3]=='.' && fname_as[L-2]=='a' && fname_as[L-1]=='m')
+                fname_as[L-1] = 's';
+        }
+    }
+
+    {
+        int savedFileCounter = fileCounter;
+        int savedLineCounter = lineCounter;
+
+        fileCounter = index + 1;
+        lineCounter = 0;
+
+        in_fp  = fileArr[index];
+        out_fp = fileArr[amOffset + index];
+
+        if (check_fileExistence(in_fp) == ERROR || check_fileExistence(out_fp) == ERROR) {
+            fileCounter = savedFileCounter;
+            lineCounter = savedLineCounter;
+            return ERROR;
         }
 
-        after_label = (char *)scan_label_prefix(currentLine.content, label, sizeof(label));
-        if (after_label != NULL) {
-            char tok[MAX_LABEL_LENGTH];
-            const char *after_tok;
-            macro *m;
-
-            after_label = (char *)skipWhiteSpace(after_label);
-            after_tok = scan_token(after_label, tok, sizeof(tok));
-            m = (tok[0] ? find_macro(tok) : NULL);
-
-            if (m && only_ws_or_comment(after_tok)) {
-                if (!expand_macro(out_fp, m, label)) {
-                    fputs(currentLine.content, out_fp); fputc('\n', out_fp);
-                }
-            } else {
-                fputs(currentLine.content, out_fp); fputc('\n', out_fp);
-            }
-        } else {
-            char tok[MAX_LABEL_LENGTH];
-            const char *after_tok;
-            macro *m;
-
-            after_tok = scan_token(currentLine.content, tok, sizeof(tok));
-            m = (tok[0] ? find_macro(tok) : NULL);
-
-            if (m && only_ws_or_comment(after_tok)) {
-                (void)expand_macro(out_fp, m, NULL);
-            } else {
-                fputs(currentLine.content, out_fp); fputc('\n', out_fp);
-            }
+        freeMacroArr();
+        if (initializeMacroArr() == ERROR) {
+            fileCounter = savedFileCounter;
+            lineCounter = savedLineCounter;
+            return ERROR;
         }
 
         readLine = takeInLine(currentLine.content, in_fp);
+        while (readLine != EOF_only_line) {
+            if (readLine != 0) {
+                countError++; /* too-long line counted */
+                readLine = takeInLine(currentLine.content, in_fp);
+                continue;
+            }
+
+            trim_right(currentLine.content);
+
+            {
+                char macroName[MAX_LABEL_LENGTH];
+                int st = parse_mcro_open(currentLine.content, macroName, sizeof(macroName), fname_as);
+
+                if (st == 1) {
+                    if (addMacro(macroName) == ERROR) {
+                        countError++;
+                    } else {
+                        if (read_mcro_body(in_fp, macroName, &countError, fname_as) == ERROR)
+                            countError++;
+                    }
+                    readLine = takeInLine(currentLine.content, in_fp);
+                    continue;
+                } else if (st == -1) {
+                    countError++;
+                    if (macroName[0] != '\0' && addMacro(macroName) == 0) {
+                        if (read_mcro_body(in_fp, macroName, &countError, fname_as) == ERROR)
+                            countError++;
+                    }
+                    readLine = takeInLine(currentLine.content, in_fp);
+                    continue;
+                } else if (st == -2) {
+                    countError++;
+                }
+            }
+
+            after_label = (char *)scan_label_prefix(currentLine.content, label, sizeof(label));
+            if (after_label != NULL) {
+                char tok[MAX_LABEL_LENGTH];
+                const char *after_tok;
+                macro *m;
+
+                after_label = (char *)skipWhiteSpace(after_label);
+                after_tok = scan_token(after_label, tok, sizeof(tok));
+                m = (tok[0] ? find_macro(tok) : NULL);
+
+                if (m && only_ws_or_comment(after_tok)) {
+                    if (!expand_macro(out_fp, m, label)) {
+                        fputs(currentLine.content, out_fp); fputc('\n', out_fp);
+                    }
+                } else {
+                    fputs(currentLine.content, out_fp); fputc('\n', out_fp);
+                }
+            } else {
+                char tok[MAX_LABEL_LENGTH];
+                const char *after_tok;
+                macro *m;
+
+                after_tok = scan_token(currentLine.content, tok, sizeof(tok));
+                m = (tok[0] ? find_macro(tok) : NULL);
+
+                if (m && only_ws_or_comment(after_tok)) {
+                    (void)expand_macro(out_fp, m, NULL);
+                } else {
+                    fputs(currentLine.content, out_fp); fputc('\n', out_fp);
+                }
+            }
+
+            readLine = takeInLine(currentLine.content, in_fp);
+        }
+
+        /* restore globals */
+        fileCounter = savedFileCounter;
+        lineCounter = savedLineCounter;
     }
 
     return countError;
