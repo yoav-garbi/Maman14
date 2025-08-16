@@ -1,253 +1,238 @@
 #include "prototypes.h"
-#include <string.h>
 
+
+
+/* take in the arguments into the FILEs array */
 FILE **getFiles(int argc, char *argv[])
 {
-    FILE **arr;
-    FILE *fp;
-    int i, savedFC;
-
-    arr = (FILE **)calloc(total_num_of_files(argc), sizeof(FILE *));
-    if (check_allocation(arr) == ERROR)
-        return NULL;
-
-    savedFC = fileCounter;
-
-    for (i = 0; i < argc - 1; ++i)
-    {
-        fileCounter = i + 1;
-        fp = fopen(argv[i+1], "r");
-        if (check_fileExistence(fp) == ERROR) {
-            fileCounter = savedFC;
-            return NULL;
-        }
-        arr[i] = fp;
-    }
-
-    fileCounter = savedFC;
-    return arr;
+	FILE *filePointer;
+	FILE **fileArr = calloc(total_num_of_files(argc), sizeof(FILE *));
+	
+	if (check_allocation(fileArr) == ERROR)
+		return NULL;
+	
+	/* open .as files */
+	for (fileCounter = 0; fileCounter < argc - 1; ++fileCounter)
+	{
+		filePointer = fopen(argv[fileCounter+1], "r");
+		
+		if (check_fileExistence(filePointer) == ERROR)	/* check if the file has opened succesfuly */
+			return NULL;
+		
+		fileArr[fileCounter] = filePointer;
+	}
+	
+	return fileArr;
 }
 
 char **make_nameArr(int argc, char *argv[])
 {
-    int i;
-    char **names;
-
-    names = (char **)calloc(argc - 1, sizeof(char *));
-    if (check_allocation(names) == ERROR)
-        return NULL;
-
-    for (i = 0; i < argc - 1; ++i)
-    {
-        names[i] = (char *)malloc(buffer_size * sizeof(char));
-        if (check_allocation(names[i]) == ERROR)
-            return NULL;
-        strcpy(names[i], argv[i+1]);
-    }
-    return names;
+	int i;
+	char **nameArr;
+	
+	/* create an array of strings- each one points to the name of a .as file */
+	nameArr = calloc(argc - 1, sizeof(char *));
+	if (check_allocation(nameArr) == ERROR)
+		return NULL;
+	
+	for (i = 0; i < argc - 1; ++i) /* argc-1 because the 0th index refers to "./assembler" so we need to skip it without going out of bounds */
+	{
+		nameArr[i] = malloc(buffer_size * sizeof(char));
+		if (check_allocation(nameArr[i]) == ERROR)
+			return NULL;
+		
+		strcpy(nameArr[i], argv[i+1]);	/* argv+1 because the 0th index refers to "./assembler" which is irelevent here, so we need to skip it */
+	}
+	
+	return nameArr;
 }
 
-static int build_out_name_am(const char *in_as, char out[], int out_sz)
-{
-    int len;
-    if (!in_as) return ERROR;
-    len = (int)strlen(in_as);
-    if (len < 3 || out_sz < len + 1) return ERROR;
-    strcpy(out, in_as);
-    out[len-2] = 'a';
-    out[len-1] = 'm';
-    return 0;
-}
-
-static int build_out_name_ob(const char *in_as, char out[], int out_sz)
-{
-    int len;
-    if (!in_as) return ERROR;
-    len = (int)strlen(in_as);
-    if (len < 3 || out_sz < len + 1) return ERROR;
-    strcpy(out, in_as);
-    out[len-2] = 'o';
-    out[len-1] = 'b';
-    return 0;
-}
-
-static int build_out_name_ent(const char *in_as, char out[], int out_sz)
-{
-    int len;
-    if (!in_as) return ERROR;
-    len = (int)strlen(in_as);
-    if (len < 3 || out_sz < len + 2) return ERROR;
-    strcpy(out, in_as);
-    out[len-2] = 'e';
-    out[len-1] = 'n';
-    out[len]   = 't';
-    out[len+1] = '\0';
-    return 0;
-}
-
-static int build_out_name_ext(const char *in_as, char out[], int out_sz)
-{
-    int len;
-    if (!in_as) return ERROR;
-    len = (int)strlen(in_as);
-    if (len < 3 || out_sz < len + 2) return ERROR;
-    strcpy(out, in_as);
-    out[len-2] = 'e';
-    out[len-1] = 'x';
-    out[len]   = 't';
-    out[len+1] = '\0';
-    return 0;
-}
-
+/* create the output files and store in the FILEs array */
 int create_amFile(int argc, FILE **fileArr, char **nameArr, int i)
 {
-    char out[MAX_LINE_LENGTH];
-    FILE *fp;
+	int len;
+	FILE *filePointer;
+	
+	len = strlen(nameArr[i]);
+	nameArr[i][len-2] = 'a';
+	nameArr[i][len-1] = 'm';
 
-    if (build_out_name_am(nameArr[i], out, (int)sizeof(out)) == ERROR)
-        return ERROR;
+	filePointer = fopen(nameArr[i], "w+");
 
-    fp = fopen(out, "w+");
-    if (check_newFileExistence(fp) == ERROR)
-        return ERROR;
+	if (check_newFileExistence(filePointer) == ERROR)
+		return ERROR;
 
-    fileArr[(argc-1) + i] = fp;
-    printf("\t%s\n", out);
-    return 0;
+	fileArr[(argc-1) + i] = filePointer;
+	printf("\t%s\n", nameArr[i]);																						/*TEMP*/
+	
+	return 0;
 }
 
+/* create ob file and store in the FILEs array */
 int create_obFile(int argc, FILE **fileArr, char **nameArr, int i)
 {
-    char out[MAX_LINE_LENGTH];
-    FILE *fp;
+	int len;
+	FILE *filePointer;
+	
+	len = strlen(nameArr[i]);
+	nameArr[i][len-2] = 'o';
+	nameArr[i][len-1] = 'b';
 
-    if (build_out_name_ob(nameArr[i], out, (int)sizeof(out)) == ERROR)
-        return ERROR;
+	filePointer = fopen(nameArr[i], "w+");
 
-    fp = fopen(out, "w+");
-    if (check_newFileExistence(fp) == ERROR)
-        return ERROR;
+	if (check_newFileExistence(filePointer) == ERROR)
+		return ERROR;
 
-    fileArr[2*(argc-1) + i] = fp;
-    printf("\t%s\n", out);
-    return 0;
+	fileArr[2*(argc-1) + i] = filePointer;
+	printf("\t%s\n", nameArr[i]);																						/*TEMP*/
+	
+	return 0;
 }
 
+/* create ent file and store in the FILEs array */
 int create_entFile(int argc, FILE **fileArr, char **nameArr, int i)
 {
-    char out[MAX_LINE_LENGTH];
-    FILE *fp;
+	int len;
+	FILE *filePointer;
+	
+	len = strlen(nameArr[i]);
+	nameArr[i][len-2] = 'e';
+	nameArr[i][len-1] = 'n';
+	nameArr[i][len] = 't';
+	nameArr[i][len+1] = '\0';
 
-    if (build_out_name_ent(nameArr[i], out, (int)sizeof(out)) == ERROR)
-        return ERROR;
+	filePointer = fopen(nameArr[i], "w+");
 
-    fp = fopen(out, "w+");
-    if (check_newFileExistence(fp) == ERROR)
-        return ERROR;
+	if (check_newFileExistence(filePointer) == ERROR)
+		return ERROR;
 
-    fileArr[3*(argc-1) + i] = fp;
-    printf("\t%s\n", out);
-    return 0;
+	fileArr[3*(argc-1) + i] = filePointer;
+	printf("\t%s\n", nameArr[i]);																						/*TEMP*/
+	
+	return 0;
 }
 
+/* create ext file and store in the FILEs array */
 int create_extFile(int argc, FILE **fileArr, char **nameArr, int i)
 {
-    char out[MAX_LINE_LENGTH];
-    FILE *fp;
+	int len;
+	FILE *filePointer;
+	
+	len = strlen(nameArr[i]);
+	nameArr[i][len-2] = 'x';
 
-    if (build_out_name_ext(nameArr[i], out, (int)sizeof(out)) == ERROR)
-        return ERROR;
+	filePointer = fopen(nameArr[i], "w+");
 
-    fp = fopen(out, "w+");
-    if (check_newFileExistence(fp) == ERROR)
-        return ERROR;
+	if (check_newFileExistence(filePointer) == ERROR)
+		return ERROR;
 
-    fileArr[4*(argc-1) + i] = fp;
-    printf("\t%s\n", out);
-    return 0;
+	fileArr[4*(argc-1) + i] = filePointer;
+	printf("\t%s\n", nameArr[i]);																						/*TEMP*/
+	
+	return 0;
 }
 
+
+
+/* close all files */
 int closeFiles(int argc, FILE **fileArr)
 {
-    int i;
-    if (fileArr == NULL)
-        return 0;
-    for (i = 0; i < total_num_of_files(argc); ++i)
-        if (fileArr[i] != NULL)
-            fclose(fileArr[i]);
-    return 0;
+	int i;
+	
+	if (fileArr == NULL)
+		return 0;
+	
+	for (i = 0; i < total_num_of_files(argc); ++i)
+		if (fileArr[i] != NULL)
+			fclose(fileArr[i]);
+	
+	return 0;
 }
 
+
+
+/* read lines until you reach a non-note and non-white-space-only line */
 int takeInLine(char buffer[], FILE *source)
 {
-    int flag;
-    char *c, *fgetsStatus;
-
-    do {
-        flag = 0;
-        fgetsStatus = fgets(buffer, buffer_size, source);
-        lineCounter++;
-        if (fgetsStatus == NULL)
-            return EOF_only_line;
-        c = skipWhiteSpace(fgetsStatus);
-        if (*c == ';')
-            continue;
-        if (check_lineLength(buffer) == ERROR)
-            continue;
-        c = skipWhiteSpace(c);
-        if (*c != '\n')
-            flag = 1;
-    } while (flag == 0);
-
-    return 0;
+	int flag;
+	char *c, *fgetsStatus;
+	
+	do
+	{
+		flag = 0;
+		
+		/* take in line */
+		fgetsStatus = fgets(buffer, buffer_size, source);
+		lineCounter++;
+	
+		if (fgetsStatus == NULL) /* fgets returns NULL if the entire input is EOF (an empty line)- end the task */
+			return EOF_only_line;
+		
+		c = skipWhiteSpace(fgetsStatus);
+		if (*c == ';')
+			continue;
+		
+		if (check_lineLength(buffer) == ERROR) /* line is too long, so we can skip it */
+			continue;
+		
+		c = skipWhiteSpace(c);
+			
+		if (*c != '\n')
+			flag = 1;
+		
+	} while (flag == 0);	/* perform this action as long as count is 0 (as long as the lines are blank) */
+	
+	return 0;
 }
+
+
 
 int recognize_opcode(char *code)
 {
-    int i, status;
-    for (i = 0; i < num_of_opcodes && strcmp(code, opcodeTable[i].name); ++i) ;
-    status = check_opcodeName(i);
-    if (status == 0)
-        return i;
-    return ERROR;
+	int i, status;
+	
+	for (i = 0; i < num_of_opcodes && strcmp(code, opcodeTable[i].name); ++i);
+
+	status = check_opcodeName(i);
+	if(status == 0)	/* command found- return index */
+		return i;
+	
+	return ERROR;
 }
 
-static int writeEntNode(FILE *file, binTree *root)
-{
-    char address[address_binary_representation_size+1];
-    if (!root) return 0;
-    writeEntNode(file, root->left);
-    if (root->isEntry) {
-        base10_to_base2_forAddress(root->address, address);
-        fprintf(file, "%s\t\t", root->str);
-        base2_to_base4_strToFile(address, file);
-        fprintf(file, "\n");
-    }
-    writeEntNode(file, root->right);
-    return 0;
-}
 
-static int writeExtNode(FILE *file, binTree *root)
-{
-    char address[address_binary_representation_size+1];
-    if (!root) return 0;
-    writeExtNode(file, root->left);
-    if (root->isExternal) {
-        base10_to_base2_forAddress(root->address, address);
-        fprintf(file, "%s\t\t", root->str);
-        base2_to_base4_strToFile(address, file);
-        fprintf(file, "\n");
-    }
-    writeExtNode(file, root->right);
-    return 0;
-}
 
 int writeEnt(FILE *file)
 {
-    return writeEntNode(file, labelTable[fileCounter]);
+	char address[address_binary_representation_size+1];	/* +1 is for '\0' */
+	lineNode *node;
+	
+	for (node = entryLineArr[fileCounter]; node != NULL; node = node->next)
+	{
+		base10_to_base2_forAddress(node->address, address);
+		
+		fprintf(file, "%s\t\t", node->line);
+		base2_to_base4_strToFile(address, file);
+		fprintf(file, "\n");
+	}
+	
+	return 0;
 }
+
 
 int writeExt(FILE *file)
 {
-    return writeExtNode(file, labelTable[fileCounter]);
+	char address[address_binary_representation_size+1];	/* +1 is for '\0' */
+	lineNode *node;
+	
+	for (node = externLineArr[fileCounter]; node != NULL; node = node->next)
+	{
+		base10_to_base2_forAddress(node->address, address);
+		
+		fprintf(file, "%s\t\t", node->line);
+		base2_to_base4_strToFile(address, file);
+		fprintf(file, "\n");
+	}
+	
+	return 0;
 }
