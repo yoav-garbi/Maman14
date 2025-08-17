@@ -228,6 +228,9 @@ int writeExt(FILE *file)
 
 	for (node = externLineArr[fileCounter]; node != NULL; node = node->next)
 	{
+		if (node->address == 0)
+			continue; /* skip declarations, only write usages */
+		
 		base10_to_base2_forShortAddress(node->address, address);
 		address[short_address_binary_representation_size] = '\0';
 
