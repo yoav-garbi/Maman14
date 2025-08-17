@@ -8,6 +8,7 @@
 #define ERROR -1
 #define buffer_size 200
 #define address_binary_representation_size 10
+#define short_address_binary_representation_size 8
 #define total_num_of_files(argc) ((argc-1)*5) /* argc-1 because the 0th index refers to "./assembler" which is irrelevent here. *4 because each .as file (1) will make a .am file (2), .ob file (3), a .ext file (4) and a .ent file (5) */
 #define EOF_only_line 1
 #define num_of_opcodes 16
@@ -174,6 +175,7 @@ int base2_to_base4_fileToFile(FILE *, FILE *);
 int base2_to_base4_strToFile(char *, FILE*);
 int base10_to_base2(int, char[]);
 int base10_to_base2_forAddress(int, char[]);
+int base10_to_base2_forShortAddress(int, char[]);
 int copyFile(FILE *, FILE *);
 char *strDuplicate(char *);
 char *skipWhiteSpace(char *);
