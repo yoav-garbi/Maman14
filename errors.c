@@ -267,7 +267,7 @@ int check_registerNumber(char *name)
 
 int check_labelName(char *ptr) /* ptr can be "label:" */
 {
-    int len = strlen(ptr), i;
+	int len = strlen(ptr), i;
     char name[MAX_LABEL_LENGTH + 2]; /* room for '\0' */
     int name_len;
 
@@ -327,7 +327,6 @@ int check_labelName(char *ptr) /* ptr can be "label:" */
 
     return 0;
 }
-
 
 
 
