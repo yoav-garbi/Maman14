@@ -281,7 +281,7 @@ void processSingleOperand(char *operand, int method, int *IC, lineNode **codeLis
 
         case 1: /* direct */
             addExternIfNeeded(operand, *IC, labelTable, externLineArr);
-            sprintf(labelPadded, " %-8s ", operand);
+            sprintf(labelPadded, " %-10s ", operand);
             addLineNode(codeList, labelPadded, (*IC)++, lineNum);
             break;
         
@@ -289,7 +289,7 @@ void processSingleOperand(char *operand, int method, int *IC, lineNode **codeLis
         {
             if (sscanf(operand, "%[^[][%2[^]]][%2[^]]]", matLabel, rowReg, colReg) == 3) {
                 addExternIfNeeded(matLabel, *IC, labelTable, externLineArr);
-                sprintf(labelPadded, " %-8.8s ", matLabel);
+                sprintf(labelPadded, " %-10.10s ", matLabel);
                 addLineNode(codeList, labelPadded, (*IC)++, lineNum);
 
                 value = getRegisterNumber(rowReg);
@@ -371,9 +371,11 @@ operands parseOperands(char *lineAfterOpcode, char *opcodeName) {
     token = strtok(tempLine, " ,\t\n");
     if (token != NULL) {
         if (hasOnlyDestOperand(opcodeName)) {
-            strcpy(ops.op2, token);
+            strncpy(ops.op2, token, MAX_LABEL_LENGTH - 1);
+            ops.op2[MAX_LABEL_LENGTH - 1] = '\0';
         } else {
-            strcpy(ops.op1, token);
+            strncpy(ops.op1, token, MAX_LABEL_LENGTH - 1);
+            ops.op1[MAX_LABEL_LENGTH - 1] = '\0';
         }
         count++;
     }
