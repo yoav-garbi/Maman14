@@ -198,6 +198,33 @@ int base10_to_base2_forAddress(int num, char str[])
 
 
 
+int base10_to_base2_forShortAddress(int num, char str[])
+{
+	int i;
+	char tempStr[short_address_binary_representation_size + 1]; /* +1 for '\0' */
+	
+	for (i = 0; num != 0; i++)
+	{
+		if (num % 2)
+			tempStr[i] = '1';
+		else
+			tempStr[i] = '0';
+
+		num >>= 1;
+	}
+	
+	while (i < short_address_binary_representation_size)
+		tempStr[i++] = '0';
+
+	for (i = 0; i < short_address_binary_representation_size; i++)
+		str[i] = tempStr[short_address_binary_representation_size - 1 - i];
+	
+	str[i] = '\0';
+	return 0;
+}
+
+
+
 int copyFile(FILE *source, FILE *dest)
 {
 	int c = ' ';
