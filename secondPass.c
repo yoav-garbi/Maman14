@@ -111,9 +111,9 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 		create_obFile(argc, fileArr, nameArr, fileCounter);
 		
 		/* write IC and DC in first line */
-		base10_to_base2(icArr[fileCounter], binAddress);
+		base10_to_base2(icArr[fileCounter] - IC_INIT_VALUE, binAddress);
 		fprintf(fileArr[obOffset + fileCounter], "\t %s ", binAddress);
-		base10_to_base2(dcArr[fileCounter], binAddress);
+		base10_to_base2(dcArr[fileCounter] - icArr[fileCounter] - IC_INIT_VALUE, binAddress);
 		fprintf(fileArr[obOffset + fileCounter], "%s\n", binAddress);
 		
 		
