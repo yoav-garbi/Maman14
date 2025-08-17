@@ -199,9 +199,7 @@
     return 1;
 }
 
-
-/* ============================================================================================== */
-/* read from fileArr[index] (.as), write to fileArr[amOffset+index] (.am) */
+/* ================================================================================================================= */
 int preAssemble(int index)
 {
     FILE *in_fp, *out_fp;
@@ -211,7 +209,13 @@ int preAssemble(int index)
     char *after_label;
     int readLine;
 
+    /* file name we print in diagnostics (normalize to .as) */
     char fname_as[buffer_size];
+
+    /* path to the .am we may need to delete on failure */
+    char fname_am[buffer_size];
+    size_t L;
+
     {
         const char *src = NULL;
         if (argvPointer && *argvPointer && (*argvPointer)[index+1])
@@ -222,10 +226,27 @@ int preAssemble(int index)
         strncpy(fname_as, src ? src : "unknown", sizeof(fname_as)-1);
         fname_as[sizeof(fname_as)-1] = '\0';
 
-        {
-            size_t L = strlen(fname_as);
-            if (L >= 3 && fname_as[L-3]=='.' && fname_as[L-2]=='a' && fname_as[L-1]=='m')
-                fname_as[L-1] = 's';
+        /* If someone passed a .am by mistake, present messages as .as */
+        L = strlen(fname_as);
+        if (L >= 3 && fname_as[L-3]=='.' && fname_as[L-2]=='a' && fname_as[L-1]=='m')
+            fname_as[L-1] = 's';
+
+        /* Build .am path from .as path */
+        L = strlen(fname_as);
+        if (L >= 3 && fname_as[L-3]=='.' && fname_as[L-2]=='a' && fname_as[L-1]=='s') {
+            /* copy and flip .as -> .am */
+            strncpy(fname_am, fname_as, sizeof(fname_am)-1);
+            fname_am[sizeof(fname_am)-1] = '\0';
+            fname_am[L-1] = 'm';
+        } else {
+            /* fallback: append .am if space allows */
+            if (L + 3 < sizeof(fname_am)) {
+                memcpy(fname_am, fname_as, L);
+                fname_am[L] = '\0';
+                strcat(fname_am, ".am");
+            } else {
+                fname_am[0] = '\0'; /* too long; deletion will be skipped */
+            }
         }
     }
 
@@ -239,7 +260,9 @@ int preAssemble(int index)
         in_fp  = fileArr[index];
         out_fp = fileArr[amOffset + index];
 
+        /* If opening/creating failed, nothing to remove (out_fp may be NULL) */
         if (check_fileExistence(in_fp) == ERROR || check_fileExistence(out_fp) == ERROR) {
+            /* restore globals */
             fileCounter = savedFileCounter;
             lineCounter = savedLineCounter;
             return ERROR;
@@ -247,6 +270,13 @@ int preAssemble(int index)
 
         freeMacroArr();
         if (initializeMacroArr() == ERROR) {
+            /* close and delete the .am we opened */
+            if (fileArr[amOffset + index]) {
+                fclose(fileArr[amOffset + index]);
+                fileArr[amOffset + index] = NULL;
+            }
+            if (fname_am[0] != '\0') remove(fname_am);
+
             fileCounter = savedFileCounter;
             lineCounter = savedLineCounter;
             return ERROR;
@@ -262,6 +292,7 @@ int preAssemble(int index)
 
             trim_right(currentLine.content);
 
+            /* --- macro open? --- */
             {
                 char macroName[MAX_LABEL_LENGTH];
                 int st = parse_mcro_open(currentLine.content, macroName, sizeof(macroName), fname_as);
@@ -288,6 +319,7 @@ int preAssemble(int index)
                 }
             }
 
+            /* --- label + macro call? --- */
             after_label = (char *)scan_label_prefix(currentLine.content, label, sizeof(label));
             if (after_label != NULL) {
                 char tok[MAX_LABEL_LENGTH];
@@ -306,6 +338,7 @@ int preAssemble(int index)
                     fputs(currentLine.content, out_fp); fputc('\n', out_fp);
                 }
             } else {
+                /* --- plain line or macro call without label --- */
                 char tok[MAX_LABEL_LENGTH];
                 const char *after_tok;
                 macro *m;
@@ -323,6 +356,16 @@ int preAssemble(int index)
             readLine = takeInLine(currentLine.content, in_fp);
         }
 
+        /* If we detected any pre-assembler errors, delete the emitted .am */
+        if (countError > 0) {
+            if (fileArr[amOffset + index]) {
+                fflush(fileArr[amOffset + index]);
+                fclose(fileArr[amOffset + index]);
+                fileArr[amOffset + index] = NULL; /* so later code won’t fflush/fclose again */
+            }
+            if (fname_am[0] != '\0') remove(fname_am);
+        }
+
         /* restore globals */
         fileCounter = savedFileCounter;
         lineCounter = savedLineCounter;
@@ -330,4 +373,3 @@ int preAssemble(int index)
 
     return countError;
 }
-
