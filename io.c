@@ -204,35 +204,41 @@ int recognize_opcode(char *code)
 
 int writeEnt(FILE *file)
 {
-	char address[address_binary_representation_size+1];	/* +1 is for '\0' */
+	char address[address_binary_representation_size + 3]; /* +3 for ERA bits and '\0' */
 	lineNode *node;
-	
+
 	for (node = entryLineArr[fileCounter]; node != NULL; node = node->next)
 	{
 		base10_to_base2_forAddress(node->address, address);
-		
+		address[address_binary_representation_size] = '0';
+		address[address_binary_representation_size + 1] = '0';
+		address[address_binary_representation_size + 2] = '\0';
+
 		fprintf(file, "%s\t\t", node->line);
 		base2_to_base4_strToFile(address, file);
 		fprintf(file, "\n");
 	}
-	
+
 	return 0;
 }
 
 
 int writeExt(FILE *file)
 {
-	char address[address_binary_representation_size+1];	/* +1 is for '\0' */
+	char address[address_binary_representation_size + 3]; /* +3 for ERA bits and '\0' */
 	lineNode *node;
-	
+
 	for (node = externLineArr[fileCounter]; node != NULL; node = node->next)
 	{
 		base10_to_base2_forAddress(node->address, address);
-		
+		address[address_binary_representation_size] = '0';
+		address[address_binary_representation_size + 1] = '1';
+		address[address_binary_representation_size + 2] = '\0';
+
 		fprintf(file, "%s\t\t", node->line);
 		base2_to_base4_strToFile(address, file);
 		fprintf(file, "\n");
 	}
-	
+
 	return 0;
 }
