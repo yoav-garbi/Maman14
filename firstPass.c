@@ -12,28 +12,29 @@ char *skipWhitespace(char *line) {
 }
 
 int isLabel(char *ptr) {
-	int len = 0;
-	char label[MAX_LABEL_LENGTH + 2];
+    int len = 0;
+    char *colon;
+    char saved;
 
-	/* find end of potential label */
-	while (ptr[len] && !isspace((unsigned char)ptr[len]) && ptr[len] != ':')
-		len++;
+    while (ptr[len] && !isspace((unsigned char)ptr[len]) && ptr[len] != ':')
+        len++;
 
-	if (ptr[len] != ':')
-		return 0;
+    if (ptr[len] != ':')
+        return 0;
 
-	/* copy only the label (including ':') for validation */
-	if (len + 1 >= (int)sizeof(label))
-		return ERROR;
-	memcpy(label, ptr, len + 1);
-	label[len + 1] = '\0';
+    colon = ptr + len;
+    saved = colon[1];
+    colon[1] = '\0';
 
-	if (check_labelName(label) == ERROR) {
-		return ERROR;
-	}
+    if (check_labelName(ptr) == ERROR) {
+        colon[1] = saved;
+        return ERROR;
+    }
 
-	return 1;
+    colon[1] = saved;
+    return 1;
 }
+
 
 int isData(char *word) {
     if (strcmp(word, ".data") == 0) return 1;
