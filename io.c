@@ -209,7 +209,7 @@ int writeEnt(FILE *file)
 
 	for (node = entryLineArr[fileCounter]; node != NULL; node = node->next)
 	{
-		base10_to_base2_forAddress(node->address, address);
+		base10_to_base2_forShortAddress(node->address, address);
 		address[short_address_binary_representation_size] = '\0';
 
 		fprintf(file, "%s\t\t", node->line);
@@ -228,7 +228,7 @@ int writeExt(FILE *file)
 
 	for (node = externLineArr[fileCounter]; node != NULL; node = node->next)
 	{
-		base10_to_base2_forAddress(node->address, address);
+		base10_to_base2_forShortAddress(node->address, address);
 		address[short_address_binary_representation_size] = '\0';
 
 		fprintf(file, "%s\t\t", node->line);
