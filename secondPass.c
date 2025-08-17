@@ -92,18 +92,19 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 			base10_to_base2_forAddress(node->address, binAddress); /* translate address to binary */
 			
 			/* overwrite placeholder with address bits and ERA */
-			memcpy(character + 1, binAddress, address_binary_representation_size);
 			if (node->isExternal)
 			{
-				character[1 + address_binary_representation_size] = '0';
-				character[1 + address_binary_representation_size + 1] = '1';
+				binAddress[address_binary_representation_size - 2] = '0';
+				binAddress[address_binary_representation_size - 1] = '1';
 			}
 			else
 			{
-				character[1 + address_binary_representation_size] = '1';
-				character[1 + address_binary_representation_size + 1] = '0';
+				binAddress[address_binary_representation_size - 2] = '1';
+				binAddress[address_binary_representation_size - 1] = '0';
 			}
-			character[1 + address_binary_representation_size + 2] = '\0';
+			
+			memcpy(character + 1, binAddress, address_binary_representation_size);
+			character[1 + address_binary_representation_size] = '\0';
 		}
 	}
 
