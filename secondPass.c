@@ -5,7 +5,7 @@
 int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char **nameArr)
 {
 	int errorFlag = 0, numFiles = argc - 1, obOffset = 2 * numFiles, entOffset = 3 * numFiles, extOffset = 4 * numFiles, type;
-	char *character, label[buffer_size], *labelPtr, binAddress[address_binary_representation_size+1];
+	char *character, label[buffer_size], *labelPtr, binAddress[address_binary_representation_size+3];
 	binTree *node;
 	lineNode *line, *entryLine, *externLine;
 	FILE *tempFile;
