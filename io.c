@@ -204,15 +204,13 @@ int recognize_opcode(char *code)
 
 int writeEnt(FILE *file)
 {
-	char address[address_binary_representation_size + 3]; /* +3 for ERA bits and '\0' */
+	char address[short_address_binary_representation_size + 1]; /* +1 for '\0' */
 	lineNode *node;
 
 	for (node = entryLineArr[fileCounter]; node != NULL; node = node->next)
 	{
 		base10_to_base2_forAddress(node->address, address);
-		address[address_binary_representation_size] = '0';
-		address[address_binary_representation_size + 1] = '0';
-		address[address_binary_representation_size + 2] = '\0';
+		address[short_address_binary_representation_size] = '\0';
 
 		fprintf(file, "%s\t\t", node->line);
 		base2_to_base4_strToFile(address, file);
@@ -225,15 +223,13 @@ int writeEnt(FILE *file)
 
 int writeExt(FILE *file)
 {
-	char address[address_binary_representation_size + 3]; /* +3 for ERA bits and '\0' */
+	char address[short_address_binary_representation_size + 1]; /* +1 for '\0' */
 	lineNode *node;
 
 	for (node = externLineArr[fileCounter]; node != NULL; node = node->next)
 	{
 		base10_to_base2_forAddress(node->address, address);
-		address[address_binary_representation_size] = '0';
-		address[address_binary_representation_size + 1] = '1';
-		address[address_binary_representation_size + 2] = '\0';
+		address[short_address_binary_representation_size] = '\0';
 
 		fprintf(file, "%s\t\t", node->line);
 		base2_to_base4_strToFile(address, file);
