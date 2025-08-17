@@ -175,7 +175,8 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 			writeEnt(fileArr[entOffset + fileCounter]);
 		}
 		
-		if (externLineArr[fileCounter] != NULL)	/* if there is an extern label used in the file (to put in .ext file) */
+		for (externLine = externLineArr[fileCounter]; externLine != NULL && externLine->address == 0; externLine = externLine->next); /* look for extern usage */
+		if (externLine != NULL) /* create .ext file only if a usage was found */
 		{
 			create_extFile(argc, fileArr, nameArr, fileCounter);
 			writeExt(fileArr[extOffset + fileCounter]);
