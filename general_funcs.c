@@ -55,6 +55,9 @@ int base2_to_base4_fileToFile(FILE *source, FILE *dest)
 			fputc(result, dest);
 		}
 		
+		if (i > 0 && buffer[i-1] != '\n')
+			fputc('\n', dest);
+		
 		status = fgets(buffer, buffer_size, source);
 	}
 	
