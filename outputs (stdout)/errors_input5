@@ -1,0 +1,18 @@
+	input5_a.am
+	input5_b.am
+======= Pre-assembler completed successfully =======
+======= First pass completed successfully =======
+
+Entry "fakeLabel2" doesn't have a local definition in this file. (Line 2, file: "input5_a.am")
+
+
+Entry "entriedLabel" was already declared in another file. (Line 2, file: "input5_b.am")
+
+
+External label "someLabel1" isn't declared as .entry in any file. (Line 5, file: "input5_a.am")
+
+
+External label "someLabel2" doesn't have a definition in any file. (Line 6, file: "input5_a.am")
+
+
+Label "fakeLabel1" not defined in the assembly file. (Line 1, file: "input5_a.am")
