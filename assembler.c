@@ -116,7 +116,10 @@ int main (int argc, char *argv[])
 
     /* 7) second pass */
     if (secondPass(argc, argv, fileArr, lineArr, nameArr) == ERROR)
-        goto cleanUp;
+	{
+		printf("======= Errors were found in the second pass. Compilation terminated =======\n");        
+		goto cleanUp;
+	}
 
     printf("======= Second pass completed successfully =======\n");
     printf("\n\n======= Compilation over =======\n");
