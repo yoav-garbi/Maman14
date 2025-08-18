@@ -166,7 +166,7 @@ int base10_to_base2(int num, char str[])
 }
 
 
-/* differs from  base10_to_base2 only by insuring that the number is 8 chars long (as standard for an address) */
+/* differs from base10_to_base2 by enforcing a fixed width of address_binary_representation_size characters (10 bits including ARE) */
 int base10_to_base2_forAddress(int num, char str[])
 {
 	int i;
