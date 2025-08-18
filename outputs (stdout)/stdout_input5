@@ -16,3 +16,5 @@ External label "someLabel2" doesn't have a definition in any file. (Line 6, file
 
 
 Label "fakeLabel1" not defined in the assembly file. (Line 1, file: "input5_a.am")
+
+======= Errors were found in the second pass. Compilation terminated =======
