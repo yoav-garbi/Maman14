@@ -1,0 +1,181 @@
+	input4_a.am
+	input4_b.am
+======= Pre-assembler completed successfully =======
+
+Extraneous text before line. (Line 1, File: "input4_a.am")
+
+
+Label exceeding the allowed length of 30 chars. (Line 2, file: "input4_a.am")
+
+
+Empty label decleration. (Line 3, file: "input4_a.am")
+
+
+Label name contains a non-alnum. (Line 4, file: "input4_a.am")
+
+
+Label name starts with non-letter. (Line 5, file: "input4_a.am")
+
+
+Label name is the name of a register. (Line 6, file: "input4_a.am")
+
+
+Extraneous text: "r1,". (Line 7, File: "input4_a.am")
+
+
+Label "dup" was declared multiple times. (Line 9, file: "input4_a.am")
+
+
+Extraneous text before line. (Line 10, File: "input4_a.am")
+
+
+Missing code/data after label declaration. (Line 11, file: "input4_a.am")
+
+
+'.entry' is not allowed here. (Line 12, File: "input4_a.am")
+
+
+'.extern' is not allowed here. (Line 13, File: "input4_a.am")
+
+
+Extraneous text: "two2:". (Line 14, File: "input4_a.am")
+
+
+Extraneous text before line. (Line 15, File: "input4_a.am")
+
+
+Extraneous text before line. (Line 16, File: "input4_a.am")
+
+
+Extraneous comma in single-operand command 'clr'. (Line 17, File: "input4_a.am")
+
+
+Missing comma between operands for 'add'. (Line 18, File: "input4_a.am")
+
+
+Illegal addressing mode for destination operand in command 'clr'. (Line 19, File: "input4_a.am")
+
+
+Missing/illegal destination operand for 'mov'. (Line 20, File: "input4_a.am")
+
+
+Missing comma between operands for 'mov'. (Line 21, File: "input4_a.am")
+
+
+Illegal first matrix index (need r0-r7). (Line 23, File: "input4_a.am")
+
+
+Missing comma between operands for 'mov'. (Line 23, File: "input4_a.am")
+
+
+Label name contains a non-alnum. (Line 24, file: "input4_a.am")
+
+
+Missing comma between operands for 'mov'. (Line 25, File: "input4_a.am")
+
+
+Extraneous text after zero-operand command 'stop'. (Line 26, File: "input4_a.am")
+
+
+
+======= Error in first pass of file input4_a.am (23 errors found) =======
+
+Missing value after '.data' decleration. (Line 1, File: "input4_b.am")
+
+
+Number is out of legal range for a data-typed integer. (Line 2, File: "input4_b.am")
+
+
+Number is out of legal range for a data-typed integer. (Line 3, File: "input4_b.am")
+
+
+Missing value/non-number after comma in a '.data' line. (Line 4, File: "input4_b.am")
+
+
+Use of a fraction (float)- illegal. (Line 5, file: "input4_b.am")
+
+
+Missing value after '.data' decleration. (Line 6, File: "input4_b.am")
+
+
+Missing value/non-number after comma in a '.data' line. (Line 7, File: "input4_b.am")
+
+
+Missing value/non-number after comma in a '.data' line. (Line 8, File: "input4_b.am")
+
+
+Extraneous text after '.data'. (Line 9, file: "input4_b.am")
+
+
+Extraneous text after line.(Line 10, File: "input4_b.am")
+
+
+Missing value/non-number after comma in a '.mat' line. (Line 11, File: "input4_b.am")
+
+
+Extraneous text or missing bracket in '.mat' decleration. (Line 12, File: "input4_b.am")
+
+
+Missing '[' in '.mat' decleration or extaneous text in-line. (Line 13, File: "input4_b.am")
+
+
+Extraneous text or missing bracket in '.mat' decleration. (Line 14, File: "input4_b.am")
+
+
+Number is out of legal range for a data-typed integer. (Line 15, File: "input4_b.am")
+
+
+Number is out of legal range for a data-typed integer. (Line 16, File: "input4_b.am")
+
+
+Missing value/non-number after comma in a '.mat' line. (Line 17, File: "input4_b.am")
+
+
+Too many values for '.mat'- max is 4. (Line 18, File: "input4_b.am")
+
+
+Extraneous text after line.(Line 19, File: "input4_b.am")
+
+
+Missing " after string. (Line 20, file: "input4_b.am")
+
+
+Missing " before string. (Line 21, file: "input4_b.am")
+
+
+Missing " before string. (Line 22, file: "input4_b.am")
+
+
+Missing string data after directive. (Line 23, file: "input4_b.am")
+
+
+Extraneous text after '.string'. (Line 24, file: "input4_b.am")
+
+
+Extraneous text after line. (Line 25, File: "input4_b.am")
+
+
+Extraneous text after '.entry'. (Line 26, file: "input4_b.am")
+
+
+Missing label after directive. (Line 27, file: "input4_b.am")
+
+
+Extraneous text after line. (Line 28, file: "input4_b.am")
+
+
+Extraneous text after '.extern'. (Line 29, file: "input4_b.am")
+
+
+Missing label after directive. (Line 30, file: "input4_b.am")
+
+
+Extraneous text after line. (Line 31, file: "input4_b.am")
+
+
+Label "HELLO" cannot be both .entry and .extern in the same file (Line 33, File "input4_b.am")
+
+
+
+======= Error in first pass of file input4_b.am (28 errors found) =======
+======= Errors were found in the first pass. Compilation terminated =======
