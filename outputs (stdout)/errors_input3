@@ -1,0 +1,15 @@
+	input3.am
+
+Extraneous text after line. (Line 4, file: "input3.as")
+
+
+Extraneous text after line. (Line 11, file: "input3.as")
+
+
+Missing white space between 'mcro' and macro name. (Line 14, file: "input3.as")
+
+
+Text glued to 'mcroend' directive. (Line 21, file: "input3.as")
+
+======= Pre-assembler found 4 issue(s) in file input3.as =======
+======= Errors were found in the pre-assembler. Compilation terminated =======
