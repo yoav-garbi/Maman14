@@ -1,11 +1,12 @@
+; input4_b.as - along with input4_a.as , tests errors found in first pass (here focus is on directive lines)
 	; .data with no arguments
 	.data
 	
 	; .data with number too large
-	.data 130
+	.data 550
 	
 	; .data with number too small
-	.data -129
+	.data -550
 	
 	; .data with non-number
 	.data 1, a, 3
@@ -63,6 +64,9 @@
 	
 	; .string with bad use of quotes
 	.string text
+	
+	; .string with blank string
+	.string
 	
 	; no space after .string
 	.string"abc"
