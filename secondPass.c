@@ -129,7 +129,7 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 		
 		for (line = lineArr[fileCounter]; line != NULL; line = line->next) /* each iteration is one line */
 		{
-			base10_to_base2_forAddress(line->address, binAddress);
+			base10_to_base2_forShortAddress(line->address, binAddress);
 			fprintf(fileArr[obOffset + fileCounter], "%s\t\t", binAddress);
 			
 			for (character = line->line; *character != '\0'; character++) /* each iteration is one char */
