@@ -1,4 +1,4 @@
-; input7_b.as - helper to input7a.as , valid code too, no errors
+; input7_b.as - helper to input7_a.as , valid code too, no errors
 .entry EXTFN
 .entry EXTDATA
 .entry LENGTHB
