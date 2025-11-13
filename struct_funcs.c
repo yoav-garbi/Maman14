@@ -33,17 +33,17 @@ binTree * makeNode(char *str, int address, int type, int external, int entry)
 }
 
 /* allows to change the pointer to the left */
-int setL(binTree *node, binTree *left)
+int setL(binTree **root, binTree *left)
 {
-	node->left = left;
+	(*root)->left = left;
 	
 	return 0;
 }
 
 /* allows to change the pointer to the right */
-int setR(binTree *node, binTree *right)
+int setR(binTree **root, binTree *right)
 {
-	node->right = right;
+	(*root)->right = right;
 	
 	return 0;
 }
@@ -110,7 +110,7 @@ int addNodePrivate(binTree *root, char *str, int address, int type, int external
 	{
 		if (root->left == NULL)
 		{
-			setL(root, makeNode(str, address, type, external, entry));
+			setL(&root, makeNode(str, address, type, external, entry));
 			return 0;
 		}
 		
@@ -121,7 +121,7 @@ int addNodePrivate(binTree *root, char *str, int address, int type, int external
 	{
 		if (root->right == NULL)
 		{
-			setR(root, makeNode(str, address, type, external, entry));
+			setR(&root, makeNode(str, address, type, external, entry));
 			return 0;
 		}
 		
@@ -363,8 +363,31 @@ int freeListArr(lineNode ***arr, int fileNum)
 }
 
 
+/* check if the label is already in entryLineArr (if it was declared as an entry in this file) */
+int isAlreadyEntry(char *label)
+{
+	lineNode *node;
+	for (node = entryLineArr[fileCounter]; node != NULL; node = node->next)
+		if (strcmp(node->line, label) == 0)
+			return 1;
+	
+	return 0;
+}
+
+/* check if the label is already in externLineArr (if it was declared as extern in this file) */
+int isAlreadyExtern(char *label)
+{
+	lineNode *node;
+	for (node = externLineArr[fileCounter]; node != NULL; node = node->next)
+		if (strcmp(node->line, label) == 0)
+			return 1;
+	
+	return 0;
+}
 
 
+
+/* ================================================================================================================================ */
 
 
 
@@ -386,7 +409,7 @@ int freeNameArr(char ***arr, int fileNum) /* arr = pointer -> pointer -> array o
 
 
 
-
+/* ================================================================================================================================ */
 
 
 
@@ -399,12 +422,3 @@ int freeFileArr(FILE ***arr) /* arr = pointer to a pointer to an array of FILE p
 	*arr = NULL;
 	return 0;
 }
-
-
-
-
-
-
-
-
-

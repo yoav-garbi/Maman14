@@ -178,7 +178,7 @@ int takeInLine(char buffer[], FILE *source)
 		{
 			c = buffer[i];
 			
-			if (c != ' ' || c != '\t' || c != '\n')
+			if (c != ' ' && c != '\t' && c != '\n')
 				flag = 1;
 		}
 		

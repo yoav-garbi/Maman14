@@ -150,6 +150,37 @@ int check_fileEntered(int argc)
 }
 
 
+
+int check_fileName(int numFiles, char *argv[])
+{
+	int len;
+	char *c;
+	
+	for (fileCounter = 0; fileCounter < numFiles; ++fileCounter)
+	{
+		len = strlen(argv[fileCounter+1]);
+			
+		if (len < 4)
+		{
+			printf("\nFile name must end with '.as' and isn't allowed to be only '.as' (no name). (file: %s)\n\n", argv[fileCounter+1]);
+			return ERROR;
+		}
+		
+		c = &(argv[fileCounter+1][len - 3]); /* -3: (file name) + ".as" */
+		
+		if (strcmp(c,".as") != 0)
+		{
+			printf("\nFile name must end with '.as'. (file: %s)\n\n", argv[fileCounter+1]);
+			return ERROR;
+		}
+	}
+	
+	return 0;
+}
+
+
+
+
 /* check if a command in the source code was mis-written */
 int check_opcodeName(int index)
 {
@@ -1057,32 +1088,4 @@ int check_commandOperands(char **line, char *commandName)
 	
 	*line = c; /* move caller's line pointer */
 	return 1;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* TEMP- this is Tomer's */
-int isLabel(char *ptr) {
-    int len = 0;
-    while (ptr[len] && !isspace((unsigned char)ptr[len]) && ptr[len] != ':') len++;
-    
-    if (ptr[len] == ':' && check_labelName(ptr) == ERROR)
-        return ERROR;
-    
-    return ptr[len] == ':';
 }
