@@ -12,28 +12,29 @@ char *skipWhitespace(char *line) {
 }
 
 int isLabel(char *ptr) {
-	int len = 0;
-	char label[MAX_LABEL_LENGTH + 2];
+    int len = 0;
+    char *colon;
+    char saved;
 
-	/* find end of potential label */
-	while (ptr[len] && !isspace((unsigned char)ptr[len]) && ptr[len] != ':')
-		len++;
+    while (ptr[len] && !isspace((unsigned char)ptr[len]) && ptr[len] != ':')
+        len++;
 
-	if (ptr[len] != ':')
-		return 0;
+    if (ptr[len] != ':')
+        return 0;
 
-	/* copy only the label (including ':') for validation */
-	if (len + 1 >= (int)sizeof(label))
-		return ERROR;
-	memcpy(label, ptr, len + 1);
-	label[len + 1] = '\0';
+    colon = ptr + len;
+    saved = colon[1];
+    colon[1] = '\0';
 
-	if (check_labelName(label) == ERROR) {
-		return ERROR;
-	}
+    if (check_labelName(ptr) == ERROR) {
+        colon[1] = saved;
+        return ERROR;
+    }
 
-	return 1;
+    colon[1] = saved;
+    return 1;
 }
+
 
 int isData(char *word) {
     if (strcmp(word, ".data") == 0) return 1;
@@ -233,9 +234,9 @@ void processDataLine(char *line, int *DC, lineNode **dataList, int lineNum) {
 void encodeInstructionWord(int opcode, int srcMethod, int destMethod, char *binaryLine) {
     int instruction = 0;
 
-    instruction |= (opcode & 0xF) << 8;
-    instruction |= (srcMethod & 0x3) << 6;
-    instruction |= (destMethod & 0x3) << 4;
+	instruction |= (opcode & 0xF) << 6;
+	instruction |= (srcMethod & 0x3) << 4;
+	instruction |= (destMethod & 0x3) << 2;
     /* ERA bits are 0 for now */
 
     intToBinary(instruction, binaryLine);
@@ -245,7 +246,7 @@ void encodeInstructionWord(int opcode, int srcMethod, int destMethod, char *bina
 void encodeOperandWord(int value, int addressingMethod, char *binaryLine) {
     int operand = 0;
 
-    operand |= (value & 0x3FF) << 2; /* 10 bits for value */
+    operand |= (value & 0xFF) << 2; /* 8 bits for value */
     operand |= (addressingMethod == 3) ? 2 : 0; /* ERA bits */
 
     intToBinary(operand, binaryLine);
@@ -280,7 +281,7 @@ void processSingleOperand(char *operand, int method, int *IC, lineNode **codeLis
 
         case 1: /* direct */
             addExternIfNeeded(operand, *IC, labelTable, externLineArr);
-            sprintf(labelPadded, " %-8s ", operand);
+            sprintf(labelPadded, " %-*.*s ", address_binary_representation_size, address_binary_representation_size, operand);
             addLineNode(codeList, labelPadded, (*IC)++, lineNum);
             break;
         
@@ -288,7 +289,7 @@ void processSingleOperand(char *operand, int method, int *IC, lineNode **codeLis
         {
             if (sscanf(operand, "%[^[][%2[^]]][%2[^]]]", matLabel, rowReg, colReg) == 3) {
                 addExternIfNeeded(matLabel, *IC, labelTable, externLineArr);
-                sprintf(labelPadded, " %-8.8s ", matLabel);
+                sprintf(labelPadded, " %-*.*s ", address_binary_representation_size, address_binary_representation_size, matLabel);
                 addLineNode(codeList, labelPadded, (*IC)++, lineNum);
 
                 value = getRegisterNumber(rowReg);
@@ -370,9 +371,11 @@ operands parseOperands(char *lineAfterOpcode, char *opcodeName) {
     token = strtok(tempLine, " ,\t\n");
     if (token != NULL) {
         if (hasOnlyDestOperand(opcodeName)) {
-            strcpy(ops.op2, token);
+            strncpy(ops.op2, token, MAX_LABEL_LENGTH - 1);
+            ops.op2[MAX_LABEL_LENGTH - 1] = '\0';
         } else {
-            strcpy(ops.op1, token);
+            strncpy(ops.op1, token, MAX_LABEL_LENGTH - 1);
+            ops.op1[MAX_LABEL_LENGTH - 1] = '\0';
         }
         count++;
     }

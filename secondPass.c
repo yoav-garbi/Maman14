@@ -5,7 +5,7 @@
 int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char **nameArr)
 {
 	int errorFlag = 0, numFiles = argc - 1, obOffset = 2 * numFiles, entOffset = 3 * numFiles, extOffset = 4 * numFiles, type;
-	char *character, label[buffer_size], *labelPtr, binAddress[address_binary_representation_size+1];
+	char *character, label[buffer_size], *labelPtr, binAddress[address_binary_representation_size+3];
 	binTree *node;
 	lineNode *line, *entryLine, *externLine;
 	FILE *tempFile;
@@ -91,10 +91,20 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 			
 			base10_to_base2_forAddress(node->address, binAddress); /* translate address to binary */
 			
-			memcpy(character + 1, binAddress, 8); /* use address to overwrite the label */
+			/* overwrite placeholder with address bits and ERA */
+			if (node->isExternal)
+			{
+				binAddress[address_binary_representation_size - 2] = '0';
+				binAddress[address_binary_representation_size - 1] = '1';
+			}
+			else
+			{
+				binAddress[address_binary_representation_size - 2] = '1';
+				binAddress[address_binary_representation_size - 1] = '0';
+			}
 			
-			while (*character != ' ')	/* delete any remaining parts of the label */
-				*character = ' ';
+			memcpy(character + 1, binAddress, address_binary_representation_size);
+			character[1 + address_binary_representation_size] = '\0';
 		}
 	}
 
@@ -111,7 +121,7 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 		create_obFile(argc, fileArr, nameArr, fileCounter);
 		
 		/* write IC and DC in first line */
-		base10_to_base2(icArr[fileCounter], binAddress);
+		base10_to_base2(icArr[fileCounter] - IC_INIT_VALUE, binAddress);
 		fprintf(fileArr[obOffset + fileCounter], "\t %s ", binAddress);
 		base10_to_base2(dcArr[fileCounter], binAddress);
 		fprintf(fileArr[obOffset + fileCounter], "%s\n", binAddress);
@@ -135,13 +145,20 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 		
 		tempFile = fopen("temp", "w+");
 		if (check_newFileExistence(tempFile) == ERROR)
-			return ERROR;
-			
+		return ERROR;
+
 		copyFile(fileArr[obOffset + fileCounter], tempFile);
-		freopen(NULL, "w+", fileArr[obOffset + fileCounter]); /* truncate and reopen the ob file */
+		fclose(fileArr[obOffset + fileCounter]);
+		fileArr[obOffset + fileCounter] = fopen(nameArr[fileCounter], "w+"); /* reopen and truncate the ob file */
+		if (check_newFileExistence(fileArr[obOffset + fileCounter]) == ERROR)
+		{
+			fclose(tempFile);
+			remove("temp");
+			return ERROR;
+		}
 
 		base2_to_base4_fileToFile(tempFile, fileArr[obOffset + fileCounter]);
-		
+
 		fclose(tempFile);
 		remove("temp");
 	}
@@ -158,7 +175,8 @@ int secondPass(int argc, char *argv[], FILE **fileArr, lineNode *lineArr[], char
 			writeEnt(fileArr[entOffset + fileCounter]);
 		}
 		
-		if (externLineArr[fileCounter] != NULL)	/* if there is an extern label used in the file (to put in .ext file) */
+		for (externLine = externLineArr[fileCounter]; externLine != NULL && externLine->address == 0; externLine = externLine->next); /* look for extern usage */
+		if (externLine != NULL) /* create .ext file only if a usage was found */
 		{
 			create_extFile(argc, fileArr, nameArr, fileCounter);
 			writeExt(fileArr[extOffset + fileCounter]);

@@ -7,7 +7,8 @@
 
 #define ERROR -1
 #define buffer_size 200
-#define address_binary_representation_size 8
+#define address_binary_representation_size 10
+#define short_address_binary_representation_size 8
 #define total_num_of_files(argc) ((argc-1)*5) /* argc-1 because the 0th index refers to "./assembler" which is irrelevent here. *4 because each .as file (1) will make a .am file (2), .ob file (3), a .ext file (4) and a .ent file (5) */
 #define EOF_only_line 1
 #define num_of_opcodes 16
@@ -153,6 +154,8 @@ int check_entryWithLocalDefinition(binTree *, char *);
 int check_labelDuplicate(char *);
 int check_isExternalLabelDefinedInOtherFile(char *, int);
 int check_entryDeclaredInOtherFile(char *, int);
+int check_entryNotAlsoExterned(char *);
+int check_externNotAlsoEntryed(char *);
 int check_garbageTextBeforeLine(char *, int *, int *);
 int check_garbageTextAndClassifyWord(char *, int, int *, int *);
 int check_scanOperand(char **, int *, char *);
@@ -172,6 +175,7 @@ int base2_to_base4_fileToFile(FILE *, FILE *);
 int base2_to_base4_strToFile(char *, FILE*);
 int base10_to_base2(int, char[]);
 int base10_to_base2_forAddress(int, char[]);
+int base10_to_base2_forShortAddress(int, char[]);
 int copyFile(FILE *, FILE *);
 char *strDuplicate(char *);
 char *skipWhiteSpace(char *);
@@ -249,7 +253,6 @@ int preAssemble(int);
 
 /* firstPass.c */
 int firstPass(int index);
-/* quick check for data directives */
 int isData(char *word);
 int isInstruction(char *word);
 char *skipWhitespace(char *line);
@@ -261,18 +264,14 @@ int isMatrix(char *operand);
 int isImmediate(char *operand);
 int isRegister(char *operand);
 int getRegisterNumber(char *operand);
-/* Processes a single operand based on its addressing method */
 void processSingleOperand(char *operand, int method, int *IC, lineNode **codeList, int lineNum, binTree *labelTable, lineNode **externLineArr);
-/* Get opcode index from name */
 int getOpcodeIndex(char *opcodeName);
-/* Determine addressing method */
 int getAddressingMethod(char *operand);
 int addIC(binTree **root, int IC);
 int addICList(lineNode *dataList, int IC_FINAL);
 int hasOnlyDestOperand(char *opcodeName);
 void addExternIfNeeded(char *operand, int IC, binTree *labelTable, lineNode **externLineArr);
 void processInstructionLine(char *opcode, operands ops, int *IC, lineNode **codeList, int lineNum, binTree *labelTable, lineNode **externLineArr);
-
 
 
 

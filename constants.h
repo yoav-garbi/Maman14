@@ -6,7 +6,7 @@
 #define MAX_LABEL_LENGTH 31	/* 30 chars + \0 */
 #define ASSEMBLED_LINE_LENGTH 24
 #define MAX_TOTAL_ADDRESSES 256
-#define WORD_LENGTH 12
+#define WORD_LENGTH 10
 
 /* --- Macro Marks --- */
 #define MACRO_START_MARK "mcro"
@@ -29,6 +29,5 @@
 /* --- General Assembly Settings --- */
 #define IC_INIT_VALUE 100
 #define DC_INIT_VALUE 0
+
 #endif /* CONSTANTS_H */
-
-

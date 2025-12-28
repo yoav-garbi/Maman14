@@ -265,55 +265,67 @@ int check_registerNumber(char *name)
 
 
 
-int check_labelName(char *ptr)	/* ptr entered should be "(labelStr):\0" */
+int check_labelName(char *ptr) /* ptr can be "label:" */
 {
 	int len = strlen(ptr), i;
-	
-	if (len == 1)
-	{
-		printf("\nLabel is blank. (Line %d)\n\n", lineCounter);
-		return ERROR;	
-	}
-	
-	if (len > MAX_LABEL_LENGTH-1) /* -1 because -\0 */
-	{
-		printf("\nLabel exceeding the allowed length of 30 chars. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
-		return ERROR;	
-	}
-	
-	if (!isalpha(ptr[0])) /* check that macro name starts with letter- this eliminates directive names (because they start with '.') */
-	{
-		printf("\nLabel name starts with non-letter. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
-		return ERROR;
-	}
-	
-	for (i = 0; i < len; ++i)
-		if (!isalnum(ptr[i]) && ptr[i] != ':' && ptr[i] != '\0')
-		{
-			printf("\nLabel name contains a non-alnum. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
-			return ERROR;
-		}
-	
-	if (ptr[0] == 'r' && ptr[1] >= '0' && ptr[1] <= '7' && ptr[2] == ':')
-	{
-		printf("\nLabel name is the name of a register. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
-		return ERROR;
-	}
-	
-	for (i = 0; i < num_of_opcodes; ++i)
-		if (strcmp(ptr, opcodeTable[i].name) == 0)
-		{
-			printf("\nLabel name is the name of a command. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
-			return ERROR;
-		}
-	
-	if (len >= 2 && ptr[len-1] != ':')
-	{
-		printf("\nMissing ':' at the end of label. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
-		return ERROR;
-	}
-	
-	return 0;
+    char name[MAX_LABEL_LENGTH + 2]; /* room for '\0' */
+    int name_len;
+
+    if (len == 1 && ptr[0] == ':') {
+        printf("\nLabel is blank. (Line %d)\n\n", lineCounter);
+        return ERROR;
+    }
+
+    /* Must end with ':' */
+    if (len < 2 || ptr[len-1] != ':') {
+        printf("\nMissing ':' at the end of label. (Line %d, file: \"%s\")\n\n",
+               lineCounter, nameArr[fileCounter]);
+        return ERROR;
+    }
+
+    /* Copy name without ':' */
+    name_len = len - 1;
+    if (name_len > MAX_LABEL_LENGTH) { /* length check on the NAME only */
+        printf("\nLabel exceeding the allowed length of 30 chars. (Line %d, file: \"%s\")\n\n",
+               lineCounter, nameArr[fileCounter]);
+        return ERROR;
+    }
+    memcpy(name, ptr, (size_t)name_len);
+    name[name_len] = '\0';
+
+    /* First char must be letter */
+    if (!isalpha((unsigned char)name[0])) {
+        printf("\nLabel name starts with non-letter. (Line %d, file: \"%s\")\n\n",
+               lineCounter, nameArr[fileCounter]);
+        return ERROR;
+    }
+
+    /* All chars must be alnum */
+    for (i = 0; i < name_len; ++i) {
+        if (!isalnum((unsigned char)name[i])) {
+            printf("\nLabel name contains a non-alnum. (Line %d, file: \"%s\")\n\n",
+                   lineCounter, nameArr[fileCounter]);
+            return ERROR;
+        }
+    }
+
+    /* Register name (r0..r7) is illegal as label */
+    if (name_len == 2 && name[0] == 'r' && name[1] >= '0' && name[1] <= '7') {
+        printf("\nLabel name is the name of a register. (Line %d, file: \"%s\")\n\n",
+               lineCounter, nameArr[fileCounter]);
+        return ERROR;
+    }
+
+    /* Instruction name is illegal as label (now compares WITHOUT ':') */
+    for (i = 0; i < num_of_opcodes; ++i) {
+        if (strcmp(name, opcodeTable[i].name) == 0) {
+            printf("\nLabel name is the name of a command. (Line %d, file: \"%s\")\n\n",
+                   lineCounter, nameArr[fileCounter]);
+            return ERROR;
+        }
+    }
+
+    return 0;
 }
 
 

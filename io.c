@@ -204,35 +204,40 @@ int recognize_opcode(char *code)
 
 int writeEnt(FILE *file)
 {
-	char address[address_binary_representation_size+1];	/* +1 is for '\0' */
+	char address[short_address_binary_representation_size + 1]; /* +1 for '\0' */
 	lineNode *node;
-	
+
 	for (node = entryLineArr[fileCounter]; node != NULL; node = node->next)
 	{
-		base10_to_base2_forAddress(node->address, address);
-		
+		base10_to_base2_forShortAddress(node->address, address);
+		address[short_address_binary_representation_size] = '\0';
+
 		fprintf(file, "%s\t\t", node->line);
 		base2_to_base4_strToFile(address, file);
 		fprintf(file, "\n");
 	}
-	
+
 	return 0;
 }
 
 
 int writeExt(FILE *file)
 {
-	char address[address_binary_representation_size+1];	/* +1 is for '\0' */
+	char address[short_address_binary_representation_size + 1]; /* +1 for '\0' */
 	lineNode *node;
-	
+
 	for (node = externLineArr[fileCounter]; node != NULL; node = node->next)
 	{
-		base10_to_base2_forAddress(node->address, address);
+		if (node->address == 0)
+			continue; /* skip declarations, only write usages */
 		
+		base10_to_base2_forShortAddress(node->address, address);
+		address[short_address_binary_representation_size] = '\0';
+
 		fprintf(file, "%s\t\t", node->line);
 		base2_to_base4_strToFile(address, file);
 		fprintf(file, "\n");
 	}
-	
+
 	return 0;
 }
