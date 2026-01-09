@@ -5,24 +5,30 @@ lineNode **lineArr;
 char **nameArr;
 FILE **fileArr;
 binTree **labelTable;
+macro **macroArr;
 int *icArr;
 int *dcArr;
 int lineCounter;
 int fileCounter;
+int macroCounter;
 lineNode **entryLineArr;
 lineNode **externLineArr;
 char ***argvPointer;
+int amOffset;
 
 
 int main (int argc, char *argv[])
 {
 	int numFiles = argc-1, errorFlag = 0, res;
 	labelTable = NULL;
+	macroArr = NULL;
+	macroCounter = 0;
 	icArr = NULL;
 	dcArr = NULL;
 	entryLineArr = NULL;
 	externLineArr = NULL;
 	argvPointer = &argv;
+	amOffset = numFiles;
 	
 	
 	/* 1) check that source file/s were entered, and are legal */
@@ -51,6 +57,8 @@ int main (int argc, char *argv[])
 	if (check_allocation(externLineArr) == ERROR)
 		goto cleanUp;
 	
+	if (initializeMacroArr() == ERROR) /* initialize macro array */
+		goto cleanUp;
 	
 	
 	
@@ -65,10 +73,12 @@ int main (int argc, char *argv[])
 	if (nameArr == NULL)
 		goto cleanUp;
 	
-
-
 	
-	/* 5) first pass */
+	/* 5) pre-assembler */
+	
+	
+		
+	/* 6) first pass */
 	for (fileCounter = 0; fileCounter < numFiles; fileCounter++)
 	{
     		lineCounter = 0;
@@ -87,13 +97,13 @@ int main (int argc, char *argv[])
 	
 	
 	
-	/* 6) second pass */
+	/* 7) second pass */
 	if (secondPass(argc, argv, fileArr, lineArr, nameArr) == ERROR)
 		goto cleanUp;
 	
 	
 	
-	
+	/* 8) cleanup everything- close all files and free all memory */
 	cleanUp:
 	closeFiles(argc, fileArr); /* close all open files */
 	
@@ -101,6 +111,7 @@ int main (int argc, char *argv[])
 	freeLabelTable(&labelTable, numFiles);
 	freeListArr(&lineArr, numFiles);
 	freeNameArr(&nameArr, numFiles);
+	freeMacroArr();
 	freeFileArr(&fileArr);
 	free(icArr);
 	free(dcArr);

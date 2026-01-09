@@ -48,7 +48,6 @@ int isInstruction(char *word) {
 int addSymbolToData(binTree **root, char *str, int address) {
     binTree *found = search(*root, str);
     if (found != NULL) {
-        printf("Error symbol '%s' already exists!\n", str);
         return 0; /* already there */
     }
 
@@ -131,13 +130,11 @@ void processStringDirective(char *data, int *DC, lineNode **dataList, int lineNu
 
     start = strchr(data, '"');
     if (!start) {
-        printf("Error: No opening quote at line %d\n", lineNum);
         return;
     }
 
     end = strchr(start + 1, '"');
     if (!end || end <= start) {
-        printf("Error: Invalid string format at line %d\n", lineNum);
         return;
     }
 
@@ -170,7 +167,7 @@ void processMatDirective(char *line, int *DC, lineNode **dataList, int lineNum) 
     char *p;
     int rows = 0, cols = 0, total, count = 0;
     char *token;
-    char binaryLine[buffer_size];	
+    char binaryLine[buffer_size];
 
     /* parse dimensions */
     p = strchr(line, '[');
@@ -181,7 +178,6 @@ void processMatDirective(char *line, int *DC, lineNode **dataList, int lineNum) 
     }
 
     if (rows <= 0 || cols <= 0) {
-        printf("Error: Invalid matrix dimensions at line %d\n", lineNum);
         return;
     }
 
@@ -251,9 +247,10 @@ void encodeOperandWord(int value, int addressingMethod, char *binaryLine) {
 
 /* Adds an extern operand to externLineArr if needed */
 void addExternIfNeeded(char *operand, int IC, binTree *labelTable, lineNode **externLineArr) {
+    binTree *sym;
     if (operand == NULL) return;
 
-    binTree *sym = search(labelTable, operand);
+    sym = search(labelTable, operand);
     if (sym != NULL && sym->isExternal) {
         addLineNode(externLineArr, operand, IC, 0);
     }
@@ -410,7 +407,6 @@ int firstPass(int index) {
 
     fp = fopen(fileName, "r");
     if (fp == NULL) {
-        printf("Error opening file %s\n", fileName);
         return -1;
     }
 
@@ -428,6 +424,14 @@ int firstPass(int index) {
         currentLine.hasLabel = 0;
         currentLine.error[0] = '\0';
         currentLine.label[0] = '\0';
+
+        /* run surface-level line checks before parsing */
+        if (check_lineGeneral(currentLine.content) != 0) {
+            countError++;
+            lineNumber++;
+            readLine = takeInLine(currentLine.content, fp);
+            continue;
+        }
 
         ptr = skipWhitespace(currentLine.content);
 
@@ -505,8 +509,8 @@ int firstPass(int index) {
     icArr[index] = IC;
 
     if (IC + DC >= MAX_TOTAL_ADDRESSES) {
-        printf("Program size (IC + DC = %d) exceeds maximum memory limit (%d)\n",
-               (IC + DC), MAX_TOTAL_ADDRESSES);
+        printf("\nProgram size (IC + DC = %d) exceeds maximum memory limit (%d) in file \"%s\"\n\n",
+               (IC + DC), MAX_TOTAL_ADDRESSES, nameArr[amOffset + fileCounter+1]);
         countError++;
     }
 

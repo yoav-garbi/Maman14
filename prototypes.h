@@ -88,18 +88,30 @@ typedef struct {
 } operands;
 
 
+/* struct that holds a macros name and the macro itself */
+typedef struct
+{
+	char *name;
+	char **macroLines;
+	int lineAmount;
+} macro;
+
 
 extern lineNode **lineArr;
 extern char **nameArr;
 extern FILE **fileArr;
+extern macro **macroArr;
 extern int lineCounter;
 extern int fileCounter;
+extern int macroCounter;
 extern binTree **labelTable;
 extern opcd opcodeTable[16];
 extern int *icArr;
 extern int *dcArr;
 extern lineNode **entryLineArr;
 extern lineNode **externLineArr;
+extern char ***argvPointer;
+extern int amOffset;
 
 
 
@@ -126,7 +138,7 @@ int check_lineGeneral(char *);
 int check_fileExistence(void*);
 int check_newFileExistence(void *);
 int check_fileEntered(int);
-int check_fileName(int, char *[]);
+int check_fileName(int);
 int check_opcodeName(int);
 int check_lineLength(char []);
 int check_registerNumber(char []);
@@ -144,7 +156,9 @@ int check_dataValues(char **, int *);
 int check_matValues(char **, int);
 int check_stringData(char **);
 int check_commandOperands(char **, char *);
-
+int check_macroName(char *);
+int check_macroOpenLine(char *);
+int check_macroCloseLine(char *);
 
 
 
@@ -183,19 +197,22 @@ int addIC(binTree **, int);
 int addEntryLocal(char *);
 int addExternAcross(char *, int, int);
 
-
-
 int addLineNode(lineNode **, char *, int, int);
+int addICList(lineNode *, int);
 int printList(lineNode *);																								/* TEMP */
 int freeList(lineNode **);
 int freeListArr(lineNode ***, int);
 int isAlreadyEntry(char *);
 int isAlreadyExtern(char *);
 
-
 int freeNameArr(char ***, int);
 
 int freeFileArr(FILE ***);
+
+int initializeMacroArr();
+int addMacro(char *);
+int addLineToMacro(char *, char *);
+int freeMacroArr();
 
 
 

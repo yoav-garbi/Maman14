@@ -1,4 +1,4 @@
-; file ps.as
+; prog2.as
 .extern	LOOP
 .extern	LENGTH
 .entry	L3
