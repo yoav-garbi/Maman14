@@ -817,7 +817,7 @@ int check_scanOperand(char **line, int *addrMode, char *labelForCaller)
 	if (*c == '#')
 	{
 		temp = c + 1;
-		if (scanInt(&temp, &val) == 0)
+		if (scanInt(&temp, &val) != 1)
 		{
 			printf("\nIllegal immediate value after '#'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
@@ -990,19 +990,24 @@ int check_dataValues(char **line, int *valueCount)
 
 		/* scan next int */
 		status = scanInt(&c, &num);
-		if (!status) /* char after , was non-number or missing */
+		if (status != 1) /* char after , was non-number or missing */
 		{
-			if (valueCount == NULL && status == 0) /* .data line */
+			if (status == 0)
 			{
-				printf("\nMissing value/non-number after comma in a '.data' line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
-				return ERROR;
+				if (valueCount == NULL) /* .data line */
+				{
+					printf("\nMissing value/non-number after comma in a '.data' line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+					return ERROR;
+				}
+			
+				if (valueCount != NULL) /* .mat line */
+				{
+					printf("\nMissing value/non-number after comma in a '.mat' line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+					return ERROR;
+				}
 			}
 			
-			if (valueCount != NULL && status == 0) /* .mat line */
-			{
-				printf("\nMissing value/non-number after comma in a '.mat' line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
-				return ERROR;
-			}
+			return ERROR;
 		}
 		
 		if (valueCount != NULL)

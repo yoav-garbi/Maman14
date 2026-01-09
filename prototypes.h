@@ -13,6 +13,8 @@
 #define num_of_opcodes 16
 #define max_immediate_int 127
 #define min_immediate_int -128
+#define max_data_int 511
+#define min_data_int -512
 
 #define CODE 0
 #define DATA 1
@@ -221,28 +223,26 @@ int freeMacroArr();
 
 
 /* preAssembler.c */
-/* Trim trailing spaces/tabs/newlines in-place. Use before parsing. */
-void rstrip(char *s);
-/* True if line is empty or comment (';') after leading spaces. */
-int is_empty_or_comment(const char *s);
-/* If line is valid 'mcro <name>' (per your checker), return 1 and copy name. */
-int extract_macro_name_after_check(const char *line, char *out_name, size_t out_sz);
-/* True if line is valid 'mcroend' (per your checker). */
-int is_mcro_close(const char *line);
-/* If line starts with 'LABEL:' return ptr after ':' and copy label (incl. ':'). */
-const char *leading_label(const char *s, char *label, size_t label_sz);
-/* Copy first token after spaces to buf; return ptr after token. */
-const char *first_token(const char *s, char *buf, size_t buf_sz);
-/* Lookup a macro by name in your global macroArr. */
-macro *find_macro_by_name(const char *name);
-/* Emit all stored lines of a macro to 'out'. */
-void write_macro_body(FILE *out, const macro *m);
-/* Read macro body lines until 'mcroend' and store via addLineToMacro. */
-int collect_macro_block(FILE *fp, const char *macroName, int *pLineCounter);
-/* True if rest of line (from p) is only spaces/tabs or a ';' comment. */
-int is_ws_or_comment_rest(const char *p);
-/* Expand macro; if label given, attach it to first meaningful line. Return 1 if expanded. */
-int expand_macro_with_optional_label(FILE *out, const macro *m, const char *opt_label);
+/* Trim trailing spaces/tabs/newlines. */
+void trim_right(char *s);
+/* "mcro <name>": 1 ok; -2 glued "mcroNAME"; -1 invalid (we print); 0 not mcro. */
+int  parse_mcro_open(const char *line, char *out_name, size_t out_sz, const char *fname_as);
+/* mcroend: 1 end ok; 2 end+extra text (we print); -1 glued; 0 not mcroend. */
+int  mcro_close_status(const char *line, const char *fname_as);
+/* If line starts with "LABEL:" copy it (incl. ':') and return ptr after ':', else NULL. */
+const char *scan_label_prefix(const char *s, char *label, size_t label_sz);
+/* Copy first token after spaces to buf; return ptr after the token. */
+const char *scan_token(const char *s, char *buf, size_t buf_sz);
+/* Find macro by name in global table. */
+macro *find_macro(const char *name);
+/* Emit all stored lines of a macro into out. */
+void emit_macro_body(FILE *out, const macro *m);
+/* Read macro body until mcroend; DO NOT validate body lines here (rule #10). */
+int  read_mcro_body(FILE *fp, const char *macroName, int *pErr, const char *fname_as);
+/* True if rest is only spaces/tabs or a ';' comment. */
+int  only_ws_or_comment(const char *p);
+/* Expand macro; if label provided, attach it to first non-empty body line. */
+int  expand_macro(FILE *out, const macro *m, const char *opt_label);
 int preAssemble(int);
 
 
