@@ -199,3 +199,16 @@ int copyFile(FILE *source, FILE *dest)
 	
 	return 0;
 }
+
+
+char *strDuplicate(char *str)
+{
+	char *copy = malloc(strlen(str) + 1);
+	if (copy)
+		strcpy(copy, str);
+
+	return copy;
+}
+
+
+

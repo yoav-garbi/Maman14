@@ -120,10 +120,7 @@ int create_extFile(int argc, FILE **fileArr, char **nameArr, int i)
 	FILE *filePointer;
 	
 	len = strlen(nameArr[i]);
-	nameArr[i][len-3] = 'e';
 	nameArr[i][len-2] = 'x';
-	nameArr[i][len-1] = 't';
-	nameArr[i][len] = '\0';
 
 	filePointer = fopen(nameArr[i], "w+");
 
@@ -269,6 +266,12 @@ int writeExt(FILE *file, binTree *root)
 	
 	return 0;
 }
+
+
+
+
+
+
 
 
 
