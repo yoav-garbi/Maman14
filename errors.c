@@ -349,7 +349,7 @@ int check_existsInOtherFileAsEntry(char *str, int fileNum)
 
 int check_labelExist_or_legalExternalUse(binTree *node, char *label, lineNode *line, int fileNum)
 {
-	if (node != NULL)	/* label found locally or as extern placeholder */
+	if (node != NULL) /* label found locally or as extern placeholder */
 		return 0;
 	
 	if (check_existsInOtherFileAsEntry(label, fileNum))
@@ -371,7 +371,16 @@ int check_entryWithLocalDefinition(binTree *node, char *str)
 		printf("\nEntry \"%s\" doesn't have a local definition in this file. (Line %d, file: \"%s\")\n\n", str, lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
-	
+
+	if (node->isExternal)
+	{
+		if (node->address != 0)
+			printf("\nEntry \"%s\" was already declared in another file. (Line %d, file: \"%s\")\n\n", str, lineCounter, nameArr[fileCounter]);
+		else
+			printf("\nEntry \"%s\" doesn't have a local definition in this file. (Line %d, file: \"%s\")\n\n", str, lineCounter, nameArr[fileCounter]);
+		return ERROR;
+	}
+
 	return 0;
 }
 
@@ -385,32 +394,51 @@ int check_labelDuplicate(char *str)
 
 int check_isExternalLabelDefinedInOtherFile(char *label, int numFiles)
 {
-	int i, type, found = 0;
+	int i;
 	binTree *def;
-	
+
 	for (i = 0; i < numFiles; ++i)
 	{
 		if (i == fileCounter)
 			continue;
-		
+
 		def = search(labelTable[i], label);
-		
-		if (def != NULL) /* there is an actual decleration of the label in another file */
+
+		if (def != NULL)
 		{
-			type = def->symbolType;
-			found = 1;
-			break;
+			if (def->isEntry)
+				return def->symbolType; /* legal external – label is exported */
+
+			printf("\nExternal label \"%s\" isn't declared as .entry in any file. (Line %d, file: \"%s\")\n\n", label, lineCounter, nameArr[fileCounter]);
+			return ERROR;
 		}
 	}
-	
-	if (found != 1)
-	{
-		printf("\nEntry \"%s\" doesn't have a definition in any file. (Line %d, file: \"%s\")\n\n", label, lineCounter, nameArr[fileCounter]);
-		return ERROR;
-	}	
-	
-	return type;
+
+	printf("\nExternal label \"%s\" doesn't have a definition in any file. (Line %d, file: \"%s\")\n\n", label, lineCounter, nameArr[fileCounter]);
+	return ERROR;
 }
+
+int check_entryDeclaredInOtherFile(char *label, int numFiles)
+{
+	int i;
+	binTree *def;
+
+	for (i = 0; i < numFiles; ++i)
+	{
+		if (i == fileCounter)
+			continue;
+
+		def = search(labelTable[i], label);
+		if (def != NULL && def->isEntry)
+		{
+			printf("\nEntry \"%s\" was already declared in another file. (Line %d, file: \"%s\")\n\n", label, lineCounter, nameArr[fileCounter]);
+			return ERROR;
+		}
+	}
+
+	return 0;
+}
+
 
 
 
@@ -419,7 +447,7 @@ int check_entryNotAlsoExterned(char *label)
 {
 	if (isAlreadyExtern(label))
 	{
-		printf("Label \"%s\" cannot be both .entry and .extern in the same file (Line %d, File \"%s\")\n", label, lineCounter, nameArr[fileCounter]);
+		printf("\nLabel \"%s\" cannot be both .entry and .extern in the same file (Line %d, File \"%s\")\n\n", label, lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 	
@@ -432,7 +460,7 @@ int check_externNotAlsoEntryed(char *label)
 {
 	if (isAlreadyEntry(label))
 	{
-		printf("Label \"%s\" cannot be both .entry and .extern in the same file. (Line %d, file: \"%s\")\n\n", label, lineCounter, nameArr[fileCounter]);
+		printf("\nLabel \"%s\" cannot be both .entry and .extern in the same file. (Line %d, file: \"%s\")\n\n", label, lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 	
@@ -613,7 +641,7 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 		c++;
 		charsRead++;
 	}
-	if (*c == '\0')
+	if (*c == '\0' || *c == '\n')
 		return EMPTY_LINE;
 		
 	/* whole-line comment */
@@ -789,7 +817,7 @@ int check_scanOperand(char **line, int *addrMode, char *labelForCaller)
 	if (*c == '#')
 	{
 		temp = c + 1;
-		if (!scanInt(&temp, &val))
+		if (scanInt(&temp, &val) == 0)
 		{
 			printf("\nIllegal immediate value after '#'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
@@ -927,7 +955,7 @@ int check_dataValues(char **line, int *valueCount)
 	/* require the first integer (empty list is illegal for .data) */
 	status = scanInt(&c, &num);
 	
-	if (!status) /* no data */
+	if (status != 1) /* no data */
 	{
 		if (valueCount != NULL) /* valueCount == NULL means we didn't call the func for a mat[][], so != NULL means this is for data- blank declaration illegal */
 		{
@@ -935,13 +963,20 @@ int check_dataValues(char **line, int *valueCount)
 			return 1;
 		}
 		
-		printf("\nMissing value after '.data' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+		if (status == 0)
+			printf("\nMissing value after '.data' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
         return ERROR;
 	}
 	
 	if (valueCount != NULL)
 		*valueCount  = 1;
-
+	
+	if (num > max_data_int || num < min_data_int)
+	{
+		printf("\nNumber is out of legal range for a data-typed integer. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+		return ERROR;
+	}
+	
 	/* take in: ", int" until no more or error */
 	while(1)
 	{
@@ -957,12 +992,27 @@ int check_dataValues(char **line, int *valueCount)
 		status = scanInt(&c, &num);
 		if (!status) /* char after , was non-number or missing */
 		{
-			printf("\nMissing value/non-number after comma in a '.data' line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
-		    return ERROR;
+			if (valueCount == NULL && status == 0) /* .data line */
+			{
+				printf("\nMissing value/non-number after comma in a '.data' line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+				return ERROR;
+			}
+			
+			if (valueCount != NULL && status == 0) /* .mat line */
+			{
+				printf("\nMissing value/non-number after comma in a '.mat' line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+				return ERROR;
+			}
 		}
 		
 		if (valueCount != NULL)
 			(*valueCount)++;
+			
+		if (num > max_data_int || num < min_data_int)
+		{
+			printf("\nNumber is out of legal range for a data-typed integer. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+			return ERROR;
+		}
 	}
 
 	/* after end of ints allow only trailing white spaces */
@@ -1025,7 +1075,7 @@ int check_stringData(char **line)
 	status = scanString(&c, buffer);
 	if (!status)
 	{
-		printf("\nMissing/illegal string after '.string'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+		*line = c;
 		return ERROR;
 	}
 	

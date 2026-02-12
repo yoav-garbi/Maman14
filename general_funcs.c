@@ -17,16 +17,25 @@ int base2_to_base4_fileToFile(FILE *source, FILE *dest)
 		i = 0;
 		
 		while (buffer[i] != '\0') /* until end of line */
-		{
-			/* write \n */
-			if (buffer[i] == '\n')
-			{
-				fputc('\n', dest);
+		{	
+			while (buffer[i] != '0' && buffer[i] != '1' && buffer[i] != '\0')
+				fputc(buffer[i++], dest);
+			
+			if (buffer[i] == '\0')
 				break;
-			}
 			
 			c1 = buffer[i++];
+			
+			
+			while (buffer[i] != '0' && buffer[i] != '1' && buffer[i] != '\0')
+				fputc(buffer[i++], dest);
+			
+			if (buffer[i] == '\0')
+				break;
+				
 			c2 = buffer[i++];
+			
+			
 			
 			if (c1 == '0' && c2 == '0')
 				result = 'a';
@@ -61,31 +70,25 @@ int base2_to_base4_strToFile(char *source, FILE *dest)
 	
 	if (source == NULL)
 		return ERROR;
-
-	while (source[i] != '\0')
-	{
-		/* skip and write white spaces */
-		while (source[i] != '0' && source[i] != '1' && source[i] != '\0') 
-		{
-			fprintf(dest, "%c", source[i++]);
-		}
 	
-		if (source[i] == '\0')
-			break;
-	
-		c1 = source[i++];
-	
-	
-		/* skip and write white spaces */
-		while (source[i] != '0' && source[i] != '1' && source[i] != '\0') 
-		{
-			fprintf(dest, "%c", source[i++]);
-		}
-	
-		if (source[i] == '\0')
-			break;
-	
-		c2 = source[i++];
+	while (source[i] != '\0') /* until end of line */
+	{	
+		while (source[i] != '0' && source[i] != '1' && source[i] != '\0')
+				fputc(source[i++], dest);
+			
+			if (source[i] == '\0')
+				break;
+			
+			c1 = source[i++];
+			
+			
+			while (source[i] != '0' && source[i] != '1' && source[i] != '\0')
+				fputc(source[i++], dest);
+			
+			if (source[i] == '\0')
+				break;
+				
+			c2 = source[i++];
 	
 	
 		if (c1 == '0' && c2 == '0')
@@ -119,12 +122,16 @@ int base10_to_base2(int num, char str[])
 	char tempStr[buffer_size];
 	
 	/* handle zero explicitly to avoid returning an empty string */
-        if (num == 0)
-        {
-                str[0] = '0';
-                str[1] = '\0';
-                return 0;
-        }
+	if (num == 0)
+	{
+		/* ensure at least one full pair of bits for base-4 conversion */
+		str[0] = '0';
+		str[1] = '0';
+		str[2] = '0';
+		str[3] = '0';
+		str[4] = '\0';
+		return 0;
+	}
 	
 	/* translate num from decimal to binary into the temporary str (it is needed because the number comes out backwards) */
 	for (i = 0; num != 0; i++)
@@ -302,6 +309,13 @@ int scanInt(char **line, int *num)
 	if (!gotDigit) /* no number was detected */
 		return 0;
 	
+	/* check if the number is a float (containing a '.') */
+	if (*c == '.')
+	{
+		printf("\nUse of a fraction (float)- illegal. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+		return ERROR;
+	}
+	
 	*num = sign * val;
 	*line = c; /* advance caller's pointer to after the number */
 	return 1;
@@ -317,9 +331,20 @@ int scanString(char **line, char *str)
 	
 	start = skipWhiteSpace(*line);
 	
+	if (isEndOfLine_or_whiteSpaceOnly(start)) /* not string data found */
+	{
+		printf("\nMissing string data after directive. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+		*line = start;
+		return ERROR;
+	}
+	
 	if (*start != '"') /* not starting " found */
 	{
 		printf("\nMissing \" before string. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+		c = start;
+		while (*c && *c != '\n')
+			c++;
+		*line = c;
 		return ERROR;
 	}
 	
@@ -339,6 +364,7 @@ int scanString(char **line, char *str)
 	if (end == NULL) /* no closing " was found */
 	{
 		printf("\nMissing \" after string. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+		*line = c;
 		return ERROR;
 	}
 	
@@ -358,4 +384,17 @@ int scanString(char **line, char *str)
 	/* advance caller pointer to right after the closing " */
 	*line = end + 1;
 	return 1;
+}
+
+
+																																			/* TEMP */
+int printFile(FILE *fp)
+{
+	int c;
+	rewind(fp);
+	while ((c = fgetc(fp)) != EOF)
+		putchar(c);
+	
+	rewind(fp);
+	return 0;
 }

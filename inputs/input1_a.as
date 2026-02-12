@@ -1,4 +1,4 @@
- ;prog1.as
+; input1_a.as - valid code, no errors
 .entry	LOOP
 .entry	LENGTH
 .extern	L3

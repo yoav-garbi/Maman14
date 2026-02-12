@@ -89,7 +89,7 @@ int main (int argc, char *argv[])
 
 		res = preAssemble(fileCounter);
 		if (res != 0) {
-			printf("Pre-assembler found %d issue(s) in file %s\n", res, (*argvPointer)[fileCounter+1]);
+			printf("======= Pre-assembler found %d issue(s) in file %s\n =======", res, (*argvPointer)[fileCounter+1]);
 			errorFlag = 1;
 		}
 
@@ -101,8 +101,8 @@ int main (int argc, char *argv[])
 	
 	if (errorFlag)
 	{
-    		printf("Errors were found in the pre-assembler. Compilation terminated\n");
-    		goto cleanUp;
+		printf("======= Errors were found in the pre-assembler. Compilation terminated =======\n");
+		goto cleanUp;
 	}
 	
 	printf("======= Pre-assembler completed succesfully =======\n");
@@ -116,14 +116,14 @@ int main (int argc, char *argv[])
     		lineCounter = 0;
 			res = firstPass(fileCounter);
     		if (res != 0) {
-        		printf("Error in first pass of file %s (%d errors found)\n", nameArr[fileCounter], res);
+        		printf("\n\n======= Error in first pass of file %s (%d errors found)=======\n", nameArr[fileCounter], res);
         		errorFlag = 1;
     		}
 	}
 
 	if (errorFlag)
 	{
-    		printf("Errors were found in the first pass. Compilation terminated\n");
+    		printf("======= Errors were found in the first pass. Compilation terminated =======\n");
     		goto cleanUp;
 	}
 	

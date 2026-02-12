@@ -6,7 +6,7 @@
 #include "constants.h"
 
 #define ERROR -1
-#define buffer_size 85
+#define buffer_size 200
 #define address_binary_representation_size 8
 #define total_num_of_files(argc) ((argc-1)*5) /* argc-1 because the 0th index refers to "./assembler" which is irrelevent here. *4 because each .as file (1) will make a .am file (2), .ob file (3), a .ext file (4) and a .ent file (5) */
 #define EOF_only_line 1
@@ -150,6 +150,7 @@ int check_labelExist_or_legalExternalUse(binTree *, char *, lineNode *, int);
 int check_entryWithLocalDefinition(binTree *, char *);
 int check_labelDuplicate(char *);
 int check_isExternalLabelDefinedInOtherFile(char *, int);
+int check_entryDeclaredInOtherFile(char *, int);
 int check_garbageTextBeforeLine(char *, int *, int *);
 int check_garbageTextAndClassifyWord(char *, int, int *, int *);
 int check_scanOperand(char **, int *, char *);
@@ -177,6 +178,7 @@ int isRequiredComma(char **);
 int scanLabel(char **, char *);
 int scanInt(char **, int *);
 int scanString(char **, char *);
+int printFile(FILE *fp);																									/* TEMP */
 
 
 

@@ -202,49 +202,37 @@ int recognize_opcode(char *code)
 
 
 
-int writeEnt(FILE *file, binTree *root)
+int writeEnt(FILE *file)
 {
 	char address[address_binary_representation_size+1];	/* +1 is for '\0' */
+	lineNode *node;
 	
-	if (root == NULL)
-		return 0;
-	
-	writeEnt(file, root->left);
-	
-	if (root->isEntry)
+	for (node = entryLineArr[fileCounter]; node != NULL; node = node->next)
 	{
-		base10_to_base2_forAddress(root->address, address);
-	
-		fprintf(file, "%s\t\t", root->str);
+		base10_to_base2_forAddress(node->address, address);
+		
+		fprintf(file, "%s\t\t", node->line);
 		base2_to_base4_strToFile(address, file);
 		fprintf(file, "\n");
 	}
-	
-	writeEnt(file, root->right);
 	
 	return 0;
 }
 
 
-int writeExt(FILE *file, binTree *root)
+int writeExt(FILE *file)
 {
 	char address[address_binary_representation_size+1];	/* +1 is for '\0' */
+	lineNode *node;
 	
-	if (root == NULL)
-		return 0;
-	
-	writeExt(file, root->left);
-	
-	if (root->isExternal)
+	for (node = externLineArr[fileCounter]; node != NULL; node = node->next)
 	{
-		base10_to_base2_forAddress(root->address, address);
-			
-		fprintf(file, "%s\t\t", root->str);
+		base10_to_base2_forAddress(node->address, address);
+		
+		fprintf(file, "%s\t\t", node->line);
 		base2_to_base4_strToFile(address, file);
 		fprintf(file, "\n");
 	}
-	
-	writeExt(file, root->right);
 	
 	return 0;
 }
