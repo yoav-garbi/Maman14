@@ -1,0 +1,13 @@
+	input1_a.am
+	input1_b.am
+======= Pre-assembler completed successfully =======
+======= First pass completed successfully =======
+	input1_a.ob
+	input1_b.ob
+	input1_a.ent
+	input1_a.ext
+	input1_b.ent
+======= Second pass completed successfully =======
+
+
+======= Compilation over =======

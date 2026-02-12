@@ -1,0 +1,13 @@
+	input8_a.am
+	input8_b.am
+======= Pre-assembler completed successfully =======
+======= First pass completed successfully =======
+	input8_a.ob
+	input8_b.ob
+	input8_a.ent
+	input8_a.ext
+	input8_b.ent
+======= Second pass completed successfully =======
+
+
+======= Compilation over =======
