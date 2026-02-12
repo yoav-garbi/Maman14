@@ -170,6 +170,7 @@ void processMatDirective(char *line, int *DC, lineNode **dataList, int lineNum) 
     char *p;
     int rows = 0, cols = 0, total, count = 0;
     char *token;
+    char binaryLine[buffer_size];	
 
     /* parse dimensions */
     p = strchr(line, '[');
@@ -253,7 +254,7 @@ void addExternIfNeeded(char *operand, int IC, binTree *labelTable, lineNode **ex
     if (operand == NULL) return;
 
     binTree *sym = search(labelTable, operand);
-    if (sym != NULL && sym->symbolType == EXTERN) {
+    if (sym != NULL && sym->isExternal) {
         addLineNode(externLineArr, operand, IC, 0);
     }
 }
@@ -414,7 +415,7 @@ int firstPass(int index) {
     }
 
     readLine = takeInLine(currentLine.content, fp);
-    while (readLine != EOF) {
+    while (readLine != EOF_only_line) {
         if (readLine != 0) {
             countError++;
             lineNumber++;

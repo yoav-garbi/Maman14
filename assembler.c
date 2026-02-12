@@ -11,6 +11,7 @@ int lineCounter;
 int fileCounter;
 lineNode **entryLineArr;
 lineNode **externLineArr;
+char ***argvPointer;
 
 
 int main (int argc, char *argv[])
@@ -21,10 +22,11 @@ int main (int argc, char *argv[])
 	dcArr = NULL;
 	entryLineArr = NULL;
 	externLineArr = NULL;
+	argvPointer = &argv;
 	
 	
 	/* 1) check that source file/s were entered, and are legal */
-	if (check_fileEntered(argc) == ERROR || check_fileName(numFiles, argv) == ERROR)
+	if (check_fileEntered(argc) == ERROR || check_fileName(numFiles) == ERROR)
 		goto cleanUp;
 	
 	
@@ -96,14 +98,14 @@ int main (int argc, char *argv[])
 	closeFiles(argc, fileArr); /* close all open files */
 	
 	/* free all allocated storage */
-	freeLabelTable(&labelTable, argc-1);
-	freeListArr(&lineArr, argc-1);
-	freeNameArr(&nameArr, argc-1);
+	freeLabelTable(&labelTable, numFiles);
+	freeListArr(&lineArr, numFiles);
+	freeNameArr(&nameArr, numFiles);
 	freeFileArr(&fileArr);
 	free(icArr);
 	free(dcArr);
-	freeListArr(&entryLineArr, argc-1);
-	freeListArr(&externLineArr, argc-1);
+	freeListArr(&entryLineArr, numFiles);
+	freeListArr(&externLineArr, numFiles);
 	
 	return 0;
 }
