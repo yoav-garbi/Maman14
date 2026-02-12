@@ -115,6 +115,7 @@ extern int amOffset;
 
 
 
+
 /* io.c */
 FILE **getFiles(int, char *[]);
 char **make_nameArr(int, char *[]);
@@ -128,8 +129,8 @@ int closeFiles(int, FILE **);
 int takeInLine(char [], FILE *);
 int recognize_opcode(char *);
 int findCommand(char *);
-int writeEnt(FILE *, binTree *);
-int writeExt(FILE *, binTree *);
+int writeEnt(FILE *);
+int writeExt(FILE *);
 
 
 
@@ -214,6 +215,33 @@ int addMacro(char *);
 int addLineToMacro(char *, char *);
 int freeMacroArr();
 
+
+
+
+/* preAssembler.c */
+/* Trim trailing spaces/tabs/newlines in-place. Use before parsing. */
+void rstrip(char *s);
+/* True if line is empty or comment (';') after leading spaces. */
+int is_empty_or_comment(const char *s);
+/* If line is valid 'mcro <name>' (per your checker), return 1 and copy name. */
+int extract_macro_name_after_check(const char *line, char *out_name, size_t out_sz);
+/* True if line is valid 'mcroend' (per your checker). */
+int is_mcro_close(const char *line);
+/* If line starts with 'LABEL:' return ptr after ':' and copy label (incl. ':'). */
+const char *leading_label(const char *s, char *label, size_t label_sz);
+/* Copy first token after spaces to buf; return ptr after token. */
+const char *first_token(const char *s, char *buf, size_t buf_sz);
+/* Lookup a macro by name in your global macroArr. */
+macro *find_macro_by_name(const char *name);
+/* Emit all stored lines of a macro to 'out'. */
+void write_macro_body(FILE *out, const macro *m);
+/* Read macro body lines until 'mcroend' and store via addLineToMacro. */
+int collect_macro_block(FILE *fp, const char *macroName, int *pLineCounter);
+/* True if rest of line (from p) is only spaces/tabs or a ';' comment. */
+int is_ws_or_comment_rest(const char *p);
+/* Expand macro; if label given, attach it to first meaningful line. Return 1 if expanded. */
+int expand_macro_with_optional_label(FILE *out, const macro *m, const char *opt_label);
+int preAssemble(int);
 
 
 

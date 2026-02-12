@@ -32,13 +32,13 @@ int check_lineGeneral(char *line)
 		
 		if ((firstWord == wordIsENTRY || firstWord == wordIsEXTERN) && secondWord == EMPTY_LINE)
 		{
-			printf("\nMissing label after directive. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nMissing label after directive. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		
 		if (firstWord == wordIsLABEL && secondWord == EMPTY_LINE)
 		{
-			printf("\nMissing code/data after label declaration. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nMissing code/data after label declaration. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		
@@ -57,7 +57,7 @@ int check_lineGeneral(char *line)
 			
 			if (!isEndOfLine_or_whiteSpaceOnly(c))
 			{
-				printf("\nExtraneous text after line. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+				printf("\nExtraneous text after line. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 				return ERROR;
 			}
 			return 0; /* nothing more to check in this line */
@@ -102,16 +102,37 @@ int check_lineGeneral(char *line)
 	{
 		if (matHeight <= 0 || matLength <= 0)
 		{
-			printf("\nInvalid matrix dimensions. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nInvalid matrix dimensions. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
         	return ERROR;
 		}
 		
-		capacity = matHeight * matLength; 
+		capacity = matHeight * matLength;
+
+		/* skip the dimension declaration before checking values */
+		line = skipWhiteSpace(line);
+		if (*line == '[')
+		{
+			line++;
+			while (*line && *line != ']')
+				line++;
+			if (*line == ']')
+				line++;
+			line = skipWhiteSpace(line);
+			if (*line == '[')
+			{
+				line++;
+				while (*line && *line != ']')
+					line++;
+				if (*line == ']')
+					line++;
+			}
+		}
+
 		status = check_matValues(&line, capacity);
 		if (status == ERROR)
 			return ERROR;
 		return 0;
-	}
+		}
 	
 	
 	return 0; /* default- success */
@@ -204,7 +225,7 @@ int check_opcodeName(int index)
 	if (index < num_of_opcodes) /* a command was found */
 		return 0;
 	
-	printf("\nUnknown command name. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+	printf("\nUnknown command name. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 	return ERROR;
 }
 
@@ -217,24 +238,27 @@ int check_lineLength(char buffer[])
 	
 	if (len == MAX_LINE_LENGTH && buffer[80] != '\n') /* this check makes sure that a line that has 81 chars and EOF doesn't go unnoticed */
 	{
-		printf("\nLine exceeding the allowed length of 80 chars. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\nLine exceeding the allowed length of 80 chars. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 	
 	else if (status)
 		return 0; /* this means that the line has legal length */
 	
-	printf("\nLine exceeding the allowed length of 80 chars. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+	printf("\nLine exceeding the allowed length of 80 chars. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 	return ERROR;
 }
 
 
-int check_registerNumber(char name[3])
+int check_registerNumber(char *name)
 {
-	if (name[0] == 'r' && (name[1] >= '0' && name[1] <= '7') && name[2] == '\0')
+	int len;
+	len = strlen(name);	
+	
+	if (len == 3 && name[0] == 'r' && (name[1] >= '0' && name[1] <= '7') && name[2] == '\0')
 		return 0; /* register name is correct */
 	
-	printf("\nRegister with this name doesn't exist. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+	printf("\nRegister with this name doesn't exist. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 	return ERROR;
 }
 
@@ -253,39 +277,39 @@ int check_labelName(char *ptr)	/* ptr entered should be "(labelStr):\0" */
 	
 	if (len > MAX_LABEL_LENGTH-1) /* -1 because -\0 */
 	{
-		printf("\nLabel exceeding the allowed length of 30 chars. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\nLabel exceeding the allowed length of 30 chars. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 		return ERROR;	
 	}
 	
 	if (!isalpha(ptr[0])) /* check that macro name starts with letter- this eliminates directive names (because they start with '.') */
 	{
-		printf("\nLabel name starts with non-letter. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\nLabel name starts with non-letter. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 	
 	for (i = 0; i < len; ++i)
-		if (!isalnum(ptr[i]) && ptr[i] != ':')
+		if (!isalnum(ptr[i]) && ptr[i] != ':' && ptr[i] != '\0')
 		{
-			printf("\nLabel name contains a non-alnum. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nLabel name contains a non-alnum. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 	
 	if (ptr[0] == 'r' && ptr[1] >= '0' && ptr[1] <= '7' && ptr[2] == ':')
 	{
-		printf("\nLabel name is the name of a register. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\nLabel name is the name of a register. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 	
 	for (i = 0; i < num_of_opcodes; ++i)
 		if (strcmp(ptr, opcodeTable[i].name) == 0)
 		{
-			printf("\nLabel name is the name of a command. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nLabel name is the name of a command. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 	
 	if (len >= 2 && ptr[len-1] != ':')
 	{
-		printf("\nMissing ':' at the end of label. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\nMissing ':' at the end of label. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 	
@@ -330,12 +354,12 @@ int check_labelExist_or_legalExternalUse(binTree *node, char *label, lineNode *l
 	
 	if (check_existsInOtherFileAsEntry(label, fileNum))
 	{
-		printf("\nLabel \"%s\" is an entry form another file but not imported with .extern in this file- unuseable here. (Line %d, file: \"%s\")\n\n", label, line->lineNum, nameArr[amOffset + fileCounter+1]);
+		printf("\nLabel \"%s\" is an entry form another file but not imported with .extern in this file- unuseable here. (Line %d, file: \"%s\")\n\n", label, line->lineNum, nameArr[fileCounter]);
 		return ERROR;
 	}
 	
 	/* else- label wasn't found in the label table */
-	printf("\nLabel \"%s\" not defined in the assembly file. (Line %d, file: \"%s\")\n\n", label, line->lineNum, nameArr[amOffset + fileCounter+1]);
+	printf("\nLabel \"%s\" not defined in the assembly file. (Line %d, file: \"%s\")\n\n", label, line->lineNum, nameArr[fileCounter]);
 	return ERROR;
 }
 
@@ -344,7 +368,7 @@ int check_entryWithLocalDefinition(binTree *node, char *str)
 {
 	if (node == NULL)
 	{
-		printf("\nEntry \"%s\" doesn't have a local definition in this file. (Line %d, file: \"%s\")\n\n", str, lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\nEntry \"%s\" doesn't have a local definition in this file. (Line %d, file: \"%s\")\n\n", str, lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 	
@@ -354,7 +378,7 @@ int check_entryWithLocalDefinition(binTree *node, char *str)
 
 int check_labelDuplicate(char *str)
 {
-	printf("\nLabel \"%s\" was declared multiple times. (Line %d, file: \"%s\")\n\n", str, lineCounter, nameArr[amOffset + fileCounter+1]);
+	printf("\nLabel \"%s\" was declared multiple times. (Line %d, file: \"%s\")\n\n", str, lineCounter, nameArr[fileCounter]);
 	return ERROR;
 }
 
@@ -381,7 +405,7 @@ int check_isExternalLabelDefinedInOtherFile(char *label, int numFiles)
 	
 	if (found != 1)
 	{
-		printf("\nEntry \"%s\" doesn't have a definition in any file. (Line %d, file: \"%s\")\n\n", label, lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\nEntry \"%s\" doesn't have a definition in any file. (Line %d, file: \"%s\")\n\n", label, lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}	
 	
@@ -395,7 +419,7 @@ int check_entryNotAlsoExterned(char *label)
 {
 	if (isAlreadyExtern(label))
 	{
-		printf("Label \"%s\" cannot be both .entry and .extern in the same file (Line %d, File \"%s\")\n", label, lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("Label \"%s\" cannot be both .entry and .extern in the same file (Line %d, File \"%s\")\n", label, lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 	
@@ -408,26 +432,29 @@ int check_externNotAlsoEntryed(char *label)
 {
 	if (isAlreadyEntry(label))
 	{
-		printf("Label \"%s\" cannot be both .entry and .extern in the same file. (Line %d, file: \"%s\")\n\n", label, lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("Label \"%s\" cannot be both .entry and .extern in the same file. (Line %d, file: \"%s\")\n\n", label, lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 	
 	return 0;
 }
 
+
+
+
 /* check that there is no garbage text before the line, and that the first word is legal and valid */
 int check_garbageTextBeforeLine(char *line, int *matHeight, int *matLength)
 {
-	int charsRead = 0, i, len;
-	char word[MAX_LINE_LENGTH], *c;
+	int charsRead = 0, localRead = 0, i, len;
+	char word[MAX_LINE_LENGTH], *c, *p;
 	c = line;
 	
 	/* skip white spaces before line */
 	while (*c == ' ' || *c == '\t')
 		c++;
-	if (*c == '\0')
+	if (*c == '\0' || *c == ';')
 		return EMPTY_LINE;
-
+	
 	/* scan first word */
 	if (sscanf(c, "%s%n", word, &charsRead) < 1)
 		return ERROR;
@@ -436,7 +463,7 @@ int check_garbageTextBeforeLine(char *line, int *matHeight, int *matLength)
 	len = strlen(word);
 	if (len == 1 && word[0] == ':')
 	{
-		printf("\nEmpty label decleration. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\nEmpty label decleration. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 	if (len > 1 && word[len-1] == ':')
@@ -447,7 +474,7 @@ int check_garbageTextBeforeLine(char *line, int *matHeight, int *matLength)
 	{
 		if (len > 6) /* word is longer than '.entry\0'- there are extraneous chars sticked to it */
 		{
-			printf("\nExtraneous text after '.entry'. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nExtraneous text after '.entry'. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		
@@ -459,7 +486,7 @@ int check_garbageTextBeforeLine(char *line, int *matHeight, int *matLength)
 	{
 		if (len > 7) /* word is longer than '.extern\0'- there are extraneous chars sticked to it */
 		{
-			printf("\nExtraneous text after '.extern'. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nExtraneous text after '.extern'. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		
@@ -471,7 +498,7 @@ int check_garbageTextBeforeLine(char *line, int *matHeight, int *matLength)
 	{
 		if (len > 5) /* word is longer than '.data\0'- there are extraneous chars sticked to it */
 		{
-			printf("\nExtraneous text after '.data'. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nExtraneous text after '.data'. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		
@@ -484,7 +511,7 @@ int check_garbageTextBeforeLine(char *line, int *matHeight, int *matLength)
 	{
 		if (len > 7) /* word is longer than '.string\0'- there are extraneous chars sticked to it */
 		{
-			printf("\nExtraneous text after '.string'. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nExtraneous text after '.string'. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		
@@ -493,46 +520,70 @@ int check_garbageTextBeforeLine(char *line, int *matHeight, int *matLength)
 	
 	
 	/* is this .mat[][]? */
-	if (strncmp(word, ".mat[", 5) == 0)
+	if (strncmp(word, ".mat", 4) == 0)
 	{
-		c = word + 5;
-		charsRead = 0;
-		if (sscanf(c, "%d%n", matHeight, &charsRead) == 0)
+		p = c + 4; /* after ".mat" in the line */
+		p = skipWhiteSpace(p); /* allow spaces before "[" */
+        
+		if (*p != '[')
 		{
-			printf("\nMissing mat height in '.mat[][]' decleration or non-int value. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nMissing '[' in '.mat' decleration or extaneous text in-line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
-		c += charsRead;
+		p++; /* skip '[' */
 		
-		if (*(c++) != ']' || *(c++) != '[')
+		/* scan height */
+        localRead = 0;
+        if (sscanf(p, "%d%n", matHeight, &localRead) != 1)
+        {
+            printf("\nMissing mat height in '.mat[][]' decleration or non-int value. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+            return ERROR;
+        }
+        p += localRead;
+
+        p = skipWhiteSpace(p);
+        if (*p != ']')
+        {
+            printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+            return ERROR;
+        }
+        p++; /* skip ']' */
+
+        p = skipWhiteSpace(p);
+        if (*p != '[')
+        {
+            printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+            return ERROR;
+        }
+        p++; /* skip '[' */
+
+		/* scan length */
+		localRead = 0;
+		if (sscanf(p, "%d%n", matLength, &localRead) != 1)
 		{
-			printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nMissing mat length in '.mat[][]' decleration or non-int value. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
-		charsRead += 2;
-		
-		if (sscanf(c, "%d%n", matLength, &charsRead) == 0)
+		p += localRead;
+
+		p = skipWhiteSpace(p);
+		if (*p != ']')
 		{
-			printf("\nMissing mat length in '.mat[][]' decleration or non-int value. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
-		c += charsRead;
-		
-		if (*(c++) != ']')
+		p++; /* skip ']' */
+
+		/* only whitespace or EOL allowed after the ".mat[H][W]" */
+		if (*p != ' ' && *p != '\t' && *p != '\n' && *p != '\0')
 		{
-			printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nExtraneous text after '.mat'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
-		charsRead++;
-		
-		if (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\0') /* no white space or end of line after .mat decleration */
-		{
-			printf("\nExtraneous text after '.mat'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
-			return ERROR;
-		}
-		
+
 		return wordIsMAT;
 	}
+	
 
 	/* is this a command? */
 	for (i = 0; i < num_of_opcodes; ++i)
@@ -541,7 +592,7 @@ int check_garbageTextBeforeLine(char *line, int *matHeight, int *matLength)
 
 
 	/* no legal opening was matched- this is garbage text */
-	printf("\nExtraneous text before line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+	printf("\nExtraneous text before line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 	return ERROR;
 }
 
@@ -553,8 +604,8 @@ int check_garbageTextBeforeLine(char *line, int *matHeight, int *matLength)
 /* check that there is no garbage text before next word, and that the new word is legal and valid */
 int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, int *matLength)
 {
-	int charsRead = 0, i, len;
-	char word[MAX_LINE_LENGTH], *c = line;
+	int charsRead = 0, localRead = 0, i, len;
+	char word[MAX_LINE_LENGTH], *c = line, *p;
 	
 	/* skip white spaces before line */
 	while (*c == ' ' || *c == '\t')
@@ -564,6 +615,10 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 	}
 	if (*c == '\0')
 		return EMPTY_LINE;
+		
+	/* whole-line comment */
+    if (*c == ';')
+            return EMPTY_LINE;
 
 	/* scan next word */
 	if (sscanf(c, "%s%n", word, &charsRead) < 1)
@@ -576,14 +631,14 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 	/* is this .entry? */
 	if (strncmp(word, ".entry", 6) == 0) /* entry is not allowed to be anything but the first word */
 	{
-		printf("\n'.entry' is not allowed here. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\n'.entry' is not allowed here. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 		
 	/* is this .extern? */
 	if (strncmp(word, ".extern", 7) == 0) /* extern is not allowed to be anything but the first word */
 	{
-		printf("\n'.extern' is not allowed here. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\n'.extern' is not allowed here. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 
@@ -592,13 +647,13 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 	{
 		if (firstWord != wordIsLABEL) /* only case when .data is allowed as second word is after label decleration */
 		{
-			printf("\n'.data' is not allowed here. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\n'.data' is not allowed here. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		
 		if (len > 5) /* word is longer than '.data\0'- there are extraneous chars sticked to it */
 		{
-			printf("\nExtraneous text after '.data'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nExtraneous text after '.data'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		
@@ -611,13 +666,13 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 	{
 		if (firstWord != wordIsLABEL) /* only case when .string is allowed as second word is after label decleration */
 		{
-			printf("\n'.string' is not allowed here. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\n'.string' is not allowed here. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		
 		if (len > 7) /* word is longer than '.string\0'- there are extraneous chars sticked to it */
 		{
-			printf("\nExtraneous text after '.string'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nExtraneous text after '.string'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		
@@ -626,50 +681,67 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 	
 	
 	/* is this .mat[][]? */
-	if (strncmp(word, ".mat[", 5) == 0)
+	if (strncmp(word, ".mat", 4) == 0)
 	{
-		if (firstWord != wordIsLABEL) /* only case when .mat is allowed as second word is after label decleration */
+		p = c + 4; /* after ".mat" in the line */
+		p = skipWhiteSpace(p); /* allow spaces before "[" */
+        
+		if (*p != '[')
 		{
-			printf("\n'.mat' is not allowed here. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nMissing '[' in '.mat' decleration or extaneous text in-line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
+		p++; /* skip '[' */
 		
-		c = word + 5;
-		charsRead = 0;
-		if (sscanf(c, "%d%n", matHeight, &charsRead) == 0)
+		/* scan height */
+        localRead = 0;
+        if (sscanf(p, "%d%n", matHeight, &localRead) != 1)
+        {
+            printf("\nMissing mat height in '.mat[][]' decleration or non-int value. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+            return ERROR;
+        }
+        p += localRead;
+
+        p = skipWhiteSpace(p);
+        if (*p != ']')
+        {
+            printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+            return ERROR;
+        }
+        p++; /* skip ']' */
+
+        p = skipWhiteSpace(p);
+        if (*p != '[')
+        {
+            printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
+            return ERROR;
+        }
+        p++; /* skip '[' */
+
+		/* scan length */
+		localRead = 0;
+		if (sscanf(p, "%d%n", matLength, &localRead) != 1)
 		{
-			printf("\nMissing mat height in '.mat[][]' decleration or non-int value. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nMissing mat length in '.mat[][]' decleration or non-int value. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
-		c += charsRead;
-		
-		if (*(c++) != ']' || *(c++) != '[')
+		p += localRead;
+
+		p = skipWhiteSpace(p);
+		if (*p != ']')
 		{
-			printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
-		charsRead += 2;
-		
-		if (sscanf(c, "%d%n", matLength, &charsRead) == 0)
+		p++; /* skip ']' */
+
+		/* only whitespace or EOL allowed after the ".mat[H][W]" */
+		if (*p != ' ' && *p != '\t' && *p != '\n' && *p != '\0')
 		{
-			printf("\nMissing mat length in '.mat[][]' decleration or non-int value. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nExtraneous text after '.mat'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
-		c += charsRead;
-		
-		if (*(c++) != ']')
-		{
-			printf("\nExtraneous text or missing bracket in '.mat' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
-			return ERROR;
-		}
-		charsRead++;
-		
-		if (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\0') /* no white space or end of line after .mat decleration */
-		{
-			printf("\nExtraneous text after '.mat'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
-			return ERROR;
-		}
-		
+
 		return wordIsMAT;
 	}
 
@@ -679,7 +751,7 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 		{
 			if (firstWord != wordIsLABEL) /* only case when command is allowed as second word is after label */
 			{
-				printf("\nCommand is not allowed here. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+				printf("\nCommand is not allowed here. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 				return ERROR;
 			}
 			
@@ -696,7 +768,7 @@ int check_garbageTextAndClassifyWord(char *line, int firstWord, int *matHeight, 
 	
 	
 	/* no legal opening was matched- this is garbage text */
-	printf("\nExtraneous text \"%s\". (Line %d, File: \"%s\")\n\n", word, lineCounter, nameArr[amOffset + fileCounter+1]);
+	printf("\nExtraneous text: \"%s\". (Line %d, File: \"%s\")\n\n", word, lineCounter, nameArr[fileCounter]);
 	return ERROR;
 }
 
@@ -719,14 +791,14 @@ int check_scanOperand(char **line, int *addrMode, char *labelForCaller)
 		temp = c + 1;
 		if (!scanInt(&temp, &val))
 		{
-			printf("\nIllegal immediate value after '#'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nIllegal immediate value after '#'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		
 		/* after the number there must be end/space/comma/']' */
 		if (*temp != '\0' && *temp != '\n' && *temp != ' ' && *temp != '\t' && *temp != ',' && *temp != ']')
 		{
-			printf("\nExtraneous text after immediate operand. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nExtraneous text after immediate operand. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 
@@ -734,7 +806,7 @@ int check_scanOperand(char **line, int *addrMode, char *labelForCaller)
 		
 		if (val > max_immediate_int || val < min_immediate_int)
 		{
-			printf("\nNumber is out of legal range. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nNumber is out of legal range. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		
@@ -782,7 +854,7 @@ int check_scanOperand(char **line, int *addrMode, char *labelForCaller)
 				temp = skipWhiteSpace(temp);
 				if (*temp != ']')
 				{
-					printf("\nMissing ']' after first matrix index. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+					printf("\nMissing ']' after first matrix index. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 					return ERROR;
 				}
 			
@@ -791,7 +863,7 @@ int check_scanOperand(char **line, int *addrMode, char *labelForCaller)
 			
 			else
 			{
-				printf("\nIllegal first matrix index (need r0-r7). (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+				printf("\nIllegal first matrix index (need r0-r7). (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
                 return ERROR;
 			}
 					
@@ -800,7 +872,7 @@ int check_scanOperand(char **line, int *addrMode, char *labelForCaller)
 			temp = skipWhiteSpace(temp);
 			if (*temp != '[')
 			{
-				printf("\nMissing second '[' before second matrix index. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+				printf("\nMissing second '[' before second matrix index. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 				return ERROR;
 			}
 		
@@ -813,7 +885,7 @@ int check_scanOperand(char **line, int *addrMode, char *labelForCaller)
 				temp = skipWhiteSpace(temp);
 				if (*temp != ']')
 				{
-					printf("\nMissing ']' after second matrix index. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+					printf("\nMissing ']' after second matrix index. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 					return ERROR;
 				}
 				temp++; /* skip ']' */
@@ -821,7 +893,7 @@ int check_scanOperand(char **line, int *addrMode, char *labelForCaller)
 		
 			else
 			{
-				printf("\nIllegal second matrix index (need r0-r7). (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+				printf("\nIllegal second matrix index (need r0-r7). (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
                 return ERROR;
 			}
 		
@@ -847,16 +919,23 @@ int check_dataValues(char **line, int *valueCount)
 	int num, status;
 	char *c;
 	
-	c = *line;
+	c = *line;	
 	
 	/* skip leading spaces before first int */
 	c = skipWhiteSpace(c);
 	
-	/* Require the first integer (empty list is illegal for .data) */
+	/* require the first integer (empty list is illegal for .data) */
 	status = scanInt(&c, &num);
-	if (!status) /* valueCount == NULL means we didn't call the func for a mat[][] check */
+	
+	if (!status) /* no data */
 	{
-		printf("\nMissing value after '.data' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+		if (valueCount != NULL) /* valueCount == NULL means we didn't call the func for a mat[][], so != NULL means this is for data- blank declaration illegal */
+		{
+			*valueCount = 0;
+			return 1;
+		}
+		
+		printf("\nMissing value after '.data' decleration. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
         return ERROR;
 	}
 	
@@ -878,7 +957,7 @@ int check_dataValues(char **line, int *valueCount)
 		status = scanInt(&c, &num);
 		if (!status) /* char after , was non-number or missing */
 		{
-			printf("\nMissing value/non-number after comma in a '.data' line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nMissing value/non-number after comma in a '.data' line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 		    return ERROR;
 		}
 		
@@ -890,7 +969,7 @@ int check_dataValues(char **line, int *valueCount)
 	c = skipWhiteSpace(c);
 	if (!isEndOfLine_or_whiteSpaceOnly(c))
 	{
-		printf("\nExtraneous text after line.(Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\nExtraneous text after line.(Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 
@@ -923,7 +1002,7 @@ int check_matValues(char **line, int capacity)
 	
 	if (valueCount > capacity)
 	{
-		printf("\nToo many values for '.mat'- max is %d. (Line %d, File: \"%s\")\n\n", capacity, lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\nToo many values for '.mat'- max is %d. (Line %d, File: \"%s\")\n\n", capacity, lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 	
@@ -946,7 +1025,7 @@ int check_stringData(char **line)
 	status = scanString(&c, buffer);
 	if (!status)
 	{
-		printf("\nMissing/illegal string after '.string'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\nMissing/illegal string after '.string'. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 	
@@ -954,7 +1033,7 @@ int check_stringData(char **line)
 	c = skipWhiteSpace(c);
 	if (!isEndOfLine_or_whiteSpaceOnly(c))
 	{
-		printf("\nExtraneous text after line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\nExtraneous text after line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 
@@ -983,7 +1062,7 @@ int check_commandOperands(char **line, char *commandName)
 	
 	if (op == NULL)
 	{
-		printf("\nUnknown opcode '%s'. (Line %d, File: \"%s\")\n\n", commandName, lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\nUnknown opcode '%s'. (Line %d, File: \"%s\")\n\n", commandName, lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 	
@@ -1012,7 +1091,7 @@ int check_commandOperands(char **line, char *commandName)
 		status = check_scanOperand(&c, &srcMode, tempSourceLabel);
 		if (!status)
 		{
-			printf("\nMissing/illegal source operand for '%s'. (Line %d, File: \"%s\")\n\n", commandName, lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nMissing/illegal source operand for '%s'. (Line %d, File: \"%s\")\n\n", commandName, lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		haveSrc = 1; /* mark success */
@@ -1020,7 +1099,7 @@ int check_commandOperands(char **line, char *commandName)
 		c = skipWhiteSpace(c);
 		if (!isRequiredComma(&c))
 		{
-			printf("\nMissing comma between operands for '%s'. (Line %d, File: \"%s\")\n\n", commandName, lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nMissing comma between operands for '%s'. (Line %d, File: \"%s\")\n\n", commandName, lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		c = skipWhiteSpace(c);
@@ -1028,7 +1107,7 @@ int check_commandOperands(char **line, char *commandName)
 		status = check_scanOperand(&c, &dstMode, tempDestLabel);
 		if (!status)
 		{
-			printf("\nMissing/illegal destination operand for '%s'. (Line %d, File: \"%s\")\n\n", commandName, lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nMissing/illegal destination operand for '%s'. (Line %d, File: \"%s\")\n\n", commandName, lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		haveDst = 1; /* mark success */
@@ -1039,7 +1118,7 @@ int check_commandOperands(char **line, char *commandName)
 		status = check_scanOperand(&c, &dstMode, tempDestLabel);
 		if (!status)
 		{
-			printf("\nMissing/illegal destination operand for '%s'. (Line %d, File: \"%s\")\n\n", commandName, lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nMissing/illegal destination operand for '%s'. (Line %d, File: \"%s\")\n\n", commandName, lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 		haveDst = 1; /* mark success */
@@ -1047,7 +1126,7 @@ int check_commandOperands(char **line, char *commandName)
 		c = skipWhiteSpace(c);
 		if (isRequiredComma(&c))
 		{
-			printf("\nExtraneous comma in single-operand command '%s'. (Line %d, File: \"%s\")\n\n", commandName, lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nExtraneous comma in single-operand command '%s'. (Line %d, File: \"%s\")\n\n", commandName, lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 	}
@@ -1056,7 +1135,7 @@ int check_commandOperands(char **line, char *commandName)
 	{
 		if (!isEndOfLine_or_whiteSpaceOnly(c))
 		{
-			printf("\nExtraneous text after zero-operand command '%s'. (Line %d, File: \"%s\")\n\n", commandName, lineCounter, nameArr[amOffset + fileCounter+1]);
+			printf("\nExtraneous text after zero-operand command '%s'. (Line %d, File: \"%s\")\n\n", commandName, lineCounter, nameArr[fileCounter]);
 			return ERROR;
 		}
 	}
@@ -1065,7 +1144,7 @@ int check_commandOperands(char **line, char *commandName)
 	c = skipWhiteSpace(c);
 	if (!isEndOfLine_or_whiteSpaceOnly(c))
 	{
-		printf("\nExtraneous text after line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\nExtraneous text after line. (Line %d, File: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 	
@@ -1097,33 +1176,33 @@ int check_macroName(char *ptr)
 	
 	if (len > MAX_LABEL_LENGTH - 1) /* -1 because -\0 */
 	{
-		printf("\nMacro name exceeding the allowed length. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		printf("\nMacro name exceeding the allowed length. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 		return ERROR;	
 	}
 	
 	if (!isalpha(ptr[0]))
 	{
-		printf("\nMacro name starts with non-letter. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		printf("\nMacro name starts with non-letter. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 		return ERROR;
 	}
 	
 	for (i = 0; i < len; ++i)
 		if (!isalnum(ptr[i]))
 		{
-			printf("\nMacro name contains a non-alnum. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+			printf("\nMacro name contains a non-alnum. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 			return ERROR;
 		}
 	
 	if (len == 2 && ptr[0] == 'r' && ptr[1] >= '0' && ptr[1] <= '7')
 	{
-		printf("\nMacro name is the name of a register. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		printf("\nMacro name is the name of a register. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 		return ERROR;
 	}
 	
 	for (i = 0; i < num_of_opcodes; ++i)
 		if (strcmp(ptr, opcodeTable[i].name) == 0)
 		{
-			printf("\nMacro name is the name of a command. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+			printf("\nMacro name is the name of a command. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 			return ERROR;
 		}
 	
@@ -1145,7 +1224,7 @@ int check_macroOpenLine(char *line)
 	status = sscanf(ptr, "%s%n", word, &charsRead);
 	if (status != 1 || strcmp(word, "mcro") != 0)
 	{
-		printf("\nMissing 'mcro' directive at start of line. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		printf("\nMissing 'mcro' directive at start of line. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 		return ERROR;
 	}
 	ptr += charsRead; /* advance through the line (skip "mcro") */
@@ -1154,7 +1233,7 @@ int check_macroOpenLine(char *line)
 	status = sscanf(ptr, "%s%n", word, &charsRead);
 	if (status != 1)
 	{
-		printf("\nMissing macro name. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		printf("\nMissing macro name. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 		return ERROR;
 	}
 	
@@ -1165,7 +1244,7 @@ int check_macroOpenLine(char *line)
 	/* check for garbage text */
 	if (!isEndOfLine_or_whiteSpaceOnly(ptr))
 	{
-		printf("\nExtraneous text after line. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		printf("\nExtraneous text after line. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 		return ERROR;
 	}
 	
@@ -1188,7 +1267,7 @@ int check_macroCloseLine(char *line)
 	status = sscanf(ptr, "%s%n", word, &charsRead);
 	if (status != 1 || strcmp(word, "mcroend") != 0)
 	{
-		printf("\nMissing 'mcroend' directive. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		printf("\nMissing 'mcroend' directive. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 		return ERROR;
 	}
 	ptr += charsRead; /* advance through the line (skip "mcro") */
@@ -1196,7 +1275,7 @@ int check_macroCloseLine(char *line)
 	/* check for garbage text */
 	if (!isEndOfLine_or_whiteSpaceOnly(ptr))
 	{
-		printf("\nExtraneous text after line. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter]);
+		printf("\nExtraneous text after line. (Line %d, file: \"%s\")\n\n", lineCounter, (*argvPointer)[fileCounter+1]);
 		return ERROR;
 	}
 	

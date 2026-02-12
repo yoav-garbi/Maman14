@@ -154,32 +154,31 @@ int closeFiles(int argc, FILE **fileArr)
 /* read lines until you reach a non-note and non-white-space-only line */
 int takeInLine(char buffer[], FILE *source)
 {
-	int i, flag;
-	char c, *fgetsStatus;
+	int flag;
+	char *c, *fgetsStatus;
 	
 	do
 	{
+		flag = 0;
+		
 		/* take in line */
 		fgetsStatus = fgets(buffer, buffer_size, source);
 		lineCounter++;
 	
 		if (fgetsStatus == NULL) /* fgets returns NULL if the entire input is EOF (an empty line)- end the task */
 			return EOF_only_line;
-
-		c = buffer[0];
-		if (c == ';')
+		
+		c = skipWhiteSpace(fgetsStatus);
+		if (*c == ';')
 			continue;
 		
 		if (check_lineLength(buffer) == ERROR) /* line is too long, so we can skip it */
 			continue;
 		
-		for (i = 0, flag = 0; c != EOF && c != '\0'; ++i)	/* read the line with c and mark count with 1 if encountering a non-white-space (this means a real line) */
-		{
-			c = buffer[i];
+		c = skipWhiteSpace(c);
 			
-			if (c != ' ' && c != '\t' && c != '\n')
-				flag = 1;
-		}
+		if (*c != '\n')
+			flag = 1;
 		
 	} while (flag == 0);	/* perform this action as long as count is 0 (as long as the lines are blank) */
 	

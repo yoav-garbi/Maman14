@@ -12,21 +12,27 @@ char *skipWhitespace(char *line) {
 }
 
 int isLabel(char *ptr) {
-    int len = 0;
+	int len = 0;
+	char label[MAX_LABEL_LENGTH + 2];
 
-    /* find end of potential label */
-    while (ptr[len] && !isspace((unsigned char)ptr[len]) && ptr[len] != ':')
-        len++;
+	/* find end of potential label */
+	while (ptr[len] && !isspace((unsigned char)ptr[len]) && ptr[len] != ':')
+		len++;
 
-    if (ptr[len] != ':')
-        return 0;
+	if (ptr[len] != ':')
+		return 0;
 
-    /* TODO: check label validity */
-    if (check_labelName(ptr) == ERROR) {
-        return ERROR;
-    }
+	/* copy only the label (including ':') for validation */
+	if (len + 1 >= (int)sizeof(label))
+		return ERROR;
+	memcpy(label, ptr, len + 1);
+	label[len + 1] = '\0';
 
-    return 1;
+	if (check_labelName(label) == ERROR) {
+		return ERROR;
+	}
+
+	return 1;
 }
 
 int isData(char *word) {
@@ -261,6 +267,8 @@ void processSingleOperand(char *operand, int method, int *IC, lineNode **codeLis
                           binTree *labelTable, lineNode **externLineArr) {
     char binaryLine[WORD_LENGTH + 1];
     char labelPadded[MAX_LABEL_LENGTH + 2];
+	char matLabel[MAX_LABEL_LENGTH + 1];
+	char rowReg[3], colReg[3];
     int value = 0;
 
     switch (method) {
@@ -271,11 +279,28 @@ void processSingleOperand(char *operand, int method, int *IC, lineNode **codeLis
             break;
 
         case 1: /* direct */
-        case 2: /* matrix */
             addExternIfNeeded(operand, *IC, labelTable, externLineArr);
             sprintf(labelPadded, " %-8s ", operand);
             addLineNode(codeList, labelPadded, (*IC)++, lineNum);
             break;
+        
+        case 2: /* matrix */
+        {
+            if (sscanf(operand, "%[^[][%2[^]]][%2[^]]]", matLabel, rowReg, colReg) == 3) {
+                addExternIfNeeded(matLabel, *IC, labelTable, externLineArr);
+                sprintf(labelPadded, " %-8.8s ", matLabel);
+                addLineNode(codeList, labelPadded, (*IC)++, lineNum);
+
+                value = getRegisterNumber(rowReg);
+                encodeOperandWord(value, 3, binaryLine);
+                addLineNode(codeList, binaryLine, (*IC)++, lineNum);
+
+                value = getRegisterNumber(colReg);
+                encodeOperandWord(value, 3, binaryLine);
+                addLineNode(codeList, binaryLine, (*IC)++, lineNum);
+            }
+            break;
+        }
 
         case 3: /* register */
             value = getRegisterNumber(operand);
@@ -399,16 +424,16 @@ int firstPass(int index) {
     LineData currentLine;
     char *ptr, *nextPtr;
     int readLine;
-    const char *fileName = nameArr[index];
     operands operands;
     lineNode *codeList = NULL;
     lineNode *dataList = NULL;
     binTree **curLabelTable = &labelTable[index];
 
-    fp = fopen(fileName, "r");
+	fp = fileArr[amOffset + index];
     if (fp == NULL) {
         return -1;
     }
+	rewind(fp);
 
     readLine = takeInLine(currentLine.content, fp);
     while (readLine != EOF_only_line) {
@@ -445,6 +470,8 @@ int firstPass(int index) {
                 nextPtr++;
                 nextPtr = skipWhitespace(nextPtr);
                 sscanf(nextPtr, "%s", first_word);
+                nextPtr += strlen(first_word);
+                nextPtr = skipWhitespace(nextPtr);
             } else {
                 countError++;
                 currentLine.hasError = 1;
@@ -503,14 +530,12 @@ int firstPass(int index) {
 
     lineArr[index] = concatLists(codeList, dataList);
 
-    fclose(fp);
-
     dcArr[index] = DC;
     icArr[index] = IC;
 
     if (IC + DC >= MAX_TOTAL_ADDRESSES) {
         printf("\nProgram size (IC + DC = %d) exceeds maximum memory limit (%d) in file \"%s\"\n\n",
-               (IC + DC), MAX_TOTAL_ADDRESSES, nameArr[amOffset + fileCounter+1]);
+               (IC + DC), MAX_TOTAL_ADDRESSES, nameArr[fileCounter]);
         countError++;
     }
 

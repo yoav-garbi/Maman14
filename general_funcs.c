@@ -319,7 +319,7 @@ int scanString(char **line, char *str)
 	
 	if (*start != '"') /* not starting " found */
 	{
-		printf("\nMissing \" before string. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\nMissing \" before string. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 	
@@ -338,7 +338,7 @@ int scanString(char **line, char *str)
 	
 	if (end == NULL) /* no closing " was found */
 	{
-		printf("\nMissing \" after string. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\nMissing \" after string. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 	
@@ -346,7 +346,7 @@ int scanString(char **line, char *str)
 	
 	if (len >= buffer_size) /* string too long */
 	{
-		printf("\nString is too long. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[amOffset + fileCounter+1]);
+		printf("\nString is too long. (Line %d, file: \"%s\")\n\n", lineCounter, nameArr[fileCounter]);
 		return ERROR;
 	}
 
